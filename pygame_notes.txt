@@ -1,0 +1,192 @@
+Important concepts:
+
+Required Stuff:
+    1. Always start by importing pygame module and initializing the module
+        import pygame
+        pygame.init()
+
+    2. Set up the Display Surface, Caption, and game clock
+        screen = pygame.display.set_mode((width, height))
+        pygame.display.set_caption("Speedopoly")
+        clock = pygame.time.Clock()
+
+    3. Declare any global variables
+        dice = Dice()
+        gameBoard = gameBoard
+        etc.
+
+    3. Main game loop
+        while True:
+            -Event handler
+                for event in pygame.event.get():
+                    check if user quits game --> Quit the game
+                    check for other events --> Carry out the logic for that event (ex. player clicks a button, call the function for that button, update surfaces like the position of the player token)
+            
+            -Update the Display Surface with the changes
+                pygame.display.update()
+            
+            -Set the frame rate
+                clock.tick(60) #60 frames per second
+
+Displaying images:
+    To draw any image, we need a surface:
+
+    1. Display Surface - The main game window, anything displayed goes here.
+        -Only one Display Surface
+        
+        -always visible
+        
+        -Origin point is (0, 0)
+            ex. (100, 100) specifies 100 pixels below and to the right of the top left of the Display Surface
+        
+        -How to make (this is done once at the start of program):
+            screen = pygame.display.set_mode((width, height))
+    
+    2. (regular) Surface - Basically just an image
+        
+        -Can have any amount of regular surfaces
+        
+        -Only displayed when connected to the Display Surface
+
+Regular surface types:
+    1. Plain color
+        -How to make:
+            test_surface = pygame.Surface((x_coordinate, y_coordinate))
+        
+        -How to display on Display Surface (applies to all regular surfaces types):
+            screen.blit(test_surface, (x_coordinate, y_coordinate))
+                Note: x_coordinate and y_coordinate determine the position of the top left point of the surface within the Display Surface
+                
+                Also note: Surfaces are drawn in the order of when blit() is called
+                    ex. Here, test_surface2 will be drawn on top of test_surface1 here. 
+                        screen.blit(test_surface1, (100, 100))
+                        screen.blit(test_surface2, (100, 100))
+                             
+        -How to fill with color:
+            test_surface.fill('Red')
+            OR
+            test_surface.fill((R, G, B))  Note: R G B are ints (0 - 255) referring to how much red green or blue to have
+
+    2. Image
+        -How to make:
+            test_image = pygame.image.load("path_to_image.png")
+        
+        -Pygame can work with images faster if we use convert() or convert_alpha() function
+            test_image = pygame.image.load("path_to_image.png").convert()
+        
+        Note: I don't have a great idea of what convert()/convert_alpha() actually does, but it is apparently faster to work with converted images
+              The documentation implies we might want to use convert or convert_alpha on all surfaces but idk
+              Also, convert_alpha seems to remove white or black backgrounds from the png (once again idk really)
+              
+              Documentation: https://www.pygame.org/docs/ref/surface.html#pygame.Surface.convert
+              ChatGPT explanation:
+              convert(): Optimizes the image for display without transparency.
+              convert_alpha(): Optimizes the image for display while keeping transparency (alpha) information intact.
+
+
+    3. Text
+        i. Create a pygame font (text size and style) 
+            test_font = pygame.font.Font(font_type, font_size)
+
+        ii. Write text onto a surface using the font
+            text_surface = test_font.render(text, anti_alias, color)    Note: anti_alias is a bool and basically would smooth the edges of the text if true
+        
+        iii. blit() the text surface onto the Display surface wherever it needs to be
+            screen.blit(text_surface, (x_coordinate, y_coordinate))
+
+Basic Animations:
+    -Animating is just changing the position of a surface slightly on each frame
+    
+    ex. This example shows a surface that moves to the right by one pixel and downwards by one pixel per frame
+        At 60 fps (clock.tick(60)), this means it moves 60 pixels right and down on the screen per second
+        while True:
+            screen.blit(test_surface, (x_coordinate, y_coordinate))
+            x_coordinate += 1
+            y_coordinate += 1
+            clock.tick(60)
+
+Rectangles:
+    -Used to help place surfaces more efficiently and precisely
+    -Used to help detect basic collisions
+
+    Placing surfaces on the display using rectangles:
+        -Split the image into 2 different variables
+        
+        -Use surface for image information
+            surface_example = pygame.image.load("path_to_image.png").convert()
+        
+        -Use rectangle for placement
+            rectangle_example = surface_example.get_rect(topleft = (x_coordinate, y_coordinate))
+                
+                -get_rect() takes a surface and draws a rectangle around it
+                
+                -you can specify the location using keyword arguments like:
+                    topleft = (x, y) positions top left corner of rectangle
+                    topright = (x, y) positions top right corner of rectangle
+                    bottomleft = (x, y) positions bottom left corner of rectangle
+                    bottomright = (x, y) positions bottom right corner of rectangle
+                    midtop = (x, y) positions the midpoint of the top edge of rectangle
+                    midbottom = (x, y) positions the midpoint of the bottom edge of the rectangle
+                    midleft = (x, y) positions the midpoint of the left edge of the rectangle
+                    midright = (x, y) positions the midpoint of the right edge of the rectangle
+                    center = (x, y) positions the center of the rectangle
+                    centerx = x positions the x-coordinate of the center of the rectangle
+                    centery = y positions the y-coordinate of the center of the rectangle
+                    top = y sets the top edge of the rectangle
+                    bottom = y sets the bottom edge of the rectangle
+                    left = x sets the left edge of the rectangle
+                    right = x sets the right edge of the rectangle
+
+        -blit() using the rectangle for placement of the surface 
+            screen.blit(surface_example, rectangle_example)
+
+        -We can move the rectangle (and the associated surface) doing math on one of its properties
+            rectangle_example.left += 1 #this moves the left edge of the rectangle one pixel to the right
+
+    Collision:
+        example_rect1.colliderect(other_rect) #returns 0 for no collision, returns 1 if there is a collision
+
+        Using collision to click buttons with the mouse:
+            -rect.collidepoint((x,y)) will be used to check if a point collides with a rectangle and will be used to implement clicking a button with the mouse
+            -We can get the mouse position with pygame.mouse or using the event loop
+
+        pygame.mouse
+            mouse_position = pygame.mouse.get_pos()
+            if button_rect.collidepoint(mouse_position):
+                carry out button logic
+
+        event loop
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button_rect.collidepoint(event.pos):
+                    carry out button logic
+
+    Position a text surface using rectangles (for example):
+        text_surface.font.render(font, false, color)
+        text_rect = text_surface.get_rect(center = (x, y))
+        screen.blit(text_surface, text_rect)
+
+    Drawing:
+        pygame.draw(): draw rectangles, circles, lines, points, etc.
+
+        ex. pygame.draw.rect(screen, 'Pink', text_rect) #this would draw a pink rectangle over the text_rect rectangle
+        ex. pygame.draw.line(screen, 'Gold', (0, 0), (100, 100), 50) #draws a gold line on the screen from (0, 0) to (100, 100) and it is 50 pixels wide
+
+Keyboard Input:
+    -2 ways of getting input:
+        pygame.key
+        event loop
+
+    pygame.key
+        keys = pygame.key.get_pressed() #this is a dict that shows which buttons are being pressed
+
+
+
+    
+
+
+
+
+    
+
+
+
