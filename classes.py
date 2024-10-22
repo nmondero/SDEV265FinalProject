@@ -112,7 +112,7 @@ class Player:
             initialPosition = self.playerPosition
             self.playerPosition = jumpToTile
             #Passing Go check when jumping to a lower tile index
-            if initialPosition > self.playerPosition:
+            if initialPosition > self.playerPosition and passGoViable:
                 self.playerBalance += 200
 
         
