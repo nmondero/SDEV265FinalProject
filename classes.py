@@ -82,16 +82,24 @@ class Player:
         return self.playerBalance
 
     '''
-    I am thinking we simply just use this function to move the player by a specified amount (move amount) or move directly to a certain spot (jumpToTile)
+    I am thinking we simply just use this function to move the player by a specified amount (move amount) or move directly to a certain spot (jumpToTile) and a bool to specify if the jumpToTile should allow passing go
     ex. Move via dice roll (totalDiceVal = 6): 
         player1.movePlayer(moveAmount = totaLDiceVal)
     ex. Pass directly to Go tile (index of zero)
-        player1.movePlayer(jumptToTile = 0)
+        player1.movePlayer(jumpToTile = 0, passGoViable = True)
+    ex. Go directly to jail, do not collect passing go money
+        player1.movePlayer(jumpToTile = 10, passGoViable = False)
     '''
-    def movePlayer(self, moveAmount = None, jumpToTile = None):
+    def movePlayer(self, moveAmount = None, jumpToTile = None, passGoViable = None):
         #Raise exception if parameters are not provided (this function requires one of the parameters to be defined)
         if moveAmount == None and jumpToTile == None:
-            raise ValueError("Function must have at least one parameter:\n(moveAmount = combined dice roll, jumpToTile = index of tile to jump to)")
+            raise ValueError("Exception: Function must have at least one parameter of the following parameters:\n(moveAmount = combined dice roll, jumpToTile = index of tile to jump to)")
+        
+        if moveAmount != None and jumpToTile != None:
+            raise ValueError("Exception: Cannot include both a moveAmount and jumpToTile parameter")
+
+        if jumpToTile != None and passGoViable == None:
+            raise ValueError("Exception: A jumpToTile parameter must be accompanied by a passGoViable boolean parameter indicating whether the teleport allows the player to collect Passing Go money.")
 
         if moveAmount != None: 
             self.playerPosition += moveAmount
