@@ -1,5 +1,7 @@
 import random
 import pygame
+from typing import Optional, List
+from __future__ import annotations
 
 pygame.init()
 
@@ -42,19 +44,18 @@ class Dice:
         surface.blit(self.dice2Img, self.dice2Rect)
 
 class Player:
-    #Constructor
-    def __init__(self, playerName, playerBalance, playerPosition, token, isInJail, turnsLeftInJail, isBankrupt, properties = None, cards = None):
-        self.playerName = playerName
-        self.playerBalance = playerBalance
-        self.playerPosition = playerPosition
+    #Constructor (Only playerName and token are required. All other values have default values for creating players at the start of the game)
+    def __init__(self, name: str, token: PlayerToken, balance: int = 1500, position: int = 0, properties: Optional[List[Property]] = None, cards: Optional[List[Card]] = None, isInJail: bool = False, consecutiveDoubles: int = 0, turnsLeftInJail: int = 0, isBankrupt: bool = False):
+        self.playerName = name
         self.token = token
+        self.playerBalance = balance
+        self.playerPosition = position
+        self.propertyList = properties if properties is not None else []
+        self.cardList = cards if cards is not None else []
         self.isInJail = isInJail
+        self.consecutiveDoubles = consecutiveDoubles
         self.turnsLeftInJail = turnsLeftInJail
         self.isBankrupt = isBankrupt
-        if properties == None: self.properties = []
-        else: self.properties = properties
-        if cards == None: self.cards = []
-        else: self.cards = cards
 
     #Add an amount to player balance
     def addBalance(self, balanceToAdd):
@@ -116,4 +117,5 @@ class Player:
                 self.playerBalance += 200
 
         
-            
+class PlayerToken:
+    pass
