@@ -1,7 +1,7 @@
+from __future__ import annotations
 import random
 import pygame
 from typing import Optional, List
-from __future__ import annotations
 
 pygame.init()
 
@@ -167,3 +167,14 @@ class Board:
     def removePlayer(playerToRemove: Player) -> None:
         pass
 
+class PlayerTokenImage:
+    pass
+
+class Tile:
+    pass
+
+class Card:
+    pass
+
+class Property(Tile):
+    pass
