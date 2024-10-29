@@ -1,5 +1,9 @@
 import pygame
 from classes import Dice
+import os
+os.environ['SDL_AUDIODRIVER'] = 'dsp'
+
+pygame.init()
 
 #Set display window
 width = 800
