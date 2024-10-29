@@ -2,13 +2,7 @@ import pygame
 import os
 os.environ['SDL_AUDIODRIVER'] = 'dsp'
 from classes import Dice
-import os
-os.environ['SDL_AUDIODRIVER'] = 'dsp'
 
-pygame.init()
-
-
-pygame.init()
 #Set display window
 width = 800
 height = 800
@@ -39,10 +33,4 @@ while running:
     dice.draw(screen) #draw dice onto the screen
     
     pygame.display.update() #update the display
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-    pygame.quit()
+    clock.tick(60) #one while loop 60 times per second

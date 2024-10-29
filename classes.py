@@ -1,7 +1,8 @@
+from __future__ import annotations
 import random
 import pygame
 from typing import Optional, List
-from __future__ import annotations
+
 
 pygame.init()
 
