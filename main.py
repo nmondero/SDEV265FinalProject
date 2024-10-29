@@ -5,6 +5,8 @@ os.environ['SDL_AUDIODRIVER'] = 'dsp'
 
 pygame.init()
 
+
+pygame.init()
 #Set display window
 width = 800
 height = 800
