@@ -183,6 +183,64 @@ class Property(Tile):
         self.price = propertyPrice
 
 class Event:
-    def __init__(self):
-        Events = { 1:"Elected to racing hall of fame. Collect $100",2:"Sign associate sponsorship. Collect $100",3:"First Union race fund matures! Collect $100",4:"Won first pole position! Collect $20",5:"Collect $50 from ever player for guest passes.",6:"Go to jail!",7:"Get out of Jail free!",8:"You are assessed for track repairs. Pay $40 for every upgrade you've made.",9:"Car needs new tires. Pay $100",10:"Speeding on pit row. Pay $50",
-        11:"Won first Race! Collect $200",12:"Pay driving school fee of $150",13:"Fastest pit crew! Recieve $25 prize.",14:"From sale of surplus race equipment you get $45",15:"In second place collect $10",16:"Race over to go and collect $200",17:"Pay $25 for each upgrade you've made"}
+    def __init__(self, events, event_code):
+        self.events = {1:"Elected to racing hall of fame. Collect $100",2:"Sign associate sponsorship. Collect $100",3:"First Union race fund matures! Collect $100",4:"Won first pole position! Collect $20",5:"Collect $50 from ever player for guest passes.",6:"Go to jail!",7:"Get out of Jail free!",8:"You are assessed for track repairs. Pay $40 for every upgrade you've made.",9:"Car needs new tires. Pay $100",10:"Speeding on pit row. Pay $50",
+        11:"Won first Race! Collect $200",12:"Pay driving school fee of $150",13:"Fastest pit crew! Recieve $25 prize.",14:"From sale of surplus race equipment you get $45",15:"In second place collect $10",16:"Race over to go and collect $200",17:"Pay $25 for each upgrade you've made",18:"You make the cover story in Inside Nascar magazine! Collect $150",19:"Need new spark plugs. Advance to parts America.",20:"Advance token to the nearest Speedway and pay owner twice the rent. If the speedway is unowned, you may buy it.",
+        21:"Cut off driver. Go back 3 spaces.",22:"Nascar winston cup scene names you driver of the year! Pay each player $50",23:"Go to jail.",24:"Get out of jail free",25:"Licensed souveniers pay. Pay $15",26:"Race over to QVC",27:"Free pit pass. Advance token to Goodwrench service plus.",28:"You qualified! Drive over to Charlotte Motor Speedway.",29:"Advance token to the nearest Speedway and pay owner twice the rent. If the speedway is unowned, you may buy it.",30:"Speed over to go and collect $200",
+        31:"First Union pays you dividend of $50",32:"Advance to nearest utility. If unowned, you may buy it. Otherwise pay the owner 10x the amount thrown on the dice."}
+    def event_outcome(event_code: int, player):
+        match event_code:
+            case 1 or 2 or 3:
+                #gain $100
+            case 9:
+                #pay $100
+            case 4:
+                #gain $20
+            case 5:
+                #gain $50 from all players
+            case 6 or 23:
+                #go to jail
+            case 7 or 24:
+                #get out of jail
+            case 8:
+                #pay $40
+            case 9:
+                #pay $100
+            case 10:
+                #pay $50
+            case 11:
+                #gain $200
+            case 12:
+                #pay $150
+            case 13:
+                #gain $25
+            case 14:
+                #gain $45
+            case 15:
+                #gain $10
+            case 16 or 30:
+                #advance to go
+            case 17:
+                #pay $25 for each upgrade
+            case 18:
+                #gain $150
+            case 19:
+                #advance to parts america
+            case 20 or 29:
+                #advance to nearest speedway and pay double rent or buy property
+            case 21:
+                #go back 3 spaces
+            case 22:
+                #pay each player $50
+            case 25:
+                #pay 15
+            case 26:
+                #go to QVC
+            case 27:
+                #go to Goodwrench service plus
+            case 28:
+                #go to Charlotte Motor Speedway
+            case 31:
+                #gain $50
+            case 32:
+                #go to nearest speedway. Pay 10x of dice value or buy property
