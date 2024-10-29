@@ -189,58 +189,81 @@ class Event:
         21:"Cut off driver. Go back 3 spaces.",22:"Nascar winston cup scene names you driver of the year! Pay each player $50",23:"Go to jail.",24:"Get out of jail free",25:"Licensed souveniers pay. Pay $15",26:"Race over to QVC",27:"Free pit pass. Advance token to Goodwrench service plus.",28:"You qualified! Drive over to Charlotte Motor Speedway.",29:"Advance token to the nearest Speedway and pay owner twice the rent. If the speedway is unowned, you may buy it.",30:"Speed over to go and collect $200",
         31:"First Union pays you dividend of $50",32:"Advance to nearest utility. If unowned, you may buy it. Otherwise pay the owner 10x the amount thrown on the dice."}
     def event_outcome(event_code: int, player):
-        match event_code:
-            case 1 or 2 or 3:
-                #gain $100
-            case 9:
-                #pay $100
-            case 4:
-                #gain $20
-            case 5:
-                #gain $50 from all players
-            case 6 or 23:
-                #go to jail
-            case 7 or 24:
-                #get out of jail
-            case 8:
-                #pay $40
-            case 9:
-                #pay $100
-            case 10:
-                #pay $50
-            case 11:
-                #gain $200
-            case 12:
-                #pay $150
-            case 13:
-                #gain $25
-            case 14:
-                #gain $45
-            case 15:
-                #gain $10
-            case 16 or 30:
-                #advance to go
-            case 17:
-                #pay $25 for each upgrade
-            case 18:
-                #gain $150
-            case 19:
-                #advance to parts america
-            case 20 or 29:
-                #advance to nearest speedway and pay double rent or buy property
-            case 21:
-                #go back 3 spaces
-            case 22:
-                #pay each player $50
-            case 25:
-                #pay 15
-            case 26:
-                #go to QVC
-            case 27:
-                #go to Goodwrench service plus
-            case 28:
-                #go to Charlotte Motor Speedway
-            case 31:
-                #gain $50
-            case 32:
-                #go to nearest speedway. Pay 10x of dice value or buy property
+        if(event_code == 1 or event_code == 2 or event_code == 3):
+            pass
+            #gain $100
+        elif (event_code == 4):
+            pass
+            #gain $20
+        elif (event_code == 5):
+            pass
+            #gain $50 from all players
+        elif (event_code == 6 or event_code == 23):
+            pass
+            #go to jail
+        elif (event_code == 7 or event_code == 24):
+            pass
+            #get out of jail
+        elif (event_code == 8):
+            pass
+            #pay $40
+        elif (event_code == 9):
+            pass
+            #pay $100
+        elif (event_code == 10):
+            pass
+            #pay $50
+        elif (event_code == 11):
+            pass
+            #gain $200
+        elif (event_code == 12):
+            pass
+            #pay $150
+        elif (event_code == 13):
+            pass
+            #gain $25
+        elif (event_code == 14):
+            pass
+            #gain $45
+        elif (event_code == 15):
+            pass
+            #gain $10
+        elif (event_code == 16 or event_code == 30):
+            pass
+            #advance to go
+        elif (event_code == 17):
+            pass
+            #pay $25 for each upgrade
+        elif (event_code == 18):
+            pass
+            #gain $150
+        elif (event_code == 19):
+            pass
+            #advance to parts america
+        elif (event_code == 20 or event_code == 29):
+            pass
+            #advance to nearest speedway and pay double rent or buy property
+        elif (event_code == 21):
+            pass
+            #go back 3 spaces
+        elif (event_code == 22):
+            pass
+            #pay each player $50
+        elif (event_code == 25):
+            pass
+            #pay 15
+        elif (event_code == 26):
+            pass
+            #go to QVC
+        elif (event_code == 27):
+            pass
+            #go to Goodwrench service plus
+        elif (event_code == 28):
+            pass
+            #go to Charlotte Motor Speedway
+        elif (event_code == 31):
+            pass
+            #gain $50
+        elif (event_code == 32):
+            pass
+            #go to nearest speedway. Pay 10x of dice value or buy property
