@@ -166,7 +166,7 @@ class Board:
     
     def removePlayer(playerToRemove: Player) -> None:
         pass
-
+        
 class PlayerTokenImage:
     pass
 
@@ -178,3 +178,6 @@ class Card:
 
 class Property(Tile):
     pass
+
+
+
