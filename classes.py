@@ -167,3 +167,21 @@ class Board:
     def removePlayer(playerToRemove: Player) -> None:
         pass
 
+class PlayerTokenImage:
+    pass
+
+class Tile:
+    pass
+
+class Card:
+    pass
+
+class Property(Tile):
+    def __init__ (self, propertyName, propertyPrice, rent):
+        self.name = propertyName
+        self.price = propertyPrice
+
+class Event:
+    def __init__(self):
+        Events = { 1:"Elected to racing hall of fame. Collect $100",2:"Sign associate sponsorship. Collect $100",3:"First Union race fund matures! Collect $100",4:"Won first pole position! Collect $20",5:"Collect $50 from ever player for guest passes.",6:"Go to jail!",7:"Get out of Jail free!",8:"You are assessed for track repairs. Pay $40 for every upgrade you've made.",9:"Car needs new tires. Pay $100",10:"Speeding on pit row. Pay $50",
+        11:"Won first Race! Collect $200",12:"Pay driving school fee of $150",13:"Fastest pit crew! Recieve $25 prize.",14:"From sale of surplus race equipment you get $45",15:"In second place collect $10",16:"Race over to go and collect $200",17:"Pay $25 for each upgrade you've made"}
