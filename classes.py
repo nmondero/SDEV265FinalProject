@@ -183,12 +183,20 @@ class Property(Tile):
         self.price = propertyPrice
 
 class Event:
-    def __init__(self, events, event_code):
+    def __init__(self):
         self.events = {1:"Elected to racing hall of fame. Collect $100",2:"Sign associate sponsorship. Collect $100",3:"First Union race fund matures! Collect $100",4:"Won first pole position! Collect $20",5:"Collect $50 from ever player for guest passes.",6:"Go to jail!",7:"Get out of Jail free!",8:"You are assessed for track repairs. Pay $40 for every upgrade you've made.",9:"Car needs new tires. Pay $100",10:"Speeding on pit row. Pay $50",
-        11:"Won first Race! Collect $200",12:"Pay driving school fee of $150",13:"Fastest pit crew! Recieve $25 prize.",14:"From sale of surplus race equipment you get $45",15:"In second place collect $10",16:"Race over to go and collect $200",17:"Pay $25 for each upgrade you've made",18:"You make the cover story in Inside Nascar magazine! Collect $150",19:"Need new spark plugs. Advance to parts America.",20:"Advance token to the nearest Speedway and pay owner twice the rent. If the speedway is unowned, you may buy it.",
+        11:"Won first Race! Collect $200",12:"Pay driving school fee of $150",13:"Fastest pit crew! Receive $25 prize.",14:"From sale of surplus race equipment you get $45",15:"In second place collect $10",16:"Race over to go and collect $200",17:"Pay $25 for each upgrade you've made",18:"You make the cover story in Inside Nascar magazine! Collect $150",19:"Need new spark plugs. Advance to parts America.",20:"Advance token to the nearest Speedway and pay owner twice the rent. If the speedway is unowned, you may buy it.",
         21:"Cut off driver. Go back 3 spaces.",22:"Nascar winston cup scene names you driver of the year! Pay each player $50",23:"Go to jail.",24:"Get out of jail free",25:"Licensed souveniers pay. Pay $15",26:"Race over to QVC",27:"Free pit pass. Advance token to Goodwrench service plus.",28:"You qualified! Drive over to Charlotte Motor Speedway.",29:"Advance token to the nearest Speedway and pay owner twice the rent. If the speedway is unowned, you may buy it.",30:"Speed over to go and collect $200",
         31:"First Union pays you dividend of $50",32:"Advance to nearest utility. If unowned, you may buy it. Otherwise pay the owner 10x the amount thrown on the dice."}
+        
+        #initializing variables initially for future references 
+        self.font = pygame.font.Font(None, 24) #sets font and size
+        self.font_rect = None
+        self.font_surface = None
+        self.is_visible = False #sets up for the trigger function of the textbox to be shown or not
+
     def event_outcome(event_code: int, player):
+
         if(event_code == 1 or event_code == 2 or event_code == 3):
             pass
             #gain $100
@@ -267,3 +275,26 @@ class Event:
         elif (event_code == 32):
             pass
             #go to nearest speedway. Pay 10x of dice value or buy property
+    
+    #creates a pop_up message when triggered to show player the event card message
+    def show_event_message(self, event_code: int):
+        message = self.events.get(event_code, "Unknown Event")
+
+        #rendering the text box on the surface
+        self.font_surface = self.font.render(message, True, (0,0,0)) #passes through the message in black text
+        self.font_rect = self.font_surface.get_rect(center = (400, 400)) #centering the rect of the screen
+        self.is_visible = True # shows the message when message is triggered by the event code 
+    
+    #hides the event message
+    def hide_event_message(self):
+        self.is_visible = False #hides the message box when FALSE
+    
+    #draws the event card on the screen
+    def draw(self, screen: pygame.Surface):
+        if self.is_visible and self.font_surface:
+
+            font_rect = pygame.Rect(250,  300, 300, 200) #text box size (LEFT, TOP, WIDTH, HEIGHT) all changeable based on how we want to do it
+            pygame.draw.rect(screen, (255, 255, 255), font_rect) # white background box
+            pygame.draw.rect(screen, (0,0,0), font_rect, 2) #black borderline
+
+            screen.blit(self.font_surface, self.font_rect)
