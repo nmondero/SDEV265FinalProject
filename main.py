@@ -1,5 +1,6 @@
 import pygame
 import os
+import random
 os.environ['SDL_AUDIODRIVER'] = 'dsp'
 from classes import Dice, Event, Player, Tile
 
@@ -35,7 +36,7 @@ while running:
                 if rollRes[0] == rollRes[1]:
                     print("Doubles!")
             if event.key == pygame.K_SPACE:
-                card_popup.show_event_message(22)
+                card_popup.show_event_message(random.randint(1, 32))
         
         
         

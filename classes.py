@@ -275,26 +275,49 @@ class Event:
         elif (event_code == 32):
             pass
             #go to nearest speedway. Pay 10x of dice value or buy property
-    
     #creates a pop_up message when triggered to show player the event card message
     def show_event_message(self, event_code: int):
         message = self.events.get(event_code, "Unknown Event")
+        self.font_surface = self.wrap_text(message, 250)  # Wrap text to fit a width of 300 pixels
+        self.is_visible = True
 
-        #rendering the text box on the surface
-        self.font_surface = self.font.render(message, True, (0,0,0)) #passes through the message in black text
-        self.font_rect = self.font_surface.get_rect(center = (400, 400)) #centering the rect of the screen
-        self.is_visible = True # shows the message when message is triggered by the event code 
-    
-    #hides the event message
+    def wrap_text(self, text, max_width):
+        words = text.split(' ')
+        lines = []
+        current_line = ''
+        
+        for word in words:
+            # Check if adding the next word exceeds the max width
+            test_line = current_line + (word if not current_line else ' ' + word)
+            if self.font.size(test_line)[0] <= max_width:
+                current_line = test_line
+            else:
+                # If the current line is not empty, add it to lines
+                if current_line:
+                    lines.append(current_line)
+                current_line = word  # Start a new line with the current word
+                
+        # Add the last line if it's not empty
+        if current_line:
+            lines.append(current_line)
+            
+        # Render each line and create a surface to hold all lines
+        surfaces = [self.font.render(line, True, (0, 0, 0)) for line in lines]
+        return surfaces
+
+    # Hides the event message
     def hide_event_message(self):
-        self.is_visible = False #hides the message box when FALSE
-    
-    #draws the event card on the screen
+        self.is_visible = False
+
+# Draws the event card on the screen
     def draw(self, screen: pygame.Surface):
         if self.is_visible and self.font_surface:
+            font_rect = pygame.Rect(250, 300, 300, 200)  # Text box size (LEFT, TOP, WIDTH, HEIGHT)
+            pygame.draw.rect(screen, (255, 255, 255), font_rect)  # White background box
+            pygame.draw.rect(screen, (0, 0, 0), font_rect, 2)  # Black border
 
-            font_rect = pygame.Rect(250,  300, 300, 200) #text box size (LEFT, TOP, WIDTH, HEIGHT) all changeable based on how we want to do it
-            pygame.draw.rect(screen, (255, 255, 255), font_rect) # white background box
-            pygame.draw.rect(screen, (0,0,0), font_rect, 2) #black borderline
-
-            screen.blit(self.font_surface, self.font_rect)
+            # Draw each line of wrapped text
+            for i, line_surface in enumerate(self.font_surface):
+                line_rect = line_surface.get_rect(topleft=(font_rect.x + 10, font_rect.y + 70 + i * self.font.get_height()))
+                screen.blit(line_surface, line_rect)
+    
