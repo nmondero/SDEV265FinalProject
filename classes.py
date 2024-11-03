@@ -3,6 +3,7 @@ import random
 import pygame
 from typing import Optional, List
 
+
 pygame.init()
 
 class Dice:
@@ -196,4 +197,146 @@ class Card:
     pass
 
 class Property(Tile):
-    pass
+    def __init__ (self, propertyName, propertyPrice, rent):
+        self.name = propertyName
+        self.price = propertyPrice
+
+class Event:
+    def __init__(self):
+        self.events = {1:"Elected to racing hall of fame. Collect $100",2:"Sign associate sponsorship. Collect $100",3:"First Union race fund matures! Collect $100",4:"Won first pole position! Collect $20",5:"Collect $50 from ever player for guest passes.",6:"Go to jail!",7:"Get out of Jail free!",8:"You are assessed for track repairs. Pay $40 for every upgrade you've made.",9:"Car needs new tires. Pay $100",10:"Speeding on pit row. Pay $50",
+        11:"Won first Race! Collect $200",12:"Pay driving school fee of $150",13:"Fastest pit crew! Receive $25 prize.",14:"From sale of surplus race equipment you get $45",15:"In second place collect $10",16:"Race over to go and collect $200",17:"Pay $25 for each upgrade you've made",18:"You make the cover story in Inside Nascar magazine! Collect $150",19:"Need new spark plugs. Advance to parts America.",20:"Advance token to the nearest Speedway and pay owner twice the rent. If the speedway is unowned, you may buy it.",
+        21:"Cut off driver. Go back 3 spaces.",22:"Nascar winston cup scene names you driver of the year! Pay each player $50",23:"Go to jail.",24:"Get out of jail free",25:"Licensed souveniers pay. Pay $15",26:"Race over to QVC",27:"Free pit pass. Advance token to Goodwrench service plus.",28:"You qualified! Drive over to Charlotte Motor Speedway.",29:"Advance token to the nearest Speedway and pay owner twice the rent. If the speedway is unowned, you may buy it.",30:"Speed over to go and collect $200",
+        31:"First Union pays you dividend of $50",32:"Advance to nearest utility. If unowned, you may buy it. Otherwise pay the owner 10x the amount thrown on the dice."}
+        
+        #initializing variables initially for future references 
+        self.font = pygame.font.Font(None, 24) #sets font and size
+        self.font_rect = None
+        self.font_surface = None
+        self.is_visible = False #sets up for the trigger function of the textbox to be shown or not
+
+    def event_outcome(event_code: int, player):
+
+        if(event_code == 1 or event_code == 2 or event_code == 3):
+            pass
+            #gain $100
+        elif (event_code == 4):
+            pass
+            #gain $20
+        elif (event_code == 5):
+            pass
+            #gain $50 from all players
+        elif (event_code == 6 or event_code == 23):
+            pass
+            #go to jail
+        elif (event_code == 7 or event_code == 24):
+            pass
+            #get out of jail
+        elif (event_code == 8):
+            pass
+            #pay $40
+        elif (event_code == 9):
+            pass
+            #pay $100
+        elif (event_code == 10):
+            pass
+            #pay $50
+        elif (event_code == 11):
+            pass
+            #gain $200
+        elif (event_code == 12):
+            pass
+            #pay $150
+        elif (event_code == 13):
+            pass
+            #gain $25
+        elif (event_code == 14):
+            pass
+            #gain $45
+        elif (event_code == 15):
+            pass
+            #gain $10
+        elif (event_code == 16 or event_code == 30):
+            pass
+            #advance to go
+        elif (event_code == 17):
+            pass
+            #pay $25 for each upgrade
+        elif (event_code == 18):
+            pass
+            #gain $150
+        elif (event_code == 19):
+            pass
+            #advance to parts america
+        elif (event_code == 20 or event_code == 29):
+            pass
+            #advance to nearest speedway and pay double rent or buy property
+        elif (event_code == 21):
+            pass
+            #go back 3 spaces
+        elif (event_code == 22):
+            pass
+            #pay each player $50
+        elif (event_code == 25):
+            pass
+            #pay 15
+        elif (event_code == 26):
+            pass
+            #go to QVC
+        elif (event_code == 27):
+            pass
+            #go to Goodwrench service plus
+        elif (event_code == 28):
+            pass
+            #go to Charlotte Motor Speedway
+        elif (event_code == 31):
+            pass
+            #gain $50
+        elif (event_code == 32):
+            pass
+            #go to nearest speedway. Pay 10x of dice value or buy property
+    #creates a pop_up message when triggered to show player the event card message
+    def show_event_message(self, event_code: int):
+        message = self.events.get(event_code, "Unknown Event")
+        self.font_surface = self.wrap_text(message, 250)  # Wrap text to fit a width of 300 pixels
+        self.is_visible = True
+
+    def wrap_text(self, text, max_width):
+        words = text.split(' ')
+        lines = []
+        current_line = ''
+        
+        for word in words:
+            # Check if adding the next word exceeds the max width
+            test_line = current_line + (word if not current_line else ' ' + word)
+            if self.font.size(test_line)[0] <= max_width:
+                current_line = test_line
+            else:
+                # If the current line is not empty, add it to lines
+                if current_line:
+                    lines.append(current_line)
+                current_line = word  # Start a new line with the current word
+                
+        # Add the last line if it's not empty
+        if current_line:
+            lines.append(current_line)
+            
+        # Render each line and create a surface to hold all lines
+        surfaces = [self.font.render(line, True, (0, 0, 0)) for line in lines]
+        return surfaces
+
+    # Hides the event message
+    def hide_event_message(self):
+        self.is_visible = False
+
+# Draws the event card on the screen
+    def draw(self, screen: pygame.Surface):
+        if self.is_visible and self.font_surface:
+            font_rect = pygame.Rect(250, 300, 300, 200)  # Text box size (LEFT, TOP, WIDTH, HEIGHT)
+            pygame.draw.rect(screen, (255, 255, 255), font_rect)  # White background box
+            pygame.draw.rect(screen, (0, 0, 0), font_rect, 2)  # Black border
+
+            # Draw each line of wrapped text
+            for i, line_surface in enumerate(self.font_surface):
+                line_rect = line_surface.get_rect(topleft=(font_rect.x + 10, font_rect.y + 70 + i * self.font.get_height()))
+                screen.blit(line_surface, line_rect)
+    
