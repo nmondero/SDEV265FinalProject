@@ -1,5 +1,5 @@
 import pygame
-from classes import Dice
+from classes import Dice, Player, PlayerTokenImage
 import os
 os.environ['SDL_AUDIODRIVER'] = 'dsp'
 
@@ -18,6 +18,8 @@ clock = pygame.time.Clock()
 #Initialize game objects
 dice = Dice()
 
+token = PlayerTokenImage()
+player = Player(1, "Nate", token)
 running = True
 
 while running:
@@ -33,6 +35,7 @@ while running:
 
     screen.fill(background_color)     
     dice.draw(screen) #draw dice onto the screen
+    player.drawScore(screen)
     
     pygame.display.update() #update the display
     clock.tick(60) #one while loop 60 times per second

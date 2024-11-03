@@ -44,11 +44,26 @@ class Dice:
         screen.blit(self.dice2Img, self.dice2Rect)
 
 class Player:
+    #Static map to help determine the location (rectangle coordinates) for a Player's score card
+    PLAYER_SCORERECT_COORDINATES = {
+        1: (400, 100),
+        2: (750, 50),
+        3: (50, 750),
+        4: (750, 50)
+    }
+
     #Constructor (Only playerName and token are required. All other values have default values for creating players at the start of the game)
-    def __init__(self, name: str, token: PlayerTokenImage, balance: int = 1500, position: int = 0, properties: Optional[List[Property]] = None, cards: Optional[List[Card]] = None, isInJail: bool = False, consecutiveDoubles: int = 0, turnsLeftInJail: int = 0, isBankrupt: bool = False):
+    def __init__(self, playerNumber: int, name: str, token: PlayerTokenImage, balance: int = 1500, position: int = 0, properties: Optional[List[Property]] = None, cards: Optional[List[Card]] = None, isInJail: bool = False, consecutiveDoubles: int = 0, turnsLeftInJail: int = 0, isBankrupt: bool = False):
+        self.playerNumber = playerNumber
         self.playerName = name
-        self.token = token
         self.playerBalance = balance
+        
+        #Used to set and determine the content of the player's score card where the player's score rectangle
+        self.scoreTextFont = pygame.font.Font(pygame.font.get_default_font(), 12)
+        self.scoreTextSurface = self.scoreTextFont.render(f"{self.playerName}\nBalance: ${self.playerBalance}", True, "Blue") #NOTE: We need to make sure playerBalance is changed whenever Player.player balance changes.
+        self.scoreTextRect = self.scoreTextSurface.get_rect(center = self.PLAYER_SCORERECT_COORDINATES[self.playerNumber])
+
+        self.token = token
         self.playerPosition = position
         self.propertyList = properties if properties is not None else []
         self.cardList = cards if cards is not None else []
@@ -56,6 +71,10 @@ class Player:
         self.consecutiveDoubles = consecutiveDoubles
         self.turnsLeftInJail = turnsLeftInJail
         self.isBankrupt = isBankrupt
+        self.playerNumber = playerNumber
+
+    def drawScore(self, screen: pygame.Surface):
+        screen.blit(self.scoreTextSurface, self.scoreTextRect)
 
     #Add a property to player's property list
     def addProperty(self, propertyToAdd: Property) -> None:
