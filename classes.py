@@ -7,18 +7,18 @@ from typing import Optional, List
 pygame.init()
 
 class Dice:
+    #All dice face images preloaded in and scaled to 50x50 pixels as a static 
+    diceFaces = [
+        pygame.transform.scale(pygame.image.load("images/1face.png").convert(), (50, 50)),
+        pygame.transform.scale(pygame.image.load("images/2face.png").convert(), (50, 50)),
+        pygame.transform.scale(pygame.image.load("images/3face.png").convert(), (50, 50)),
+        pygame.transform.scale(pygame.image.load("images/4face.png").convert(), (50, 50)),
+        pygame.transform.scale(pygame.image.load("images/5face.png").convert(), (50, 50)),
+        pygame.transform.scale(pygame.image.load("images/6face.png").convert(), (50, 50))
+    ]
+    
     #Constructor
     def __init__(self):
-        #All dice face images preloaded in and scaled to 50x50 pixels
-        self.diceFaces = [
-            pygame.transform.scale(pygame.image.load("images/1face.png").convert(), (50, 50)),
-            pygame.transform.scale(pygame.image.load("images/2face.png").convert(), (50, 50)),
-            pygame.transform.scale(pygame.image.load("images/3face.png").convert(), (50, 50)),
-            pygame.transform.scale(pygame.image.load("images/4face.png").convert(), (50, 50)),
-            pygame.transform.scale(pygame.image.load("images/5face.png").convert(), (50, 50)),
-            pygame.transform.scale(pygame.image.load("images/6face.png").convert(), (50, 50))
-        ]
-
         #Default dice values (doesn't matter what they are as default)
         self.dice1Val = 1
         self.dice2Val = 2
@@ -46,6 +46,7 @@ class Dice:
 
 class Player:
     #Static map to help determine the location (rectangle coordinates) for a Player's score card
+    #Note: We will properly place these later
     PLAYER_SCORERECT_COORDINATES = {
         1: (400, 100),
         2: (750, 50),
@@ -188,16 +189,16 @@ class Board:
         pass
 
 class PlayerTokenImage:
-    pass
+    def __init__(name: str, )
 
 class Tile:
-    pass
+    __init__(name: str, )
 
 class Card:
     pass
 
 class Property(Tile):
-    def __init__ (self, propertyName, propertyPrice, rent):
+    def __init__ (self, propertyName: str, propertyPrice: int, rent: int ''', image: pygame.Surface, '''):
         self.name = propertyName
         self.price = propertyPrice
 
