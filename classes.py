@@ -7,16 +7,19 @@ from typing import Optional, List
 pygame.init()
 
 class Dice:
-    #All dice face images preloaded in and scaled to 50x50 pixels as a static 
+    DICE_WIDTH = 50
+    DICE_HEIGHT = 50
+    #All dice face images preloaded in and scaled to 50x50 pixels as a static member
+    #Note: It makes sense for all of the dice to be loaded in at once because each face will be retrieved frequently
     diceFaces = [
-        pygame.transform.scale(pygame.image.load("images/1face.png").convert(), (50, 50)),
-        pygame.transform.scale(pygame.image.load("images/2face.png").convert(), (50, 50)),
-        pygame.transform.scale(pygame.image.load("images/3face.png").convert(), (50, 50)),
-        pygame.transform.scale(pygame.image.load("images/4face.png").convert(), (50, 50)),
-        pygame.transform.scale(pygame.image.load("images/5face.png").convert(), (50, 50)),
-        pygame.transform.scale(pygame.image.load("images/6face.png").convert(), (50, 50))
+        pygame.transform.scale(pygame.image.load("images/1face.png").convert(), (DICE_WIDTH, DICE_HEIGHT)),
+        pygame.transform.scale(pygame.image.load("images/2face.png").convert(), (DICE_WIDTH, DICE_HEIGHT)),
+        pygame.transform.scale(pygame.image.load("images/3face.png").convert(), (DICE_WIDTH, DICE_HEIGHT)),
+        pygame.transform.scale(pygame.image.load("images/4face.png").convert(), (DICE_WIDTH, DICE_HEIGHT)),
+        pygame.transform.scale(pygame.image.load("images/5face.png").convert(), (DICE_WIDTH, DICE_HEIGHT)),
+        pygame.transform.scale(pygame.image.load("images/6face.png").convert(), (DICE_WIDTH, DICE_HEIGHT))
     ]
-    
+    DICE_HEIGHT
     #Constructor
     def __init__(self):
         #Default dice values (doesn't matter what they are as default)
@@ -47,7 +50,7 @@ class Dice:
 class Player:
     #Static map to help determine the location (rectangle coordinates) for a Player's score card
     #Note: We will properly place these later
-    PLAYER_SCORERECT_COORDINATES = {
+    PLAYER_SCORE_RECT_COORDINATES = {
         1: (400, 100),
         2: (750, 50),
         3: (50, 750),
@@ -63,7 +66,7 @@ class Player:
         #Used to set and determine the content of the player's score card where the player's score rectangle
         self.scoreTextFont = pygame.font.Font(pygame.font.get_default_font(), 12)
         self.scoreTextSurface = self.scoreTextFont.render(f"{self.playerName}\nBalance: ${self.playerBalance}", True, "Blue") #NOTE: We need to make sure playerBalance is changed whenever Player.player balance changes.
-        self.scoreTextRect = self.scoreTextSurface.get_rect(center = self.PLAYER_SCORERECT_COORDINATES[self.playerNumber])
+        self.scoreTextRect = self.scoreTextSurface.get_rect(center = self.PLAYER_SCORE_RECT_COORDINATES[self.playerNumber])
 
         self.token = token
         self.playerPosition = position
@@ -91,13 +94,13 @@ class Player:
     #Add an amount to player balance
     def addBalance(self, balanceToAdd: int) -> None:
         if (balanceToAdd <= 0): #Raise an exception if invalid parameter
-            raise ValueError("Exception: Balance to add ({balanceToAdd}) is not greater than 0.")
+            raise ValueError("Exception: Balance to add (${balanceToAdd}) is not greater than 0.")
         self.playerBalance += balanceToAdd #Add specified amount to player balance
 
     #Remove an amount from player balance
     def removeBalance(self, balanceToRemove: int) -> None:
         if (balanceToRemove <= 0): #Raise exception if invalid parameter
-            raise ValueError("Exception: Balance to remove ({balanceToRemove}) is not greater than 0.")
+            raise ValueError("Exception: Balance to remove (${balanceToRemove}) is not greater than 0.")
 
         self.playerBalance -= balanceToRemove #Remove specified amount from player 
         
@@ -110,6 +113,7 @@ class Player:
             
             if totalPropertyValue < balanceToRemove: #Player is bankrupt if they cannot sell enough value to get out of negative balance
                 self.isBankrupt = True
+
             else: #Make the player sell property until they have enough money to stay out of negative
                 while self.playerBalance < balanceToRemove:
                     self.sellProperty(screen)
@@ -150,7 +154,7 @@ class Player:
         player1.movePlayer(jumpToTile = 10, passGoViable = False)
     '''
     def movePlayer(self, moveAmount: Optional[int] = None, jumpToTile: Optional[int] = None, passGoViable: Optional[bool] = None) -> None:
-        #Raise exception if parameters are not provided (this function requires one of the parameters to be defined)
+        #Raise exception if parameters are not provided (this function requires either moveAmount alone, or jumpToTile and passGoViable)
         if moveAmount == None and jumpToTile == None:
             raise ValueError("Exception: Function must have at least one parameter of the following parameters:\n(moveAmount = combined dice roll, jumpToTile = index of tile to jump to)")
         
@@ -160,6 +164,7 @@ class Player:
         if jumpToTile != None and passGoViable == None:
             raise ValueError("Exception: A jumpToTile parameter must be accompanied by a passGoViable boolean parameter indicating whether the teleport allows the player to collect Passing Go money.")
 
+        #If the parameter indicated an amount of spaces to move...
         if moveAmount != None: 
             self.playerPosition += moveAmount
             #Passing Go condition
@@ -167,6 +172,7 @@ class Player:
                 self.playerPosition %= 40
                 self.playerBalance += 200
 
+        #If the parameter indicated a tile to "teleport" to...
         else: 
             initialPosition = self.playerPosition
             self.playerPosition = jumpToTile
@@ -174,6 +180,11 @@ class Player:
             if initialPosition > self.playerPosition and passGoViable:
                 self.playerBalance += 200
 
+        '''
+        Must move token after player moves
+        Find new coordinates based on new player position (Maybe we have a )
+        self.token.moveToken(x_coordinate, y_coorindate)
+        '''
 
 class Board:
     def __init__(self, tileArray: List[Tile], turnOrder: List[Player], eventCardDeck: List[Card], turnNumber: int):
@@ -185,20 +196,60 @@ class Board:
     def drawEvent(self, drawPlayer: Player) -> None:
         pass
     
-    def removePlayer(playerToRemove: Player) -> None:
-        pass
+    def removePlayer(self, playerToRemove: Player) -> None:
+        self.turnOrder.remove(playerToRemove)
+
+    def incrementTurnCounter(self):
+        self.turnNumber += 1
 
 class PlayerTokenImage:
-    def __init__(name: str, )
+    TOKEN_WIDTH = 20
+    TOKEN_HEIGHT = 20
+    #Static map for token ID numbers to specific token image paths
+    ID_TO_IMAGE_PATH = {
+        1: "/images/tokens/token1.png",
+        2: "/images/tokens/token2.png"
+        #We should rename these to match the actual token image paths
+    }
+    #Static member for token ID to token name
+    ID_TO_TOKEN_NAME = {
+        1: "Car",
+        2: "Cannon",
+        3: "Top Hat"
+        #We should rename these to match the actual token names
+    }
 
-class Tile:
-    __init__(name: str, )
+    #Constructor
+    def __init__(self, tokenID: int):
+        self.tokenID = tokenID
+        self.tokenName = self.ID_TO_TOKEN_NAME[tokenID]
+        self.tokenImg = pygame.transform.scale(pygame.image.load(self.ID_TO_IMAGE_PATH[tokenID]).convert(), (self.TOKEN_WIDTH, self.TOKEN_HEIGHT))
+        self.x_pos = 700
+        self.y_pos = 700
+        self.tokenRect = self.tokenImg.get_rect(center = (self.x_pos, self.y_pos))
+
+    #Draw token image to screen using token rectangle position
+    def draw(self, screen: pygame.Surface):
+        screen.blit(self.tokenImg, self.tokenRect)
+
+    #Change token rectangle position
+    def moveToken(self, x_pos: int, y_pos: int):
+        #Raise exception if new token rectangle center would put any part of the rectangle outside of the screen dimensions
+        if ((x_pos - self.TOKEN_WIDTH / 2 < 0) or (x_pos + self.TOKEN_WIDTH / 2 > 800) or (y_pos - self.TOKEN_HEIGHT / 2 < 0) or (y_pos + self.TOKEN_HEIGHT / 2 > 800)):
+            raise ValueError("Exception: New token center is outside of the bounds of the window.")
+        self.x_pos = x_pos
+        self.y_pos = y_pos
+        self.tokenRect.center = (self.x_pos, self.y_pos)
+
 
 class Card:
     pass
 
+class Tile:
+    def __init__(self, tileNumber: int, )
+
 class Property(Tile):
-    def __init__ (self, propertyName: str, propertyPrice: int, rent: int ''', image: pygame.Surface, '''):
+    def __init__ (self, propertyName: str, propertyPrice: int, rent: int):
         self.name = propertyName
         self.price = propertyPrice
 
@@ -215,55 +266,55 @@ class Event:
         self.font_surface = None
         self.is_visible = False #sets up for the trigger function of the textbox to be shown or not
 
-    def event_outcome(event_code: int, player):
+    def event_outcome(event_code: int, player: Player):
 
         if(event_code == 1 or event_code == 2 or event_code == 3):
-            pass
+            player.addBalance(100)
             #gain $100
         elif (event_code == 4):
-            pass
+            player.addBalance(20)
             #gain $20
         elif (event_code == 5):
             pass
             #gain $50 from all players
         elif (event_code == 6 or event_code == 23):
-            pass
+            player.movePlayer(jumpToTile = 10, passGoViable = False)
             #go to jail
         elif (event_code == 7 or event_code == 24):
             pass
             #get out of jail
         elif (event_code == 8):
-            pass
+            player.removeBalance(40)
             #pay $40
         elif (event_code == 9):
-            pass
+            player.removeBalance(100)
             #pay $100
         elif (event_code == 10):
-            pass
+            player.removeBalance(50)o
             #pay $50
         elif (event_code == 11):
-            pass
+            player.addBalance(200)
             #gain $200
         elif (event_code == 12):
-            pass
+            player.removeBalance(150)
             #pay $150
         elif (event_code == 13):
-            pass
+            player.addBalance(25)
             #gain $25
         elif (event_code == 14):
-            pass
+            player.addBalance(45)
             #gain $45
         elif (event_code == 15):
-            pass
+            player.addBalance(10)
             #gain $10
         elif (event_code == 16 or event_code == 30):
-            pass
+            player.movePlayer(jumpToTile = 0, passGoViable = True)
             #advance to go
         elif (event_code == 17):
             pass
             #pay $25 for each upgrade
         elif (event_code == 18):
-            pass
+            player.addBalance(150)
             #gain $150
         elif (event_code == 19):
             pass
@@ -272,13 +323,13 @@ class Event:
             pass
             #advance to nearest speedway and pay double rent or buy property
         elif (event_code == 21):
-            pass
+            player.movePlayer(moveAmount = -3)
             #go back 3 spaces
         elif (event_code == 22):
             pass
             #pay each player $50
         elif (event_code == 25):
-            pass
+            player.removeBalance(15)
             #pay 15
         elif (event_code == 26):
             pass
@@ -290,11 +341,12 @@ class Event:
             pass
             #go to Charlotte Motor Speedway
         elif (event_code == 31):
-            pass
+            player.addBalance(50)
             #gain $50
         elif (event_code == 32):
             pass
             #go to nearest speedway. Pay 10x of dice value or buy property
+    
     #creates a pop_up message when triggered to show player the event card message
     def show_event_message(self, event_code: int):
         message = self.events.get(event_code, "Unknown Event")
