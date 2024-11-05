@@ -290,7 +290,7 @@ class Event:
             player.removeBalance(100)
             #pay $100
         elif (event_code == 10):
-            player.removeBalance(50)o
+            player.removeBalance(50)
             #pay $50
         elif (event_code == 11):
             player.addBalance(200)
