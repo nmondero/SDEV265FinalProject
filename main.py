@@ -2,16 +2,17 @@ import pygame
 import os
 import random
 os.environ['SDL_AUDIODRIVER'] = 'dsp'
-from classes import Dice, Event, Player, Tile
-
-
 
 #Set display window
-width = 800
-height = 800
-screen = pygame.display.set_mode((width, height))
-background_color = (200, 200, 200)
+WIDTH = 800
+HEIGHT = 800
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+BACKGROUND_COLOR = (200, 200, 200)
 pygame.display.set_caption("Speedopoly")
+
+from classes import Dice, Event, Player, Tile, PlayerTokenImage
+
+
 
 #Establish game clock
 clock = pygame.time.Clock()
@@ -23,7 +24,7 @@ card_popup = Event()
 
 
 
-token = PlayerTokenImage()
+token = PlayerTokenImage(1)
 player = Player(1, "Nate", token)
 running = True
 
@@ -43,7 +44,7 @@ while running:
         
         
 
-    screen.fill(background_color)     
+    screen.fill(BACKGROUND_COLOR)     
     dice.draw(screen) #draw dice onto the screen
     card_popup.draw(screen) #draw the popup box on the screen
     player.drawScore(screen)
