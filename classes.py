@@ -207,16 +207,25 @@ class PlayerTokenImage:
     TOKEN_HEIGHT = 20
     #Static map for token ID numbers to specific token image paths
     ID_TO_IMAGE_PATH = {
-        1: "/images/tokens/token1.png",
-        2: "/images/tokens/token2.png"
-        #We should rename these to match the actual token image paths
+        1: "/images/pieces/piece1.png",
+        2: "/images/pieces/piece2.png",
+        3: "/images/pieces/piece3.png",
+        4: "/images/pieces/piece4.png",
+        5: "/images/pieces/piece5.png",
+        6: "/images/pieces/piece6.png",
+        7: "/images/pieces/piece7.png",
+        8: "/images/pieces/piece8.png"
     }
     #Static member for token ID to token name
     ID_TO_TOKEN_NAME = {
-        1: "Car",
-        2: "Cannon",
-        3: "Top Hat"
-        #We should rename these to match the actual token names
+        1: "Modern Racecar",
+        2: "Helmet",
+        3: "NASCAR Logo",
+        4: "Trophy",
+        5: "Classic Racecar",
+        6: "Checkered Flags",
+        7: "Wheel",
+        8: "Steering Wheel"
     }
 
     #Constructor
@@ -246,7 +255,15 @@ class Card:
     pass
 
 class Tile:
-    def __init__(self, tileNumber: int, )
+    '''
+    Tile Dimensions:
+    Resolution: 300px / in
+    Tile: 55px x 90px
+    Corner Tile: 90px x 90px
+    Color bar: 55px x 23px
+    '''
+    def __init__(self, tileNumber: int, tileName: str, playersOnTile: Optional[List[Player]] = None, ):
+        pass
 
 class Property(Tile):
     def __init__ (self, propertyName: str, propertyPrice: int, rent: int):
