@@ -208,10 +208,16 @@ class PlayerTokenImage:
     TOKEN_HEIGHT = 40
     #Static map for token ID numbers to specific token image paths
     ID_TO_IMAGE_PATH = {
-        1: "/images/tokens/token1.png",
-        2: "/images/tokens/token2.png"
-        #We should rename these to match the actual token image paths
+        1: "images/pieces/piece1.png",
+        2: "images/pieces/piece2.png",
+        3: "images/pieces/piece3.png",
+        4: "images/pieces/piece4.png",
+        5: "images/pieces/piece5.png",
+        6: "images/pieces/piece6.png",
+        7: "images/pieces/piece7.png",
+        8: "images/pieces/piece8.png"
     }
+   
     #Static member for token ID to token name
     ID_TO_TOKEN_NAME = {
         1: "Modern Racecar",
@@ -246,6 +252,14 @@ class PlayerTokenImage:
         self.y_pos = y_pos
         self.tokenRect.center = (self.x_pos, self.y_pos)
     
+    # def is_taken(self):
+    #     return getattr(self, 'taken', False)
+
+    # def set_taken(self, value):
+    #     self.taken = value
+
+    # def get_name(self):
+    #     return self.tokenName
 
 
 
