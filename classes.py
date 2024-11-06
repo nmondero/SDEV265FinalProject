@@ -252,14 +252,6 @@ class PlayerTokenImage:
         self.y_pos = y_pos
         self.tokenRect.center = (self.x_pos, self.y_pos)
     
-    # def is_taken(self):
-    #     return getattr(self, 'taken', False)
-
-    # def set_taken(self, value):
-    #     self.taken = value
-
-    # def get_name(self):
-    #     return self.tokenName
 
 
 
