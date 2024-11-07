@@ -71,13 +71,13 @@ class Menu:
         if self.overlay_active:
             overlay_surface = pygame.Surface((self.overlay_rect.width, self.overlay_rect.height), pygame.SRCALPHA)
             overlay_surface.fill(self.OVERLAY_COLOR)
-            self.screen.blit(overlay_surface, self.overlay_rect.topleft)
+            self.screen.blit(overlay_surface, self.overlay_rect)
 
             # Draw close button
             pygame.draw.rect(self.screen, self.WHITE, self.close_button_rect)
             font = pygame.font.Font(None, 24)
             x_text = font.render("X", True, self.BLACK)
-            self.screen.blit(x_text, x_text.get_rect(center=self.close_button_rect.center))
+            self.screen.blit(x_text, self.close_button_rect)
 
             # Draw placeholder text
             placeholder_text = "Starting the game: The player with the highest total after rolling the dice goes first. Moving around the board: Players take turns rolling the dice and moving their token clockwise around the board. Landing on spaces: What a player does when they land on a space depends on the space: Unowned property: The player can buy the property or start an auction. Owned property: The player must pay rent to the owner. GO: The player receives £200 from the bank. Jail: The player goes to jail. Event Space: The player draws a card. Rolling doubles: If a player rolls doubles, they move their token and act on the space they landed on. They then roll the dice again and take another turn. If they roll doubles three times in a row, they go straight to jail. Winning the game: The last player with money wins. Unlike normal Monopoly, you can sell properties for their bought value back to the bank. You cannot trade."

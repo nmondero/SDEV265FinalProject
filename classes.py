@@ -274,13 +274,58 @@ class Tile:
     Corner Tile: 90px x 90px
     Color bar: 55px x 23px
     '''
-    def __init__(self, tileNumber: int, tileName: str, playersOnTile: Optional[List[Player]] = None, ):
-        pass
+    TILE_NUM_TO_INFO = {
+        0: "GO",
+        1: "Tile 2 Name",
+        2: "Event",
+        3: "Tile Name",
+        4: "Income Tax",
+        5: "Tile Name",
+        6: "Tile Name",
+        7: "Event",
+        8: "Tile Name",
+        9: "Tile Name",
+        10: "Jail",
+        11: "Tile Name",
+        12: "Tile Name",
+        13: "Tile Name",
+        14: "Tile Name",
+        15: "Tile Name",
+        16: "Tile Name",
+        17: "Event",
+        18: "Tile Name",
+        19: "Tile Name",
+        20: "Free Parking",
+        21: "Tile Name",
+        22: "Event",
+        23: "Tile Name",
+        24: "Tile Name",
+        25: "Tile Name",
+        26: "Tile Name",
+        27: "Tile Name",
+        28: "Tile Name",
+        29: "Tile Name",
+        30: "Go To Jail",
+        31: "Tile Name",
+        32: "Tile Name",
+        33: "Event",
+        34: "Tile Name",
+        35: "Tile Name",
+        36: "Event",
+        37: "Tile Name",
+        38: "Luxury Tax",
+        39: "Tile Name"
+    }
+    
+    def __init__(self, tileNumber: int, playersOnTile: Optional[List[Player]] = None):
+        self.tileNumber = tileNumber
+        self.playersOnTile = playersOnTile if playersOnTile is not None else []
+        self.tileName = self.TILE_NUM_TO_INFO[tileNumber]
 
 class Property(Tile):
-    def __init__ (self, propertyName: str, propertyPrice: int, rent: int):
-        self.name = propertyName
-        self.price = propertyPrice
+    def __init__ (self, tileNumber: int, playersOnTile: Optional[List[Player]] = None):
+        super(tileNumber, playersOnTile)
+        pass
 
 class Event:
     def __init__(self):

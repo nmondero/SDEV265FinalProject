@@ -30,7 +30,6 @@ menu = Menu(screen)
 player_menu = Player_Menu(screen)
 number_menu = PlayerNumberMenu(screen)
 players = []
-
 running = True
 
 while running:
@@ -42,7 +41,7 @@ while running:
             if menu.isActive():
                 menu.handle_event(event)
                 # When start game is clicked in main menu
-                if (not menu.isActive() and menu.buttons[0]["action"] == "start_game"):  # Check if Start Game was clicked
+                if (not menu.isActive()):  # Check if Start Game was clicked
                       player_number_menu = PlayerNumberMenu(screen)  # Show player number selection first
             
             # Handle player number selection
