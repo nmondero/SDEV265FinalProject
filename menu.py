@@ -30,7 +30,6 @@ class Menu:
             x = (self.box_rect.width - self.button_width) // 2
             y = (self.box_rect.height - self.button_height) // 2 + (i - len(self.buttons) // 2) * (self.button_height + self.button_margin)
             self.button_rects.append(pygame.Rect(x, y, self.button_width, self.button_height))
-            offset += 1
 
         # Define overlay properties
         self.overlay_rect = pygame.Rect(150, 150, 500, 500)
