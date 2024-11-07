@@ -2,7 +2,7 @@ from __future__ import annotations
 import random
 import pygame
 from typing import Optional, List
-
+import os
 
 pygame.init()
 
@@ -19,6 +19,7 @@ class Dice:
         pygame.transform.scale(pygame.image.load("images/5face.png").convert(), (DICE_WIDTH, DICE_HEIGHT)),
         pygame.transform.scale(pygame.image.load("images/6face.png").convert(), (DICE_WIDTH, DICE_HEIGHT))
     ]
+    
     DICE_HEIGHT
     #Constructor
     def __init__(self):
@@ -203,19 +204,20 @@ class Board:
         self.turnNumber += 1
 
 class PlayerTokenImage:
-    TOKEN_WIDTH = 20
-    TOKEN_HEIGHT = 20
+    TOKEN_WIDTH = 40
+    TOKEN_HEIGHT = 40
     #Static map for token ID numbers to specific token image paths
     ID_TO_IMAGE_PATH = {
-        1: "/images/pieces/piece1.png",
-        2: "/images/pieces/piece2.png",
-        3: "/images/pieces/piece3.png",
-        4: "/images/pieces/piece4.png",
-        5: "/images/pieces/piece5.png",
-        6: "/images/pieces/piece6.png",
-        7: "/images/pieces/piece7.png",
-        8: "/images/pieces/piece8.png"
+        1: "images/pieces/piece1.png",
+        2: "images/pieces/piece2.png",
+        3: "images/pieces/piece3.png",
+        4: "images/pieces/piece4.png",
+        5: "images/pieces/piece5.png",
+        6: "images/pieces/piece6.png",
+        7: "images/pieces/piece7.png",
+        8: "images/pieces/piece8.png"
     }
+   
     #Static member for token ID to token name
     ID_TO_TOKEN_NAME = {
         1: "Modern Racecar",
@@ -249,6 +251,16 @@ class PlayerTokenImage:
         self.x_pos = x_pos
         self.y_pos = y_pos
         self.tokenRect.center = (self.x_pos, self.y_pos)
+    
+    # def is_taken(self):
+    #     return getattr(self, 'taken', False)
+
+    # def set_taken(self, value):
+    #     self.taken = value
+
+    # def get_name(self):
+    #     return self.tokenName
+
 
 
 class Card:
