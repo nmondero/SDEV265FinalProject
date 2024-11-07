@@ -48,6 +48,8 @@ class Menu:
                             self.menu_active = False  # Hide menu on "Start Game"
                         elif action == "how_to_play":
                             self.overlay_active = True  # Show overlay for "How to Play"
+                        elif action == "load_game":
+                            pass
             elif self.overlay_active:
                 # Check if close button on overlay was clicked
                 if self.close_button_rect.collidepoint(mouse_pos):
@@ -56,8 +58,8 @@ class Menu:
     def draw(self):
         # Draw the main menu if active
         if self.menu_active:
-            self.screen.fill(self.WHITE)
-            pygame.draw.rect(self.screen, self.GRAY, self.box_rect)  # Draw the box
+            #self.screen.fill(self.WHITE)
+            #pygame.draw.rect(self.screen, self.GRAY, self.box_rect)  # Draw the box
             for i, button_rect in enumerate(self.button_rects):
                 pygame.draw.rect(self.screen, self.BLACK, button_rect, 2)  # Button border
                 font = pygame.font.Font(None, 36)
@@ -110,7 +112,7 @@ class Menu:
         surfaces = [self.font.render(line, True, (0, 0, 0)) for line in lines]
         return surfaces
             
-    def checkMenu(self) -> bool:
+    def isActive(self) -> bool:
         return self.menu_active
 
 

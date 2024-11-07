@@ -39,29 +39,27 @@ while running:
             running = False
         else:
             # Handle main menu events
-            if menu.checkMenu():
+            if menu.isActive():
                 menu.handle_event(event)
                 # When start game is clicked in main menu
-                if (
-                    not menu.checkMenu() and menu.buttons[0]["action"] == "start_game"
-                ):  # Check if Start Game was clicked
+                if (not menu.isActive() and menu.buttons[0]["action"] == "start_game"):  # Check if Start Game was clicked
                       player_number_menu = PlayerNumberMenu(screen)  # Show player number selection first
             
             # Handle player number selection
-            elif player_number_menu and player_number_menu.checkMenu():
+            elif player_number_menu and player_number_menu.isActive():
                 player_number_menu.handle_event(event)
                 # When player count is selected
-                if not player_number_menu.checkMenu():
+                if not player_number_menu.isActive():
                     num_players = player_number_menu.getPlayerCount()
                     player_menu = Player_Menu(screen)
                     player_menu.total_players = num_players  # Set the number of players
 
             # Handle player menu events if it exists and is active
-            elif player_menu and player_menu.checkMenu():
+            elif player_menu and player_menu.isActive():
                 player_menu.handle_event(event)
 
                 # When player setup is complete
-                if not player_menu.checkMenu():
+                if not player_menu.isActive():
 
                     # Create player objects from setup data
                     player_data = player_menu.getPlayers()
@@ -83,11 +81,11 @@ while running:
     screen.fill(backgroundColor)
 
     # Draw appropriate screen based on game state
-    if menu.checkMenu():  # if player in main menu
+    if menu.isActive():  # if player in main menu
         menu.draw()
-    elif player_number_menu and player_number_menu.checkMenu(): #if player is in the number menu
+    elif player_number_menu and player_number_menu.isActive(): #if player is in the number menu
         player_number_menu.draw()
-    elif player_menu and player_menu.checkMenu(): #if player is in the player menu
+    elif player_menu and player_menu.isActive(): #if player is in the player menu
         player_menu.draw()
     else: #if in game
         dice.draw(screen)

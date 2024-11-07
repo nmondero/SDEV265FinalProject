@@ -117,7 +117,7 @@ class Player_Menu:
             # Draw token image
             token.draw(self.screen)
 
-    def checkMenu(self) -> bool:
+    def isActive(self) -> bool:
         return self.player_setup_active
 
     def getPlayers(self) -> list:

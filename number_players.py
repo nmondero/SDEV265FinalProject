@@ -66,7 +66,7 @@ class PlayerNumberMenu:
             text_rect = text_surface.get_rect(center=rect.center)
             self.screen.blit(text_surface, text_rect)
 
-    def checkMenu(self) -> bool:
+    def isActive(self) -> bool:
         return self.menu_active
 
     def getPlayerCount(self) -> int:
