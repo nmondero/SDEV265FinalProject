@@ -18,7 +18,7 @@ class Menu:
         self.buttons = [
             {"label": "Start Game", "action": "start_game"},
             {"label": "Load Game", "action": "load_game"},
-            {"label": "How to Play", "action": "how_to_play"},
+            {"label": "How to Play", "action": "how_to_play"}
         ]
 
         self.font = pygame.font.Font(None, 24)
@@ -26,10 +26,11 @@ class Menu:
         # Calculate button positions to center them
         self.box_rect = pygame.Rect(0, 0, 800, 800)
         self.button_rects = []
-        for i, button in enumerate(self.buttons):
+        for i in range(len(self.buttons)):
             x = (self.box_rect.width - self.button_width) // 2
-            y = (self.box_rect.height - self.button_height) // 2 + i * (self.button_height + self.button_margin)
+            y = (self.box_rect.height - self.button_height) // 2 + (i - len(self.buttons) // 2) * (self.button_height + self.button_margin)
             self.button_rects.append(pygame.Rect(x, y, self.button_width, self.button_height))
+            offset += 1
 
         # Define overlay properties
         self.overlay_rect = pygame.Rect(150, 150, 500, 500)
