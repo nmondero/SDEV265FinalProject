@@ -2,7 +2,6 @@ import pygame
 import os
 import random
 os.environ['SDL_AUDIODRIVER'] = 'dsp'
-from classes import Dice, Event, Player, Tile
 from menu import Menu
 
 
