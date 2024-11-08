@@ -116,7 +116,7 @@ class Player_Menu:
             else:
                 self.name_input_active = False
                 
-                # Check for clicking finalize player
+                # Handle clicking "Finalize Player"
                 if self.finalize_player_rect.collidepoint(mouse_pos):
                     # If you try to finalize a character with no token selected (token_id_selected == -1, the default value), turn on the error flag to print error during draw
                     if self.token_id_selected == self.DEFAULT_TOKEN: 
@@ -126,7 +126,7 @@ class Player_Menu:
                     elif len(self.name_input_string) == 0: 
                         self.is_empty_input = True
 
-                    # Create new player with name_input_string and a new token with the ID of the selected token
+                    # Create new Player with name_input_string and a new token with the ID of the selected token
                     else:
                         if len(self.players) < self.current_player + 1:
                             self.current_player += 1
@@ -148,7 +148,7 @@ class Player_Menu:
                         if rect.collidepoint(mouse_pos):
                             token_data = self.tokens[i]
                             if not token_data['taken']:  # Check taken status from dictionary
-                                if self.token_id_selected is not self.DEFAULT_TOKEN:
+                                if self.token_id_selected is not self.DEFAULT_TOKEN: # Remember: DEFAULT_TOKEN (-1) is the value that denotes the player has not selected a token yet
                                     self.tokens[self.token_id_selected]["taken"] = False
                                 
                                 token_data['taken'] = True  # Mark as taken in dictionary
@@ -164,15 +164,15 @@ class Player_Menu:
         if event.type == pygame.KEYDOWN:
             # Handle pressing backspace
             if event.key == pygame.K_BACKSPACE:
-                self.name_input_string = self.name_input_string[:-1]
+                self.name_input_string = self.name_input_string[:-1] # Shave off the last character from the name string
                 self.is_max_length = False # Reset error flag indicating name_input_string is no longer max length
 
             # Handle pressing any other key provided input is active
             elif self.name_input_active:
-                if self.name_input_surface.get_width() + 15 > self.name_input_rect.width: # If you try to input a character past the max length, set error flag to show max length error
-                    self.is_max_length = True
+                if self.name_input_surface.get_width() + 15 > self.name_input_rect.width: # If you try to input a character past the max length...
+                    self.is_max_length = True # ...set error flag for max name length
                 else:
-                    self.name_input_string += event.unicode
+                    self.name_input_string += event.unicode # Append the new character to the name string
                     self.is_empty_input = False # Reset error flag that appears when you try to finalize a character with no name
 
                 

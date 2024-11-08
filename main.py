@@ -60,9 +60,10 @@ while running:
                 # When player setup is complete
                 if not player_menu.isActive():
 
-                    # Create player objects from setup data
+                    # Extract Player objects from player_menu
                     players = player_menu.getPlayers()
 
+                    # TEST OUTPUT
                     for player in players:
                         print("Name: " + player.playerName)
                         print("Token " + player.token.tokenName)
