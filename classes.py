@@ -64,7 +64,7 @@ class Player:
         self.playerName = name
         self.playerBalance = balance
         
-        #Used to set and determine the content of the player's score card where the player's score rectangle
+        #Used to set and determine the content of the player's score card where the player's score rectangle is
         self.scoreTextFont = pygame.font.Font(pygame.font.get_default_font(), 12)
         self.scoreTextSurface = self.scoreTextFont.render(f"{self.playerName}\nBalance: ${self.playerBalance}", True, "Blue") #NOTE: We need to make sure playerBalance is changed whenever Player.player balance changes.
         self.scoreTextRect = self.scoreTextSurface.get_rect(center = self.PLAYER_SCORE_RECT_COORDINATES[self.playerNumber])
@@ -208,33 +208,33 @@ class PlayerTokenImage:
     TOKEN_HEIGHT = 40
     #Static map for token ID numbers to specific token image paths
     ID_TO_IMAGE_PATH = {
-        1: "images/pieces/piece1.png",
-        2: "images/pieces/piece2.png",
-        3: "images/pieces/piece3.png",
-        4: "images/pieces/piece4.png",
-        5: "images/pieces/piece5.png",
-        6: "images/pieces/piece6.png",
-        7: "images/pieces/piece7.png",
-        8: "images/pieces/piece8.png"
+        0: "images/pieces/piece1.png",
+        1: "images/pieces/piece2.png",
+        2: "images/pieces/piece3.png",
+        3: "images/pieces/piece4.png",
+        4: "images/pieces/piece5.png",
+        5: "images/pieces/piece6.png",
+        6: "images/pieces/piece7.png",
+        7: "images/pieces/piece8.png"
     }
    
     #Static member for token ID to token name
     ID_TO_TOKEN_NAME = {
-        1: "Modern Racecar",
-        2: "Helmet",
-        3: "NASCAR Logo",
-        4: "Trophy",
-        5: "Classic Racecar",
-        6: "Checkered Flags",
-        7: "Wheel",
-        8: "Steering Wheel"
+        0: "Modern Racecar",
+        1: "Helmet",
+        2: "NASCAR Logo",
+        3: "Trophy",
+        4: "Classic Racecar",
+        5: "Checkered Flags",
+        6: "Wheel",
+        7: "Steering Wheel"
     }
 
     #Constructor
     def __init__(self, tokenID: int):
         self.tokenID = tokenID
         self.tokenName = self.ID_TO_TOKEN_NAME[tokenID]
-        self.tokenImg = pygame.transform.scale(pygame.image.load(self.ID_TO_IMAGE_PATH[tokenID]).convert(), (self.TOKEN_WIDTH, self.TOKEN_HEIGHT))
+        self.tokenImg = pygame.transform.scale(pygame.image.load(self.ID_TO_IMAGE_PATH[tokenID]).convert_alpha(), (self.TOKEN_WIDTH, self.TOKEN_HEIGHT))
         self.x_pos = 700
         self.y_pos = 700
         self.tokenRect = self.tokenImg.get_rect(center = (self.x_pos, self.y_pos))

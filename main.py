@@ -61,11 +61,11 @@ while running:
                 if not player_menu.isActive():
 
                     # Create player objects from setup data
-                    player_data = player_menu.getPlayers()
-                    for i, data in enumerate(player_data):
-                           # data["token"] is already a PlayerTokenImage instance
-                            player = Player(i + 1, data["name"], data["token"])
-                            players.append(player)
+                    players = player_menu.getPlayers()
+
+                    for player in players:
+                        print("Name: " + player.playerName)
+                        print("Token " + player.token.tokenName)
                         
 
             # Handle game events

@@ -1,5 +1,5 @@
 import pygame
-from classes import PlayerTokenImage
+from classes import PlayerTokenImage, Player
 
 class Player_Menu:
     def __init__(self, screen):
@@ -10,24 +10,49 @@ class Player_Menu:
         self.players = []
         
         # Define colors
-        self.WHITE = (255, 255, 255)
+        self.WHITE = (200, 200, 200)
         self.BLACK = (0, 0, 0)
-        self.DISABLED_COLOR = (160, 160, 160) #grey color for taken tokens
+        self.DISABLED_COLOR = (120, 120, 120) #grey color for taken tokens
+        self.RED = (255, 0, 0)
+        self.GREEN = (0, 255, 0)
 
         self.font = pygame.font.Font(None, 36)
         self.small_font = pygame.font.Font(None, 24)
         
         # Create Token instances & tracking if it is available 
-        self.tokens = [
-            {'token': PlayerTokenImage(1), 'taken': False},  # Modern Racecar
-            {'token': PlayerTokenImage(2), 'taken': False},  # Helmet
-            {'token': PlayerTokenImage(3), 'taken': False},  # NASCAR Logo
-            {'token': PlayerTokenImage(4), 'taken': False},  # Trophy
-            {'token': PlayerTokenImage(5), 'taken': False},  # Classic Racecar
-            {'token': PlayerTokenImage(6), 'taken': False},  # Checkered Flags
-            {'token': PlayerTokenImage(7), 'taken': False},  # Wheel
-            {'token': PlayerTokenImage(8), 'taken': False}   # Steering Wheel
-        ]
+        self.tokens = {
+            0: {'token': PlayerTokenImage(0), 'taken': False},  # Modern Racecar
+            1: {'token': PlayerTokenImage(1), 'taken': False},  # Helmet
+            2: {'token': PlayerTokenImage(2), 'taken': False},  # NASCAR Logo
+            3: {'token': PlayerTokenImage(3), 'taken': False},  # Trophy
+            4: {'token': PlayerTokenImage(4), 'taken': False},  # Classic Racecar
+            5: {'token': PlayerTokenImage(5), 'taken': False},  # Checkered Flags
+            6: {'token': PlayerTokenImage(6), 'taken': False},  # Wheel
+            7: {'token': PlayerTokenImage(7), 'taken': False}   # Steering Wheel
+        }
+
+        self.DEFAULT_TOKEN = -1
+        self.token_id_selected = self.DEFAULT_TOKEN #Holds the id (the key in the self.tokens map) of the selected token. Default is -1 for no token selected
+
+        # Create name input prompt surface
+        self.prompt_surface = self.small_font.render("Select a token then click the box below to enter your name", True, self.BLACK)
+
+        # Create variables to hold name entry info
+        self.name_input_string = ""
+        self.name_input_active = False
+        
+        # Create surfaces and flags for error messages (Flags default to false so their error messages do not appear until the error arises)
+        self.max_length_error_surface = self.small_font.render("Player name is at max length", True, self.RED)
+        self.is_max_length = False
+        
+        self.empty_input_error_surface = self.small_font.render("Enter a player name first", True, self.RED)
+        self.is_empty_input = False
+        
+        self.no_token_selected_error_surface = self.small_font.render("Select a token first", True, self.RED)
+        self.no_token_selected = False
+
+        # Create finalize player button
+        self.finalize_player_surface = self.small_font.render("Finalize Player", True, self.BLACK)
 
         # Setup interface elements
         self.setup_player_interface()
@@ -48,7 +73,7 @@ class Player_Menu:
         start_y = 200
         
         # Create rectangles and set positions for tokens
-        for i, token_data in enumerate(self.tokens):
+        for i in range(len(self.tokens)):
             col = i // tokens_per_col
             row = i % tokens_per_col
         
@@ -63,26 +88,94 @@ class Player_Menu:
             # Center token within the larger box
             token_x = box_x + (box_size - token_size) // 2
             token_y = box_y + (box_size - token_size) // 2
-            token_data['token'].moveToken(token_x + token_size//2, token_y + token_size//2)
-            
+            self.tokens[i]['token'].moveToken(token_x + token_size // 2, token_y + token_size // 2)
+
+        # Create the prompt rect, name input rect, and finalize player rect under the token rects
+        self.prompt_rect = pygame.Rect(400 - self.prompt_surface.get_width() // 2, self.token_rects[-1].bottom + 75, 200, 25)
+        self.name_input_rect = pygame.Rect(300, self.prompt_rect.bottom + 25, 200, 25)
+        self.finalize_player_rect = pygame.Rect(((800 + self.name_input_rect.right) // 2) - (self.finalize_player_surface.get_width() // 2), self.name_input_rect.top, self.finalize_player_surface.get_width() + 10, 25)
+
+        # Create error rects positioned below the name input rect
+        self.max_length_input_error_rect = pygame.Rect(400 - self.max_length_error_surface.get_width() // 2, self.name_input_rect.bottom + 25, 200, 25)
+        self.empty_input_error_rect = pygame.Rect(400 - self.empty_input_error_surface.get_width() // 2, self.name_input_rect.bottom + 25, 200, 25)
+        self.no_token_selected_error_rect = pygame.Rect(400 - self.no_token_selected_error_surface.get_width() // 2, self.name_input_rect.bottom + 25, 200, 25)
+
+           
 
     def handle_event(self, event):
+        # Handle clicking the mouse
         if event.type == pygame.MOUSEBUTTONDOWN:
+            # Get location of mouse click
             mouse_pos = event.pos
-            # Handle token selection
-            for i, rect in enumerate(self.token_rects):
-                if rect.collidepoint(mouse_pos):
-                    token_data = self.tokens[i]
-                    if not token_data['taken']:  # Check taken status from dictionary
+
+            # Check if name input box clicked
+            if self.name_input_rect.collidepoint(mouse_pos):
+                self.name_input_active = True
+            
+            # If name input box not clicked, set it's activity flag to False and check for every other collision
+            else:
+                self.name_input_active = False
+                
+                # Check for clicking finalize player
+                if self.finalize_player_rect.collidepoint(mouse_pos):
+                    # If you try to finalize a character with no token selected (token_id_selected == -1, the default value), turn on the error flag to print error during draw
+                    if self.token_id_selected == self.DEFAULT_TOKEN: 
+                        self.no_token_selected = True
+
+                    # If you try to finalize a player with an empty name, turn on the error flag to print error during draw
+                    elif len(self.name_input_string) == 0: 
+                        self.is_empty_input = True
+
+                    # Create new player with name_input_string and a new token with the ID of the selected token
+                    else:
                         if len(self.players) < self.current_player + 1:
-                            self.players.append({
-                                "name": f"Player {self.current_player + 1}",
-                                "token": token_data['token']
-                            })
-                            token_data['taken'] = True  # Mark as taken in dictionary
                             self.current_player += 1
+                            self.players.append(Player(self.current_player, self.name_input_string, PlayerTokenImage(self.token_id_selected)))
                             if self.current_player >= self.total_players:
                                 self.player_setup_active = False
+                            
+                            # Reset selections and error flags to default
+                            self.token_id_selected = self.DEFAULT_TOKEN
+                            self.name_input_string = ""
+                            self.name_input_active = False
+                            self.is_max_length = False
+                            self.is_empty_input = False
+                            self.no_token_selected = False
+
+
+                else: # Handle token selection
+                    for i, rect in enumerate(self.token_rects):
+                        if rect.collidepoint(mouse_pos):
+                            token_data = self.tokens[i]
+                            if not token_data['taken']:  # Check taken status from dictionary
+                                if self.token_id_selected is not self.DEFAULT_TOKEN:
+                                    self.tokens[self.token_id_selected]["taken"] = False
+                                
+                                token_data['taken'] = True  # Mark as taken in dictionary
+                                self.token_id_selected = i # Assign selected index (the token ID)
+                                self.no_token_selected = False # Reset no token selected error flag
+
+                            # If the token clicked was already selected by current player, return token_id_selected to default value and deselect token
+                            elif i == self.token_id_selected:
+                                self.token_id_selected = self.DEFAULT_TOKEN
+                                token_data['taken'] = False
+
+        # Handle keyboard input for the name input box
+        if event.type == pygame.KEYDOWN:
+            # Handle pressing backspace
+            if event.key == pygame.K_BACKSPACE:
+                self.name_input_string = self.name_input_string[:-1]
+                self.is_max_length = False # Reset error flag indicating name_input_string is no longer max length
+
+            # Handle pressing any other key provided input is active
+            elif self.name_input_active:
+                if self.name_input_surface.get_width() + 15 > self.name_input_rect.width: # If you try to input a character past the max length, set error flag to show max length error
+                    self.is_max_length = True
+                else:
+                    self.name_input_string += event.unicode
+                    self.is_empty_input = False # Reset error flag that appears when you try to finalize a character with no name
+
+                
 
     def draw(self):
         self.screen.fill(self.WHITE)
@@ -95,27 +188,49 @@ class Player_Menu:
 
         # Draw "Select Token" section
         token_text = self.font.render("Select Token:", True, self.BLACK)
-        token_rect = token_text.get_rect(centerx=400, y=150)
+        token_rect = token_text.get_rect(centerx = 400, y = 150)
         self.screen.blit(token_text, token_rect)
 
         # Draw tokens and names
-        for i, (token_data, rect) in enumerate(zip(self.tokens, self.token_rects)):
+        for i in range(len(self.tokens)):
             # Draw token box
-            color = self.DISABLED_COLOR if token_data['taken'] else self.WHITE #marks grey if taken or white for available
-            pygame.draw.rect(self.screen, color, rect)
-            pygame.draw.rect(self.screen, self.BLACK, rect, 2)
+            color = self.DISABLED_COLOR if self.tokens[i]['taken'] else self.WHITE #marks grey if taken or white for available
+            pygame.draw.rect(self.screen, color, self.token_rects[i])
+            pygame.draw.rect(self.screen, self.BLACK, self.token_rects[i], 2)
         
             # Draw token name with better spacing
-            token = token_data['token']
+            token = self.tokens[i]['token']
             token_name = token.tokenName
             text_surface = self.small_font.render(token_name, True, self.BLACK)
-            name_rect = text_surface.get_rect(
-                midtop=(rect.centerx, rect.bottom + 5)
-            )
+            name_rect = text_surface.get_rect(midtop = (self.token_rects[i].centerx, self.token_rects[i].bottom + 5))
             self.screen.blit(text_surface, name_rect)
 
             # Draw token image
             token.draw(self.screen)
+
+        # Draw name input prompt
+        self.screen.blit(self.prompt_surface, self.prompt_rect)
+
+        # Change name input box color depending on if active or not
+        if self.name_input_active:
+            pygame.draw.rect(self.screen, (255, 255, 255), self.name_input_rect)
+        else:
+            pygame.draw.rect(self.screen, (240, 240, 240), self.name_input_rect)
+        
+        #Draw the name input box
+        self.name_input_surface = self.small_font.render(self.name_input_string, True, self.BLACK)
+        self.screen.blit(self.name_input_surface, (self.name_input_rect.x + 5, self.name_input_rect.y + 5))
+
+        # Draw the finalize player box
+        pygame.draw.rect(self.screen, self.GREEN, self.finalize_player_rect)
+        self.screen.blit(self.finalize_player_surface, (self.finalize_player_rect.x + 5, self.finalize_player_rect.y + 5))
+
+        if self.no_token_selected:
+            self.screen.blit(self.no_token_selected_error_surface, self.no_token_selected_error_rect)
+        elif self.is_max_length:
+            self.screen.blit(self.max_length_error_surface, self.max_length_input_error_rect)
+        elif self.is_empty_input:
+            self.screen.blit(self.empty_input_error_surface, self.empty_input_error_rect)
 
     def isActive(self) -> bool:
         return self.player_setup_active
