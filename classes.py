@@ -327,6 +327,9 @@ class Property(Tile):
         super(tileNumber, playersOnTile)
         pass
 
+class ColorProperty(Property):
+    pass
+
 class Event:
     def __init__(self):
         self.events = {1:"Elected to racing hall of fame. Collect $100",2:"Sign associate sponsorship. Collect $100",3:"First Union race fund matures! Collect $100",4:"Won first pole position! Collect $20",5:"Collect $50 from ever player for guest passes.",6:"Go to jail!",7:"Get out of Jail free!",8:"You are assessed for track repairs. Pay $40 for every upgrade you've made.",9:"Car needs new tires. Pay $100",10:"Speeding on pit row. Pay $50",
