@@ -32,6 +32,12 @@ number_menu = PlayerNumberMenu(screen)
 players = []
 running = True
 
+# Test rects to try to fit a rect to a tile on the board
+# Note the dimensions here give us the closest result (553px) to 550px (the size of the game board image) 
+# when we calculate the length of one side of the board, from big tile to big tile (ex. from GO to JAIL)
+tile_size_test_rect1 = pygame.Rect(125, 125, 74, 74) # Size of rect is 74 x 74 at the top left of the board
+tile_size_test_rect2 = pygame.Rect(tile_size_test_rect1.right, tile_size_test_rect1.top, 45, 74) # Size is 45 x 74 to the right of the above rect
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -77,6 +83,13 @@ while running:
                         print("Doubles!")
                 if event.key == pygame.K_SPACE:
                     card_popup.show_event_message(random.randint(1, 32))
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                if tile_size_test_rect1.collidepoint(mouse_pos):
+                    print("Free parking clicked")
+                elif tile_size_test_rect2.collidepoint(mouse_pos):
+                    print("Circuit City Clicked")
 
     screen.fill(backgroundColor)
 
