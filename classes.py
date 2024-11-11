@@ -11,14 +11,14 @@ class Dice:
     DICE_HEIGHT = 50
     #All dice face images preloaded in and scaled to 50x50 pixels as a static member
     #Note: It makes sense for all of the dice to be loaded in at once because each face will be retrieved frequently
-    diceFaces = [
+    diceFaces = (
         pygame.transform.scale(pygame.image.load("images/1face.png").convert(), (DICE_WIDTH, DICE_HEIGHT)),
         pygame.transform.scale(pygame.image.load("images/2face.png").convert(), (DICE_WIDTH, DICE_HEIGHT)),
         pygame.transform.scale(pygame.image.load("images/3face.png").convert(), (DICE_WIDTH, DICE_HEIGHT)),
         pygame.transform.scale(pygame.image.load("images/4face.png").convert(), (DICE_WIDTH, DICE_HEIGHT)),
         pygame.transform.scale(pygame.image.load("images/5face.png").convert(), (DICE_WIDTH, DICE_HEIGHT)),
         pygame.transform.scale(pygame.image.load("images/6face.png").convert(), (DICE_WIDTH, DICE_HEIGHT))
-    ]
+    )
     
     DICE_HEIGHT
     #Constructor
@@ -276,45 +276,45 @@ class Tile:
     '''
     TILE_NUM_TO_INFO = {
         0: "GO",
-        1: "Tile 2 Name",
+        1: "First Union",
         2: "Event",
-        3: "Tile Name",
-        4: "Income Tax",
-        5: "Tile Name",
-        6: "Tile Name",
+        3: "Caterpillar",
+        4: "BLACK FLAG",
+        5: "California Speedway",
+        6: "Lowe's Home Improvement Warehouse",
         7: "Event",
-        8: "Tile Name",
-        9: "Tile Name",
-        10: "Jail",
-        11: "Tile Name",
-        12: "Tile Name",
-        13: "Tile Name",
-        14: "Tile Name",
-        15: "Tile Name",
-        16: "Tile Name",
+        8: "Skittles",
+        9: "Cartoon Network",
+        10: "JAIL",
+        11: "Bellsouth",
+        12: "The Phone Company",
+        13: "QVC",
+        14: "Kodak Gold Film",
+        15: "Talladega Speedway",
+        16: "Interstate Batteries",
         17: "Event",
-        18: "Tile Name",
-        19: "Tile Name",
+        18: "Exide Batteries",
+        19: "The Family Channel Primestar",
         20: "Free Parking",
-        21: "Tile Name",
+        21: "Circuit City",
         22: "Event",
-        23: "Tile Name",
-        24: "Tile Name",
-        25: "Tile Name",
-        26: "Tile Name",
-        27: "Tile Name",
-        28: "Tile Name",
-        29: "Tile Name",
+        23: "Parts America",
+        24: "Pennzoil",
+        25: "Charlotte Speedway",
+        26: "Texaco",
+        27: "Tide",
+        28: "The Gas Company",
+        29: "Ford Quality Care",
         30: "Go To Jail",
-        31: "Tile Name",
-        32: "Tile Name",
+        31: "Valvoline",
+        32: "Kellog's",
         33: "Event",
-        34: "Tile Name",
-        35: "Tile Name",
+        34: "McDonalds",
+        35: "Dayton Speedway",
         36: "Event",
-        37: "Tile Name",
+        37: "Du Pont Automotive Finishes",
         38: "Luxury Tax",
-        39: "Tile Name"
+        39: "Goodwrench Service Plus"
     }
     
     def __init__(self, tileNumber: int, playersOnTile: Optional[List[Player]] = None):
@@ -323,9 +323,46 @@ class Tile:
         self.tileName = self.TILE_NUM_TO_INFO[tileNumber]
 
 class Property(Tile):
-    def __init__ (self, tileNumber: int, playersOnTile: Optional[List[Player]] = None):
-        super(tileNumber, playersOnTile)
-        pass
+    # Property Number to map containing buy price, rent prices (Decide which one by upgrade value), sell value, and upgrade cost
+    # Color property: rent will be determined by upgrade level as a "Rent" index
+    # Railroad: rent will be determined with number of railroads in possession of the owning player - 1 as a "Rent" index
+    # Utility: rent will be determined with number of utilities in possession of the owning player -1 as a "Rent" index. The "Rent" values are multipliers, NOT rent itself
+    PROPERTY_NUM_TO_INFO = {
+        1: {"BuyPrice" : 60, "Rent": (2, 10, 30, 90, 160, 250), "SellValue": 30, "UpgradeCost": 50}, # First Union
+        3: {"BuyPrice" : 60, "Rent": (4, 20, 60, 180, 320, 450), "SellValue": 30, "UpgradeCost": 50}, # Caterpillar
+        5: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100}, # California Speedway
+        6: {"BuyPrice" : 100, "Rent": (6, 30, 90, 270, 400, 550), "SellValue": 50, "UpgradeCost": 50}, # Lowe's Home Improvement Warehouse
+        8: {"BuyPrice" : 100, "Rent": (6, 30, 90, 270, 400, 550), "SellValue": 50, "UpgradeCost": 50}, # Skittles
+        9: {"BuyPrice" : 120, "Rent": (8, 40, 100, 300, 450, 600), "SellValue": 60, "UpgradeCost": 50}, # Cartoon Network
+        11: {"BuyPrice" : 140, "Rent": (10, 50, 150, 450, 625, 750), "SellValue": 70, "UpgradeCost": 100}, # Bellsouth
+        12: {"BuyPrice" : 150, "Rent": (4, 10), "SellValue": 75}, # The Phone Company
+        13: {"BuyPrice" : 140, "Rent": (10, 50, 150, 450, 625, 750), "SellValue": 70, "UpgradeCost": 100}, # QVC
+        14: {"BuyPrice" : 160, "Rent": (12, 60, 180, 500, 700, 900), "SellValue": 80, "UpgradeCost": 100}, # Kodak Gold Film
+        15: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100}, # Talladega Speedway
+        16: {"BuyPrice" : 180, "Rent": (14, 70, 200, 550, 750, 950), "SellValue": 90, "UpgradeCost": 100}, # Interstate Batteries
+        18: {"BuyPrice" : 180, "Rent": (14, 70, 200, 550, 750, 950), "SellValue": 90, "UpgradeCost": 100}, # Exide Batteries
+        19: {"BuyPrice" : 200, "Rent": (16, 80, 220, 600, 800, 1000), "SellValue": 100, "UpgradeCost": 100}, # The Family Channel Primestar
+        21: {"BuyPrice" : 220, "Rent": (18, 90, 250, 700, 875, 1050), "SellValue": 110, "UpgradeCost": 150}, # Circuit City
+        23: {"BuyPrice" : 220, "Rent": (18, 90, 250, 700, 875, 1050), "SellValue": 110, "UpgradeCost": 150}, # Parts America
+        24: {"BuyPrice" : 240, "Rent": (20, 100, 300, 750, 925, 1100), "SellValue": 120, "UpgradeCost": 150}, # Pennzoil
+        25: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100}, # Charlotte Speedway
+        26: {"BuyPrice" : 260, "Rent": (22, 110, 330, 800, 975, 1150), "SellValue": 130, "UpgradeCost": 150}, # Texaco 
+        27: {"BuyPrice" : 260, "Rent": (22, 110, 330, 800, 975, 1150), "SellValue": 130, "UpgradeCost": 150}, # Tide
+        28: {"BuyPrice" : 150, "Rent": (4, 10), "SellValue": 75}, # The Gas Company
+        29: {"BuyPrice" : 280, "Rent": (24, 120, 360, 850, 1025, 1200), "SellValue": 140, "UpgradeCost": 150}, # Ford Quality Care
+        31: {"BuyPrice" : 300, "Rent": (26, 130, 390, 900, 1100, 1275), "SellValue": 150, "UpgradeCost": 200}, # Valvoline
+        32: {"BuyPrice" : 300, "Rent": (26, 130, 390, 900, 1100, 1275), "SellValue": 150, "UpgradeCost": 200}, # Kellog's
+        34: {"BuyPrice" : 320, "Rent": (28, 150, 450, 1000, 1200, 1400), "SellValue": 160, "UpgradeCost": 200}, # Mcdonald's
+        35: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100}, # Daytona Speedway
+        37: {"BuyPrice" : 350, "Rent": (35, 175, 500, 1100, 1300, 1500), "SellValue": 175, "UpgradeCost": 200}, # Du Pont Automotive Finishes
+        39: {"BuyPrice" : 400, "Rent": (50, 200, 600, 1400, 1700, 2000), "SellValue": 200, "UpgradeCost": 200} # Goodwrench Service Plus
+    }
+        
+    def __init__ (self, tileNumber: int, playersOnTile: Optional[List[Player]] = None, upgradeLevel: int = 0):
+        super().__init__(tileNumber, playersOnTile)
+        self.buyPrice = self.TILE_NUM_TO_INFO[tileNumber]["BuyPrice"]
+        self.rentArray = self.TILE_NUM_TO_INFO[tileNumber]["Rent"]
+        self.sellValue = self.TILE_NUM_TO_INFO[tileNumber]["SellValue"]
 
 class ColorProperty(Property):
     pass

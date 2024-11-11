@@ -90,6 +90,11 @@ while running:
     else: #if in game
         dice.draw(screen)
         card_popup.draw(screen)
+        
+        # Trying to fit the game board to the screen here
+        board_surf = pygame.transform.scale(pygame.image.load("images/GameBoard.png").convert(), (550, 550))
+        board_rect = pygame.Rect(125, 125, 550, 550)
+        screen.blit(board_surf, board_rect)
         # player.drawScore(screen)
 
     pygame.display.update()  # update the display
