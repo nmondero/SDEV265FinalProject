@@ -154,7 +154,7 @@ class Player:
     ex. Go directly to jail, do not collect passing go money
         player1.movePlayer(jumpToTile = 10, passGoViable = False)
     '''
-    def movePlayer(self, moveAmount: Optional[int] = None, jumpToTile: Optional[int] = None, passGoViable: Optional[bool] = None) -> None:
+    def movePlayer(self, gameBoard: Board, moveAmount: Optional[int] = None, jumpToTile: Optional[int] = None, passGoViable: Optional[bool] = None) -> None:
         #Raise exception if parameters are not provided (this function requires either moveAmount alone, or jumpToTile and passGoViable)
         if moveAmount == None and jumpToTile == None:
             raise ValueError("Exception: Function must have at least one parameter of the following parameters:\n(moveAmount = combined dice roll, jumpToTile = index of tile to jump to)")
@@ -164,6 +164,8 @@ class Player:
 
         if jumpToTile != None and passGoViable == None:
             raise ValueError("Exception: A jumpToTile parameter must be accompanied by a passGoViable boolean parameter indicating whether the teleport allows the player to collect Passing Go money.")
+
+        gameBoard.tileArray[self.playerPosition].pop()
 
         #If the parameter indicated an amount of spaces to move...
         if moveAmount != None: 
@@ -180,6 +182,17 @@ class Player:
             #Passing Go check when jumping to a lower tile index
             if initialPosition > self.playerPosition and passGoViable:
                 self.playerBalance += 200
+
+        tile = gameBoard.tileArray[self.playerPosition]
+        tile.playersOnTile.append(self)
+        numOnTile = len(tile.playersOnTile)
+        x_offset = tile.x_pos + (pow(-1, numOnTile) * 15)
+        y_offset = tile.y_pos + (pow(-1, numOnTile) * 15)
+
+        if len(gameBoard.tilesArray[self.playerPosition].playersOnTile) == 1:
+            self.token.moveToken(Tile.TILE_NUM_TO_INFO[self.playerPosition]["Rect"].centerx, Tile.TILE_NUM_TO_INFO[self.playerPosition]["Rect"].centery)
+
+        
 
         '''
         Must move token after player moves
@@ -231,12 +244,12 @@ class PlayerTokenImage:
     }
 
     #Constructor
-    def __init__(self, tokenID: int):
+    def __init__(self, tokenID: int, x_pos: int, y_pos: int):
         self.tokenID = tokenID
         self.tokenName = self.ID_TO_TOKEN_NAME[tokenID]
         self.tokenImg = pygame.transform.scale(pygame.image.load(self.ID_TO_IMAGE_PATH[tokenID]).convert_alpha(), (self.TOKEN_WIDTH, self.TOKEN_HEIGHT))
-        self.x_pos = 700
-        self.y_pos = 700
+        self.x_pos = x_pos
+        self.y_pos = y_pos
         self.tokenRect = self.tokenImg.get_rect(center = (self.x_pos, self.y_pos))
 
     #Draw token image to screen using token rectangle position
@@ -246,7 +259,7 @@ class PlayerTokenImage:
     #Change token rectangle position
     def moveToken(self, x_pos: int, y_pos: int):
         #Raise exception if new token rectangle center would put any part of the rectangle outside of the screen dimensions
-        if ((x_pos - self.TOKEN_WIDTH / 2 < 0) or (x_pos + self.TOKEN_WIDTH / 2 > 800) or (y_pos - self.TOKEN_HEIGHT / 2 < 0) or (y_pos + self.TOKEN_HEIGHT / 2 > 800)):
+        if ((x_pos - self.TOKEN_WIDTH / 2 < 0) or x_pos + self.TOKEN_WIDTH / 2 > 800) or (y_pos - self.TOKEN_HEIGHT / 2 < 0) or (y_pos + self.TOKEN_HEIGHT / 2 > 800)):
             raise ValueError("Exception: New token center is outside of the bounds of the window.")
         self.x_pos = x_pos
         self.y_pos = y_pos
@@ -271,56 +284,95 @@ class Tile:
     Tile Dimensions:
     Resolution: 300px / in
     Tile: 55px x 90px
-    Corner Tile: 90px x 90px
-    Color bar: 55px x 23px
+    Corner Tile: 74px x 74px
+    Color bar: 45px x 74px
     '''
     TILE_NUM_TO_INFO = {
-        0: "GO",
-        1: "First Union",
-        2: "Event",
-        3: "Caterpillar",
-        4: "BLACK FLAG",
-        5: "California Speedway",
-        6: "Lowe's Home Improvement Warehouse",
-        7: "Event",
-        8: "Skittles",
-        9: "Cartoon Network",
-        10: "JAIL",
-        11: "Bellsouth",
-        12: "The Phone Company",
-        13: "QVC",
-        14: "Kodak Gold Film",
-        15: "Talladega Speedway",
-        16: "Interstate Batteries",
-        17: "Event",
-        18: "Exide Batteries",
-        19: "The Family Channel Primestar",
-        20: "Free Parking",
-        21: "Circuit City",
-        22: "Event",
-        23: "Parts America",
-        24: "Pennzoil",
-        25: "Charlotte Speedway",
-        26: "Texaco",
-        27: "Tide",
-        28: "The Gas Company",
-        29: "Ford Quality Care",
-        30: "Go To Jail",
-        31: "Valvoline",
-        32: "Kellog's",
-        33: "Event",
-        34: "McDonalds",
-        35: "Dayton Speedway",
-        36: "Event",
-        37: "Du Pont Automotive Finishes",
-        38: "Luxury Tax",
-        39: "Goodwrench Service Plus"
+        0: {"Name": "GO"},
+        1: {"Name": "First Union"},
+        2: {"Name": "Event"},
+        3: {"Name": "Caterpillar"},
+        4: {"Name": "BLACK FLAG"},
+        5: {"Name": "California Speedway"},
+        6: {"Name": "Lowe's Home Improvement Warehouse"},
+        7: {"Name": "Event"},
+        8: {"Name": "Skittles"},
+        9: {"Name": "Cartoon Network"},
+        10: {"Name": "JAIL"},
+        11: {"Name": "Bellsouth"},
+        12: {"Name": "The Phone Company"},
+        13: {"Name": "QVC"},
+        14: {"Name": "Kodak Gold Film"},
+        15: {"Name": "Talladega Speedway"},
+        16: {"Name": "Interstate Batteries"},
+        17: {"Name": "Event"},
+        18: {"Name": "Exide Batteries"},
+        19: {"Name": "The Family Channel Primestar"},
+        20: {"Name": "Free Parking"},
+        21: {"Name": "Circuit City"},
+        22: {"Name": "Event"},
+        23: {"Name": "Parts America"},
+        24: {"Name": "Pennzoil"},
+        25: {"Name": "Charlotte Speedway"},
+        26: {"Name": "Texaco"},
+        27: {"Name": "Tide"},
+        28: {"Name": "The Gas Company"},
+        29: {"Name": "Ford Quality Care"},
+        30: {"Name": "Go To Jail"},
+        31: {"Name": "Valvoline"},
+        32: {"Name": "Kellog's"},
+        33: {"Name": "Event"},
+        34: {"Name": "McDonalds"},
+        35: {"Name": "Dayton Speedway"},
+        36: {"Name": "Event"},
+        37: {"Name": "Du Pont Automotive Finishes"},
+        38: {"Name": "Luxury Tax"},
+        39: {"Name": "Goodwrench Service Plus"}
     }
+
+    for i in range(len(TILE_NUM_TO_INFO)):
+        if (i > 0 and i < 10): # Bottom Row
+            width = 45
+            height = 74
+            TILE_NUM_TO_INFO[i]["Rect"] = pygame.Rect(125 + 74 + (45 * 9) - (45 * (i % 10)) , 604, width, height)
+
+        elif (i > 10 and i < 20): # Left Row
+            width = 74
+            height = 45
+            TILE_NUM_TO_INFO[i]["Rect"] = pygame.Rect(125, 604 - (45 * (i % 10)), width, height)
+
+
+        elif (i > 20 and i < 30): # Top Row
+            width = 45
+            height = 74
+            TILE_NUM_TO_INFO[i]["Rect"] = pygame.Rect(125 + 74 + (45 * ((i - 1) % 10)), 126, width, height)
+
+        elif (i > 30 and i < 40): # Right Row
+            width = 74
+            height = 45
+            TILE_NUM_TO_INFO[i]["Rect"] = pygame.Rect(604, 125 + 74 + (45 * ((i - 1) % 10)), width, height)
+
+        elif (i == 0): # Bottom Right
+            TILE_NUM_TO_INFO[i]["Rect"] = pygame.Rect(604, 604, 74, 74)
+            print (TILE_NUM_TO_INFO[i]['Rect'].center)
+
+        elif (i == 10): # Bottom Left
+            TILE_NUM_TO_INFO[i]["Rect"] = pygame.Rect(125, 604, 74, 74)
+
+        elif (i == 20): # Top Left
+            TILE_NUM_TO_INFO[i]["Rect"] = pygame.Rect(125, 125, 74, 74)
+
+        elif (i == 30): # Top Right
+            TILE_NUM_TO_INFO[i]["Rect"] = pygame.Rect(604, 125, 74, 74)
+            print (type(TILE_NUM_TO_INFO[i]['Rect'].center))
+
+        
     
     def __init__(self, tileNumber: int, playersOnTile: Optional[List[Player]] = None):
         self.tileNumber = tileNumber
         self.playersOnTile = playersOnTile if playersOnTile is not None else []
-        self.tileName = self.TILE_NUM_TO_INFO[tileNumber]
+        self.tileName = self.TILE_NUM_TO_INFO[tileNumber]["Name"]
+        self.tileRect = self.TILE_NUM_TO_INFO[tileNumber]["Rect"]
 
 class Property(Tile):
     # Property Number to map containing buy price, rent prices (Decide which one by upgrade value), sell value, and upgrade cost
@@ -363,6 +415,10 @@ class Property(Tile):
         self.buyPrice = self.TILE_NUM_TO_INFO[tileNumber]["BuyPrice"]
         self.rentArray = self.TILE_NUM_TO_INFO[tileNumber]["Rent"]
         self.sellValue = self.TILE_NUM_TO_INFO[tileNumber]["SellValue"]
+        self.upgradeLevel = upgradeLevel
+
+    def getRentDue(self, totalDiceRoll: int):
+        if (self.tileNumber is 1 or 3 or 6 or )
 
 class ColorProperty(Property):
     pass
