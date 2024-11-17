@@ -244,7 +244,7 @@ class PlayerTokenImage:
     }
 
     #Constructor
-    def __init__(self, tokenID: int, x_pos: int, y_pos: int):
+    def __init__(self, tokenID: int, x_pos: int = 0, y_pos: int = 0):
         self.tokenID = tokenID
         self.tokenName = self.ID_TO_TOKEN_NAME[tokenID]
         self.tokenImg = pygame.transform.scale(pygame.image.load(self.ID_TO_IMAGE_PATH[tokenID]).convert_alpha(), (self.TOKEN_WIDTH, self.TOKEN_HEIGHT))
@@ -259,7 +259,7 @@ class PlayerTokenImage:
     #Change token rectangle position
     def moveToken(self, x_pos: int, y_pos: int):
         #Raise exception if new token rectangle center would put any part of the rectangle outside of the screen dimensions
-        if ((x_pos - self.TOKEN_WIDTH / 2 < 0) or x_pos + self.TOKEN_WIDTH / 2 > 800) or (y_pos - self.TOKEN_HEIGHT / 2 < 0) or (y_pos + self.TOKEN_HEIGHT / 2 > 800)):
+        if ((x_pos - self.TOKEN_WIDTH / 2 < 0) or x_pos + self.TOKEN_WIDTH / 2 > 800) or (y_pos - self.TOKEN_HEIGHT / 2 < 0) or (y_pos + self.TOKEN_HEIGHT / 2 > 800):
             raise ValueError("Exception: New token center is outside of the bounds of the window.")
         self.x_pos = x_pos
         self.y_pos = y_pos
@@ -418,7 +418,8 @@ class Property(Tile):
         self.upgradeLevel = upgradeLevel
 
     def getRentDue(self, totalDiceRoll: int):
-        if (self.tileNumber is 1 or 3 or 6 or )
+        #if (self.tileNumber is 1 or 3 or 6 or )
+        pass
 
 class ColorProperty(Property):
     pass

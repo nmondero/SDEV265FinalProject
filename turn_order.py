@@ -18,5 +18,6 @@ def show_turn_message(screen, player_name):
     #update the display to show th message after being called in main loop
     pygame.display.update()
 
-    #keep the message for a specific amount of time on screen
-    pygame.time.delay(2000)
+    #Commented out because this line was causing 2 second gaps in the event handling. We can just keep the current turn up for the entire drawing process
+    #keep the message for a specific amount of time on screen 
+    #pygame.time.delay(2000)
