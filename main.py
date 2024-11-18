@@ -34,7 +34,7 @@ current_turn = 0 #tracks the current player's turn
 turn_displayed = False # track if turn message has been displayed
 running = True
 
-# Trying to fit the game board to the screen here
+# Trying to fit the game board to the screen here (this orientation seems good)
 board_surf = pygame.transform.scale(pygame.image.load("images/GameBoard.png").convert(), (550, 550))
 board_rect = pygame.Rect(125, 125, 550, 550)
 
@@ -90,8 +90,9 @@ while running:
             elif event.type == pygame.KEYDOWN:
                 print("Input detected")
                 if event.key == pygame.K_RETURN:
-                    rollRes = dice.roll()
-                    if rollRes[0] == rollRes[1]:
+                    dice.roll()
+                    print(f"Dice Result: {dice.result()}")
+                    if dice.isDoubles():
                         print("Doubles!")
 
                 elif event.key == pygame.K_SPACE:

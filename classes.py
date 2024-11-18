@@ -1,7 +1,7 @@
 from __future__ import annotations
 import random
 import pygame
-from typing import Optional, List
+from typing import Optional, List, Tuple
 import os
 
 pygame.init()
@@ -34,14 +34,26 @@ class Dice:
         #Rectangles for positioning images
         self.dice1Rect = self.dice1Img.get_rect(top = 10, bottom = 60, left = 690, right = 740)
         self.dice2Rect = self.dice2Img.get_rect(top = 10, bottom = 60, left = 740, right = 790)
+
+
     
     #Roll random dice values, change dice images, then return the dice roll as a tuple of ints
-    def roll(self) -> tuple[int, int]:
+    def roll(self) -> Dice:
         self.dice1Val = random.randint(1, 6)
         self.dice2Val = random.randint(1, 6)
         self.dice1Img = self.diceFaces[self.dice1Val - 1]
         self.dice2Img = self.diceFaces[self.dice2Val - 1]
-        return self.dice1Val, self.dice2Val
+        return self
+    
+    def result(self) -> int:
+        return self.dice1Val + self.dice2Val
+    
+    # Tells you if the current dice values are the same
+    def isDoubles(self) -> bool:
+        if self.dice1Val == self.dice2Val:
+            return True
+        else: 
+            return False
     
     #Draw the dice values onto the top right of the screen at the specified rectangles (We can change the positions if we need to depending on screen size)
     def draw(self, screen: pygame.Surface) -> None:
@@ -59,10 +71,11 @@ class Player:
     }
 
     #Constructor (Only playerName and token are required. All other values have default values for creating players at the start of the game)
-    def __init__(self, playerNumber: int, name: str, token: PlayerTokenImage, balance: int = 1500, position: int = 0, properties: Optional[List[Property]] = None, cards: Optional[List[Card]] = None, isInJail: bool = False, consecutiveDoubles: int = 0, turnsLeftInJail: int = 0, isBankrupt: bool = False):
+    def __init__(self, playerNumber: int, name: str, token: PlayerTokenImage, balance: int = 1500, position: int = 0, properties: Optional[List[Property]] = None, cards: int = 0, isInJail: bool = False, consecutiveDoubles: int = 0, turnsLeftInJail: int = 0, isBankrupt: bool = False, lastDiceResult: int = 0):
         self.playerNumber = playerNumber
         self.playerName = name
         self.playerBalance = balance
+        self.propertyList = properties if properties is not None else []
         
         #Used to set and determine the content of the player's score card where the player's score rectangle is
         self.scoreTextFont = pygame.font.Font(pygame.font.get_default_font(), 12)
@@ -71,16 +84,27 @@ class Player:
 
         self.token = token
         self.playerPosition = position
-        self.propertyList = properties if properties is not None else []
-        self.cardList = cards if cards is not None else []
+    
+
+        self.numGetOutOfJailCards = cards        
         self.isInJail = isInJail
         self.consecutiveDoubles = consecutiveDoubles
         self.turnsLeftInJail = turnsLeftInJail
-        self.isBankrupt = isBankrupt
-        self.playerNumber = playerNumber
+        
+        self.isBankrupt = isBankrupt # Might not need this, we just end the game on bankruptcy anyways... although might be useful if we 
+        self.playerNumber = playerNumber # Dont think we need this
+        self.lastDiceResult = lastDiceResult # The only reason I am keeping track of the last total roll result is for the Utilities getRent() function
 
     def drawScore(self, screen: pygame.Surface):
         screen.blit(self.scoreTextSurface, self.scoreTextRect)
+
+    def putInJail(self): 
+        self.movePlayer(jumpToTile = 10, passGoViable = False)
+        self.isInJail = True
+        self.turnsLeftInJail = 3
+
+    def releaseFromJail(self):
+        self.isInJail = False
 
     #Add a property to player's property list
     def addProperty(self, propertyToAdd: Property) -> None:
@@ -119,6 +143,11 @@ class Player:
                 while self.playerBalance < balanceToRemove:
                     self.sellProperty(screen)
         '''
+
+    # Pays another player a certain amount
+    def payPlayer(self, payAmount: int, payee: Player):
+        self.removeBalance(payAmount)
+        payee.addBalance(payAmount)
     
     def sellProperty(self, screen: pygame.Surface) -> None:
         if self.propertyList.count() == 0:
@@ -145,6 +174,35 @@ class Player:
                     Remove the property from player property array
         '''
 
+
+    def rollDice(self, dice: Dice):
+        self.lastDiceResult = dice.roll.result() # The only reason I am keeping track of the last dice roll result is for the Utilities getRent function
+
+        # Decide whether to increment consecutive doubles
+        doubles = dice.isDoubles
+        if doubles:
+            self.consecutiveDoubles += 1
+        else:
+            self.consecutiveDoubles = 0
+
+        # If in jail 
+        if self.isInJail:
+            if doubles:
+                self.isInJail = False
+                self.movePlayer(moveAmount = dice.result())
+
+            else:
+                self.turnsLeftInJail -= 1
+
+        # If not in jail
+        else:
+            if self.consecutiveDoubles == 3: # If 3 consecutive doubles, go directly to jail
+                self.putInJail()
+            
+            else: # Else, regular dice roll-based movement
+                self.movePlayer(moveAmount = self.lastDiceResult)
+
+
     '''
     I am thinking we simply just use this function to move the player by a specified amount (move amount) or move directly to a certain spot (jumpToTile) and a bool to specify if the jumpToTile should allow passing go
     ex. Move via dice roll (totalDiceVal = 6): 
@@ -157,7 +215,7 @@ class Player:
     def movePlayer(self, gameBoard: Board, moveAmount: Optional[int] = None, jumpToTile: Optional[int] = None, passGoViable: Optional[bool] = None) -> None:
         #Raise exception if parameters are not provided (this function requires either moveAmount alone, or jumpToTile and passGoViable)
         if moveAmount == None and jumpToTile == None:
-            raise ValueError("Exception: Function must have at least one parameter of the following parameters:\n(moveAmount = combined dice roll, jumpToTile = index of tile to jump to)")
+            raise ValueError("Exception: Function must have at least one parameter of the following sets of parameters:\n\t-int moveAmount = combined dice roll\n\t-int jumpToTile = index of tile to jump to\tbool passGoViable determines if player can pass go from movement")
         
         if moveAmount != None and jumpToTile != None:
             raise ValueError("Exception: Cannot include both a moveAmount and jumpToTile parameter")
@@ -165,7 +223,8 @@ class Player:
         if jumpToTile != None and passGoViable == None:
             raise ValueError("Exception: A jumpToTile parameter must be accompanied by a passGoViable boolean parameter indicating whether the teleport allows the player to collect Passing Go money.")
 
-        gameBoard.tileArray[self.playerPosition].pop()
+        initialPosition = self.playerPosition # Set initial position
+        initialTile = gameBoard.tileArray[initialPosition] # Set initial tile
 
         #If the parameter indicated an amount of spaces to move...
         if moveAmount != None: 
@@ -177,48 +236,99 @@ class Player:
 
         #If the parameter indicated a tile to "teleport" to...
         else: 
-            initialPosition = self.playerPosition
             self.playerPosition = jumpToTile
             #Passing Go check when jumping to a lower tile index
             if initialPosition > self.playerPosition and passGoViable:
                 self.playerBalance += 200
 
-        tile = gameBoard.tileArray[self.playerPosition]
-        tile.playersOnTile.append(self)
-        numOnTile = len(tile.playersOnTile)
-        x_offset = tile.x_pos + (pow(-1, numOnTile) * 15)
-        y_offset = tile.y_pos + (pow(-1, numOnTile) * 15)
-
-        if len(gameBoard.tilesArray[self.playerPosition].playersOnTile) == 1:
-            self.token.moveToken(Tile.TILE_NUM_TO_INFO[self.playerPosition]["Rect"].centerx, Tile.TILE_NUM_TO_INFO[self.playerPosition]["Rect"].centery)
-
+        # Handle moving the player token rectangle
+        tile = gameBoard.tileArray[self.playerPosition] # Get the tile that the player landed on
+        offset = 10 * len(tile.playersOnTile) # Determine the magnitude of token offset from center of tile (before adding it to the tile itself) 
+        tileRect = tile.tileRect
+        index = tile.tileNumber # Get the tile's index (so we know what side of the board its on)
         
+        tile.playersOnTile.append(self) # Add the player to the tile landed on
+        initialTile.playersOnTile.remove(self) # Remove the player from the initial tile 
 
-        '''
-        Must move token after player moves
-        Find new coordinates based on new player position (Maybe we have a )
-        self.token.moveToken(x_coordinate, y_coorindate)
-        '''
+        if (index > 0 and index < 10) or index == 0 or index == 20 or index == 30: # Bottom row of board OR non-jail corner tile --> offset y downwards
+            self.token.moveToken(tileRect.centerx, tileRect.centery + offset)
+
+        elif index > 10 and index < 20: # Left row of board --> offset x to the left
+            self.token.moveToken(tileRect.centerx - offset, tileRect.centery)
+
+        elif index > 20 and index < 30: # Top row of board --> offset y upwards
+            self.token.moveToken(tileRect.centerx, tileRect.centery - offset)
+
+        elif index > 30 and index < 40: # Right row of board --> offset x to the right
+            self.token.moveToken(tileRect.centerx + offset, tileRect.centery)
+
+        else: # Player is on the jail tile
+            '''
+            if self.isInJail: # If player is currently jailed --> offset y down starting from the top right based on how many players on the jail tile are currently jailed
+                for player in gameBoard.playerTurnQueue:
+                    if player.isInJail
+                self.token.moveToken(tileRect.right - 30, tileRect.top + 30 + offset) #NOTE: need to make sure to change offset based on number of player on jail tile that are actually jailed
+            '''
+            
+
+    # Determines if the player owns the full property set of the specified color
+    def ownsPropertySet(self, color: str) -> bool:
+        # Make a set of each property ID in the players propertyList
+        playerPropertyIDs = {}
+        for prop in self.propertyList:
+            playerPropertyIDs.add(prop.tileNumber)
+
+        # Check if the player has each property in the color set
+        for colorMemberID in ColorProperty.COLOR_GROUPS[color]:
+            if colorMemberID not in playerPropertyIDs:
+                return False # Return false if no match found
+        
+        return True # If player had the whole set
+    
+    # Return the value of the nearest speedway
+    def nearestSpeedway(self) -> int:
+        # Determine index of closest speedway
+        pos = self.playerPosition
+        railroadIndices = (5, 15, 25, 35)
+        minIndex = railroadIndices[0]
+        minDistance = abs(minIndex - pos)
+        for index in railroadIndices[1:]:
+            current_distance = abs(railroadIndices[index] - pos)
+            if current_distance < minDistance:
+                minDistance = current_distance
+                minIndex = index
+        return minIndex
 
 class Board:
-    def __init__(self, tileArray: List[Tile], turnOrder: List[Player], eventCardDeck: List[Card], turnNumber: int):
+    def __init__(self, tileArray: List[Tile], playerTurnQueue: List[Player], turnNumber: int = 1, eventCardDeck: List[int] = None):
         self.tileArray = tileArray
-        self.turnOrder = turnOrder
-        self.evenCardDeck = eventCardDeck
+        self.playerTurnQueue = playerTurnQueue # We are looking at this like a queue. Current player is the player in position 0. At end of turn, remove at position 0 and append it to the end
         self.turnNumber = turnNumber
+        self.GameActive = True
 
-    def drawEvent(self, drawPlayer: Player) -> None:
+    def drawEvent(self) -> None:
         pass
-    
-    def removePlayer(self, playerToRemove: Player) -> None:
-        self.turnOrder.remove(playerToRemove)
 
-    def incrementTurnCounter(self):
-        self.turnNumber += 1
+    def checkEndGame(self) -> bool:
+        for player in self.playerTurnQueue:
+            if player.playerBalance < 0:
+                return True
+            
+    def endGame(self, playerToRemove: Player) -> None:
+        '''
+        1. Order players by playerBalance
+        2. Make game board screen inactive
+        3. Make results screen active
+        '''
+        pass
+
+    def endTurn(self):
+        self.turnNumber += 1 
+        self.playerTurnQueue.append(self.playerTurnQueue.pop(0)) # Rotate playerTurnQueue
 
 class PlayerTokenImage:
-    TOKEN_WIDTH = 40
-    TOKEN_HEIGHT = 40
+    TOKEN_WIDTH = 20
+    TOKEN_HEIGHT = 20
     #Static map for token ID numbers to specific token image paths
     ID_TO_IMAGE_PATH = {
         0: "images/pieces/piece1.png",
@@ -263,21 +373,7 @@ class PlayerTokenImage:
             raise ValueError("Exception: New token center is outside of the bounds of the window.")
         self.x_pos = x_pos
         self.y_pos = y_pos
-        self.tokenRect.center = (self.x_pos, self.y_pos)
-    
-    # def is_taken(self):
-    #     return getattr(self, 'taken', False)
-
-    # def set_taken(self, value):
-    #     self.taken = value
-
-    # def get_name(self):
-    #     return self.tokenName
-
-
-
-class Card:
-    pass
+        self.tokenRect.center = (self.x_pos, self.y_pos) 
 
 class Tile:
     '''
@@ -354,7 +450,6 @@ class Tile:
 
         elif (i == 0): # Bottom Right
             TILE_NUM_TO_INFO[i]["Rect"] = pygame.Rect(604, 604, 74, 74)
-            print (TILE_NUM_TO_INFO[i]['Rect'].center)
 
         elif (i == 10): # Bottom Left
             TILE_NUM_TO_INFO[i]["Rect"] = pygame.Rect(125, 604, 74, 74)
@@ -364,10 +459,7 @@ class Tile:
 
         elif (i == 30): # Top Right
             TILE_NUM_TO_INFO[i]["Rect"] = pygame.Rect(604, 125, 74, 74)
-            print (type(TILE_NUM_TO_INFO[i]['Rect'].center))
 
-        
-    
     def __init__(self, tileNumber: int, playersOnTile: Optional[List[Player]] = None):
         self.tileNumber = tileNumber
         self.playersOnTile = playersOnTile if playersOnTile is not None else []
@@ -380,49 +472,134 @@ class Property(Tile):
     # Railroad: rent will be determined with number of railroads in possession of the owning player - 1 as a "Rent" index
     # Utility: rent will be determined with number of utilities in possession of the owning player -1 as a "Rent" index. The "Rent" values are multipliers, NOT rent itself
     PROPERTY_NUM_TO_INFO = {
-        1: {"BuyPrice" : 60, "Rent": (2, 10, 30, 90, 160, 250), "SellValue": 30, "UpgradeCost": 50}, # First Union
-        3: {"BuyPrice" : 60, "Rent": (4, 20, 60, 180, 320, 450), "SellValue": 30, "UpgradeCost": 50}, # Caterpillar
+        1: {"BuyPrice" : 60, "Rent": (2, 10, 30, 90, 160, 250), "SellValue": 30}, # First Union
+        3: {"BuyPrice" : 60, "Rent": (4, 20, 60, 180, 320, 450), "SellValue": 30}, # Caterpillar
         5: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100}, # California Speedway
-        6: {"BuyPrice" : 100, "Rent": (6, 30, 90, 270, 400, 550), "SellValue": 50, "UpgradeCost": 50}, # Lowe's Home Improvement Warehouse
-        8: {"BuyPrice" : 100, "Rent": (6, 30, 90, 270, 400, 550), "SellValue": 50, "UpgradeCost": 50}, # Skittles
-        9: {"BuyPrice" : 120, "Rent": (8, 40, 100, 300, 450, 600), "SellValue": 60, "UpgradeCost": 50}, # Cartoon Network
-        11: {"BuyPrice" : 140, "Rent": (10, 50, 150, 450, 625, 750), "SellValue": 70, "UpgradeCost": 100}, # Bellsouth
+        6: {"BuyPrice" : 100, "Rent": (6, 30, 90, 270, 400, 550), "SellValue": 50}, # Lowe's Home Improvement Warehouse
+        8: {"BuyPrice" : 100, "Rent": (6, 30, 90, 270, 400, 550), "SellValue": 50}, # Skittles
+        9: {"BuyPrice" : 120, "Rent": (8, 40, 100, 300, 450, 600), "SellValue": 60}, # Cartoon Network
+        11: {"BuyPrice" : 140, "Rent": (10, 50, 150, 450, 625, 750), "SellValue": 70}, # Bellsouth
         12: {"BuyPrice" : 150, "Rent": (4, 10), "SellValue": 75}, # The Phone Company
-        13: {"BuyPrice" : 140, "Rent": (10, 50, 150, 450, 625, 750), "SellValue": 70, "UpgradeCost": 100}, # QVC
-        14: {"BuyPrice" : 160, "Rent": (12, 60, 180, 500, 700, 900), "SellValue": 80, "UpgradeCost": 100}, # Kodak Gold Film
+        13: {"BuyPrice" : 140, "Rent": (10, 50, 150, 450, 625, 750), "SellValue": 70}, # QVC
+        14: {"BuyPrice" : 160, "Rent": (12, 60, 180, 500, 700, 900), "SellValue": 80}, # Kodak Gold Film
         15: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100}, # Talladega Speedway
-        16: {"BuyPrice" : 180, "Rent": (14, 70, 200, 550, 750, 950), "SellValue": 90, "UpgradeCost": 100}, # Interstate Batteries
-        18: {"BuyPrice" : 180, "Rent": (14, 70, 200, 550, 750, 950), "SellValue": 90, "UpgradeCost": 100}, # Exide Batteries
-        19: {"BuyPrice" : 200, "Rent": (16, 80, 220, 600, 800, 1000), "SellValue": 100, "UpgradeCost": 100}, # The Family Channel Primestar
-        21: {"BuyPrice" : 220, "Rent": (18, 90, 250, 700, 875, 1050), "SellValue": 110, "UpgradeCost": 150}, # Circuit City
-        23: {"BuyPrice" : 220, "Rent": (18, 90, 250, 700, 875, 1050), "SellValue": 110, "UpgradeCost": 150}, # Parts America
-        24: {"BuyPrice" : 240, "Rent": (20, 100, 300, 750, 925, 1100), "SellValue": 120, "UpgradeCost": 150}, # Pennzoil
+        16: {"BuyPrice" : 180, "Rent": (14, 70, 200, 550, 750, 950), "SellValue": 90}, # Interstate Batteries
+        18: {"BuyPrice" : 180, "Rent": (14, 70, 200, 550, 750, 950), "SellValue": 90}, # Exide Batteries
+        19: {"BuyPrice" : 200, "Rent": (16, 80, 220, 600, 800, 1000), "SellValue": 100}, # The Family Channel Primestar
+        21: {"BuyPrice" : 220, "Rent": (18, 90, 250, 700, 875, 1050), "SellValue": 110}, # Circuit City
+        23: {"BuyPrice" : 220, "Rent": (18, 90, 250, 700, 875, 1050), "SellValue": 110}, # Parts America
+        24: {"BuyPrice" : 240, "Rent": (20, 100, 300, 750, 925, 1100), "SellValue": 120}, # Pennzoil
         25: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100}, # Charlotte Speedway
-        26: {"BuyPrice" : 260, "Rent": (22, 110, 330, 800, 975, 1150), "SellValue": 130, "UpgradeCost": 150}, # Texaco 
-        27: {"BuyPrice" : 260, "Rent": (22, 110, 330, 800, 975, 1150), "SellValue": 130, "UpgradeCost": 150}, # Tide
+        26: {"BuyPrice" : 260, "Rent": (22, 110, 330, 800, 975, 1150), "SellValue": 130}, # Texaco 
+        27: {"BuyPrice" : 260, "Rent": (22, 110, 330, 800, 975, 1150), "SellValue": 130}, # Tide
         28: {"BuyPrice" : 150, "Rent": (4, 10), "SellValue": 75}, # The Gas Company
-        29: {"BuyPrice" : 280, "Rent": (24, 120, 360, 850, 1025, 1200), "SellValue": 140, "UpgradeCost": 150}, # Ford Quality Care
-        31: {"BuyPrice" : 300, "Rent": (26, 130, 390, 900, 1100, 1275), "SellValue": 150, "UpgradeCost": 200}, # Valvoline
-        32: {"BuyPrice" : 300, "Rent": (26, 130, 390, 900, 1100, 1275), "SellValue": 150, "UpgradeCost": 200}, # Kellog's
-        34: {"BuyPrice" : 320, "Rent": (28, 150, 450, 1000, 1200, 1400), "SellValue": 160, "UpgradeCost": 200}, # Mcdonald's
+        29: {"BuyPrice" : 280, "Rent": (24, 120, 360, 850, 1025, 1200), "SellValue": 140}, # Ford Quality Care
+        31: {"BuyPrice" : 300, "Rent": (26, 130, 390, 900, 1100, 1275), "SellValue": 150}, # Valvoline
+        32: {"BuyPrice" : 300, "Rent": (26, 130, 390, 900, 1100, 1275), "SellValue": 150}, # Kellog's
+        34: {"BuyPrice" : 320, "Rent": (28, 150, 450, 1000, 1200, 1400), "SellValue": 160}, # Mcdonald's
         35: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100}, # Daytona Speedway
-        37: {"BuyPrice" : 350, "Rent": (35, 175, 500, 1100, 1300, 1500), "SellValue": 175, "UpgradeCost": 200}, # Du Pont Automotive Finishes
-        39: {"BuyPrice" : 400, "Rent": (50, 200, 600, 1400, 1700, 2000), "SellValue": 200, "UpgradeCost": 200} # Goodwrench Service Plus
+        37: {"BuyPrice" : 350, "Rent": (35, 175, 500, 1100, 1300, 1500), "SellValue": 175}, # Du Pont Automotive Finishes
+        39: {"BuyPrice" : 400, "Rent": (50, 200, 600, 1400, 1700, 2000), "SellValue": 200} # Goodwrench Service Plus
     }
-        
-    def __init__ (self, tileNumber: int, playersOnTile: Optional[List[Player]] = None, upgradeLevel: int = 0):
+    
+    # Property Constructor
+    def __init__ (self, tileNumber: int, playersOnTile: Optional[List[Player]] = None):
         super().__init__(tileNumber, playersOnTile)
         self.buyPrice = self.TILE_NUM_TO_INFO[tileNumber]["BuyPrice"]
-        self.rentArray = self.TILE_NUM_TO_INFO[tileNumber]["Rent"]
+        self.rentList = self.TILE_NUM_TO_INFO[tileNumber]["Rent"]
         self.sellValue = self.TILE_NUM_TO_INFO[tileNumber]["SellValue"]
-        self.upgradeLevel = upgradeLevel
 
-    def getRentDue(self, totalDiceRoll: int):
-        #if (self.tileNumber is 1 or 3 or 6 or )
+    # Abstract getRent function
+    def getRent(self, owner: Player) -> int:
         pass
 
 class ColorProperty(Property):
-    pass
+    # Define groups of tiles that belong to specific colors
+    COLOR_GROUPS = {
+        "PURPLE" : (1, 3),
+        "CYAN" : (6, 8, 9),
+        "MAGENTA" : (11, 13, 14),
+        "ORANGE" : (16, 18, 19),
+        "RED" : (21, 23, 24),
+        "YELLOW" : (26, 27, 29),
+        "GREEN" : (31, 32, 34),
+        "BLUE" : (37, 39)
+    }
+
+    def __init__(self, tileNumber: int, playersOnTile: Optional[List[Player]] = None, upgradeLevel: Optional[int] = 0):
+        super().__init__(tileNumber, playersOnTile)
+
+        # Handle upgradeLevel parameter
+        if upgradeLevel < 0 or upgradeLevel > 5:
+            raise ValueError("Exception: upgradeLevel" + upgradeLevel + " out of range")        
+        else:
+            self.upgradeLevel = upgradeLevel
+
+        # Determine upgradeCost based on tile number (Each side of the board has a uniform upgrade cost incrementing by 50 from 50 to 200)
+        self.upgradeCost = 50 + (50 * (tileNumber // 10))
+
+        # Determine the color based on tile number
+        for color in self.COLOR_GROUPS.keys:
+            if tileNumber in self.COLOR_GROUPS[color]:
+                self.color = color
+                break;
+
+    # Upgrades the property. Assumes player balance has already been verified to perform the upgrade
+    def upgrade(self):
+        if self.upgradeLevel == 5:
+            raise Exception("Exception: Cannot upgrade past hotel (if upgradeLevel == 5)")   
+        else:
+            self.upgradeLevel += 1
+
+    # Downgrades the property (if the player sells an upgrade)
+    def downgrade(self):
+        if self.upgradeLevel == 0:
+            raise Exception("Exception: Cannot downgrade with no houses (if upgradeLevel == 0)")
+        else:     
+            self.upgradeLevel -= 1
+    
+    # Reset upgrades to 0 if ownership is transferred
+    def resetUpgrade(self):
+        self.upgradeLevel = 0
+        
+    # Override: Determine the rent due from landing on this spot given the player that owns the property
+    def getRent(self, owner: Player) -> int:
+        if owner.ownsPropertySet(self.color) and self.upgradeLevel == 0: # If the owner owns the property set but hasnt upgraded yet, return double the base rent (special case)
+            return self.rentList[0] * 2
+        else: # Else, just return the rent from the rentList at the upgradeLevel index
+            return self.rentList[self.upgradeLevel]
+
+class Utility(Property):
+    def __init__(self, tileNumber: int, playersOnTile: Optional[List[Player]] = None):
+        super().__init__(tileNumber, playersOnTile)
+
+    # Override: Determine the rent due according to the diceRollTotal
+    def getRent(self, owner: Player) -> int:
+        # Count the number of utilities owned by the player to determine the resulting dice multiplication value from rentList
+        utilityCount = 0
+        for prop in owner.propertyList:
+            if isinstance(prop, Utility):
+                utilityCount += 1
+                if utilityCount == 2:
+                    break;
+        factor = self.rentList(utilityCount - 1)
+        return factor * owner.lastDiceResult # Multiply dice roll by the factor indicated by number of utilities owned (x4 or x10)
+
+
+class Railroad(Property):
+    def __init__(self, tileNumber: int, playersOnTile: Optional[List[Player]] = None):
+        super().__init__(tileNumber, playersOnTile)
+
+    # getRent override for railroads. counts railroads that the player owns
+    def getRent(self, owner: Player) -> int:
+        railroadCount = 0
+        for prop in owner.propertyList:
+            if isinstance(prop, Railroad):
+                railroadCount += 1
+                if railroadCount == 4:
+                    break;
+        return 25 * pow(2, railroadCount - 1) # Corresponds to 25, 50, 100, 200 at 1, 2, 3, and 4 railroads owned
+
 
 class Event:
     def __init__(self):
@@ -437,7 +614,7 @@ class Event:
         self.font_surface = None
         self.is_visible = False #sets up for the trigger function of the textbox to be shown or not
 
-    def event_outcome(event_code: int, player: Player):
+    def event_outcome(event_code: int, player: Player, gameBoard: Board):
 
         if(event_code == 1 or event_code == 2 or event_code == 3):
             player.addBalance(100)
@@ -446,13 +623,15 @@ class Event:
             player.addBalance(20)
             #gain $20
         elif (event_code == 5):
-            pass
+            for payer in gameBoard.playerTurnQueue:
+                if payer is not player:
+                    payer.payPlayer(50, player)
             #gain $50 from all players
         elif (event_code == 6 or event_code == 23):
             player.movePlayer(jumpToTile = 10, passGoViable = False)
             #go to jail
         elif (event_code == 7 or event_code == 24):
-            pass
+            player.numGetOutOfJailCards += 1
             #get out of jail
         elif (event_code == 8):
             player.removeBalance(40)
@@ -482,40 +661,52 @@ class Event:
             player.movePlayer(jumpToTile = 0, passGoViable = True)
             #advance to go
         elif (event_code == 17):
-            pass
+            upgradeCount = 0
+            for prop in player.propertyList:
+                if isinstance(prop, ColorProperty):
+                    upgradeCount += prop.upgradeLevel
+            player.removeBalance(25 * upgradeCount)
             #pay $25 for each upgrade
         elif (event_code == 18):
             player.addBalance(150)
             #gain $150
         elif (event_code == 19):
-            pass
+            player.movePlayer(jumpToTile = 23, passGoViable = True)
             #advance to parts america
         elif (event_code == 20 or event_code == 29):
-            pass
+            # Move the player to the property
+            player.movePlayer(jumpToTile = player.nearestSpeedway(), passGoViable = True)
+
+            #MAKE SURE TO PROCESS BUYING/AUCTIONING IF SPEEDWAY NOT OWNED
+            #OR PROCESS PAYING DOUBLE RENT!!!
+            
             #advance to nearest speedway and pay double rent or buy property
         elif (event_code == 21):
             player.movePlayer(moveAmount = -3)
             #go back 3 spaces
         elif (event_code == 22):
-            pass
+            for recipient in gameBoard.playerTurnQueue:
+                player.payPlayer(50, recipient)
             #pay each player $50
         elif (event_code == 25):
             player.removeBalance(15)
             #pay 15
         elif (event_code == 26):
-            pass
+            player.movePlayer(jumpToTile = 23, passGoViable = True)
             #go to QVC
         elif (event_code == 27):
-            pass
+            player.movePlayer(jumpToTile = 39, passGoViable = True)
             #go to Goodwrench service plus
         elif (event_code == 28):
-            pass
+            player.movePlayer(jumpToTile = 15, passGoViable = True)
             #go to Charlotte Motor Speedway
         elif (event_code == 31):
             player.addBalance(50)
             #gain $50
         elif (event_code == 32):
-            pass
+            player.movePlayer(jumpToTile = player.nearestSpeedway(), passGoViable = True)
+            
+            # MAKE SURE TO HANDLE PAYING 10x PROPERTY VALUE OR GOING TO AUCTION
             #go to nearest speedway. Pay 10x of dice value or buy property
     
     #creates a pop_up message when triggered to show player the event card message
