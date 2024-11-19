@@ -26,7 +26,7 @@ class Auction:
         self.current_player_index = current_player_index
         self.running = True
         self.exceded = False
-        self.property_image = pygame.image.load(auction_property.image)  # Load image for property
+        self.property_image = pygame.image.load(self.auction_property.image)  # Load image for property
 
     def load_property_image(self):
         """Load the image for the auctioned property (placeholder here)."""
@@ -63,7 +63,7 @@ class Auction:
         if self.bids:
             winner = self.players[self.current_player_index]  # Last bid is the winning bid
             self.players[self.current_player_index].removeBalance(self.current_bid)
-            self.players[self.current_player_index].addProperty(auction_property)
+            self.players[self.current_player_index].addProperty(self.auction_property)
             print(f"Winner: {winner.playerName} - Balance: {winner.playerBalance} - Added Property: {winner.propertyList}")
 
         

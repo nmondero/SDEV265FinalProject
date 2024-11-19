@@ -17,7 +17,7 @@ pygame.display.set_caption("Speedopoly")
 from menu import Menu
 from p_menu import Player_Menu
 from number_players import PlayerNumberMenu  
-from classes import Dice, Event, Player, PlayerTokenImage, Tile
+from classes import Dice, Event, Player, PlayerTokenImage, Tile, Property, ColorProperty
 from turn_order import show_turn_message
 from auction import Auction
 
@@ -105,7 +105,7 @@ while running:
                     turn_displayed = False #resets to show new player message
                 
                 elif event.key == pygame.K_a:
-                    auction_instance = Auction(players, property1 = Property(1), current_turn)
+                    auction_instance = Auction(players, Property(1), current_turn)
                     running_auction=True
 
             # Handle clicking events
