@@ -34,8 +34,6 @@ class Dice:
         #Rectangles for positioning images
         self.dice1Rect = self.dice1Img.get_rect(top = 10, bottom = 60, left = 690, right = 740)
         self.dice2Rect = self.dice2Img.get_rect(top = 10, bottom = 60, left = 740, right = 790)
-
-
     
     #Roll random dice values, change dice images, then return the dice roll as a tuple of ints
     def roll(self) -> Dice:
@@ -98,12 +96,12 @@ class Player:
     def drawScore(self, screen: pygame.Surface):
         screen.blit(self.scoreTextSurface, self.scoreTextRect)
 
-    def putInJail(self): 
+    def putInJail(self, jailTile: Jail): 
         self.movePlayer(jumpToTile = 10, passGoViable = False)
         self.isInJail = True
         self.turnsLeftInJail = 3
 
-    def releaseFromJail(self):
+    def releaseFromJail(self, jailTile: Jail):
         self.isInJail = False
 
     #Add a property to player's property list
@@ -262,13 +260,18 @@ class Player:
         elif index > 30 and index < 40: # Right row of board --> offset x to the right
             self.token.moveToken(tileRect.centerx + offset, tileRect.centery)
 
-        else: # Player is on the jail tile
+        elif isinstance(tile, Jail): # Player is on the jail tile
+            if self.isInJail:
+                offset = 10 * len(tile.playersInJail)
             '''
             if self.isInJail: # If player is currently jailed --> offset y down starting from the top right based on how many players on the jail tile are currently jailed
                 for player in gameBoard.playerTurnQueue:
                     if player.isInJail
                 self.token.moveToken(tileRect.right - 30, tileRect.top + 30 + offset) #NOTE: need to make sure to change offset based on number of player on jail tile that are actually jailed
             '''
+
+    def moveToken(self, fromTile: Tile, toTile: Tile):
+        pass
             
 
     # Determines if the player owns the full property set of the specified color
@@ -599,8 +602,20 @@ class Railroad(Property):
                 if railroadCount == 4:
                     break;
         return 25 * pow(2, railroadCount - 1) # Corresponds to 25, 50, 100, 200 at 1, 2, 3, and 4 railroads owned
+    
+class Jail(Tile):
+    def __init__(self, playersOnTile: Optional[List[Player]] = None, playersInJail: Optional[List[Player]] = None):
+        super.__init__(10, playersOnTile)
+        self.playersInJail = playersInJail if playersInJail is not None else []
 
 
+
+    def arrest(self, player: Player):
+        self.playersInJail.append(player)
+
+    def release(self, player: Player):
+        self.playersInJail.remove(player)
+        
 class Event:
     def __init__(self):
         self.events = {1:"Elected to racing hall of fame. Collect $100",2:"Sign associate sponsorship. Collect $100",3:"First Union race fund matures! Collect $100",4:"Won first pole position! Collect $20",5:"Collect $50 from ever player for guest passes.",6:"Go to jail!",7:"Get out of Jail free!",8:"You are assessed for track repairs. Pay $40 for every upgrade you've made.",9:"Car needs new tires. Pay $100",10:"Speeding on pit row. Pay $50",
