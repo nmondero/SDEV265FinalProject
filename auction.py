@@ -10,7 +10,7 @@ BUTTON_TEXT_COLOR = (50, 50, 50)
 BID_BUTTONS = [10, 25, 50]
 
 class Auction:
-    def __init__(self, players, property_id, current_player_index):
+    def __init__(self, players, property1, current_player_index):
         """
         Initializes the auction.
 
@@ -20,13 +20,13 @@ class Auction:
             current_player_index (int): The index of the player starting the auction.
         """
         self.players = players
-        self.property = property
+        self.auction_property = property1
         self.current_bid = 0
         self.bids = []
         self.current_player_index = current_player_index
         self.running = True
         self.exceded = False
-        self.property_image = pygame.image.load(Property.PROPERTY_NUM_TO_INFO[property_id]["Image"])  # Load image for property
+        self.property_image = pygame.image.load(auction_property.image)  # Load image for property
 
     def load_property_image(self):
         """Load the image for the auctioned property (placeholder here)."""
@@ -63,8 +63,8 @@ class Auction:
         if self.bids:
             winner = self.players[self.current_player_index]  # Last bid is the winning bid
             self.players[self.current_player_index].removeBalance(self.current_bid)
-            #self.players[self.current_player_index].addProperty(Auction_property)
-            print(f"Winner: {winner.playerName} - Balance: {winner.playerBalance}")
+            self.players[self.current_player_index].addProperty(auction_property)
+            print(f"Winner: {winner.playerName} - Balance: {winner.playerBalance} - Added Property: {winner.propertyList}")
 
         
 

@@ -105,8 +105,7 @@ while running:
                     turn_displayed = False #resets to show new player message
                 
                 elif event.key == pygame.K_a:
-                    property_num = 1
-                    auction_instance = Auction(players, property_num, current_turn)
+                    auction_instance = Auction(players, property1 = Property(1), current_turn)
                     running_auction=True
 
             # Handle clicking events
