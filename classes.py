@@ -475,42 +475,43 @@ class Property(Tile):
     # Railroad: rent will be determined with number of railroads in possession of the owning player - 1 as a "Rent" index
     # Utility: rent will be determined with number of utilities in possession of the owning player -1 as a "Rent" index. The "Rent" values are multipliers, NOT rent itself
     PROPERTY_NUM_TO_INFO = {
-        1: {"BuyPrice" : 60, "Rent": (2, 10, 30, 90, 160, 250), "SellValue": 30}, # First Union
-        3: {"BuyPrice" : 60, "Rent": (4, 20, 60, 180, 320, 450), "SellValue": 30}, # Caterpillar
-        5: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100}, # California Speedway
-        6: {"BuyPrice" : 100, "Rent": (6, 30, 90, 270, 400, 550), "SellValue": 50}, # Lowe's Home Improvement Warehouse
-        8: {"BuyPrice" : 100, "Rent": (6, 30, 90, 270, 400, 550), "SellValue": 50}, # Skittles
-        9: {"BuyPrice" : 120, "Rent": (8, 40, 100, 300, 450, 600), "SellValue": 60}, # Cartoon Network
-        11: {"BuyPrice" : 140, "Rent": (10, 50, 150, 450, 625, 750), "SellValue": 70}, # Bellsouth
-        12: {"BuyPrice" : 150, "Rent": (4, 10), "SellValue": 75}, # The Phone Company
-        13: {"BuyPrice" : 140, "Rent": (10, 50, 150, 450, 625, 750), "SellValue": 70}, # QVC
-        14: {"BuyPrice" : 160, "Rent": (12, 60, 180, 500, 700, 900), "SellValue": 80}, # Kodak Gold Film
-        15: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100}, # Talladega Speedway
-        16: {"BuyPrice" : 180, "Rent": (14, 70, 200, 550, 750, 950), "SellValue": 90}, # Interstate Batteries
-        18: {"BuyPrice" : 180, "Rent": (14, 70, 200, 550, 750, 950), "SellValue": 90}, # Exide Batteries
-        19: {"BuyPrice" : 200, "Rent": (16, 80, 220, 600, 800, 1000), "SellValue": 100}, # The Family Channel Primestar
-        21: {"BuyPrice" : 220, "Rent": (18, 90, 250, 700, 875, 1050), "SellValue": 110}, # Circuit City
-        23: {"BuyPrice" : 220, "Rent": (18, 90, 250, 700, 875, 1050), "SellValue": 110}, # Parts America
-        24: {"BuyPrice" : 240, "Rent": (20, 100, 300, 750, 925, 1100), "SellValue": 120}, # Pennzoil
-        25: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100}, # Charlotte Speedway
-        26: {"BuyPrice" : 260, "Rent": (22, 110, 330, 800, 975, 1150), "SellValue": 130}, # Texaco 
-        27: {"BuyPrice" : 260, "Rent": (22, 110, 330, 800, 975, 1150), "SellValue": 130}, # Tide
-        28: {"BuyPrice" : 150, "Rent": (4, 10), "SellValue": 75}, # The Gas Company
-        29: {"BuyPrice" : 280, "Rent": (24, 120, 360, 850, 1025, 1200), "SellValue": 140}, # Ford Quality Care
-        31: {"BuyPrice" : 300, "Rent": (26, 130, 390, 900, 1100, 1275), "SellValue": 150}, # Valvoline
-        32: {"BuyPrice" : 300, "Rent": (26, 130, 390, 900, 1100, 1275), "SellValue": 150}, # Kellog's
-        34: {"BuyPrice" : 320, "Rent": (28, 150, 450, 1000, 1200, 1400), "SellValue": 160}, # Mcdonald's
-        35: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100}, # Daytona Speedway
-        37: {"BuyPrice" : 350, "Rent": (35, 175, 500, 1100, 1300, 1500), "SellValue": 175}, # Du Pont Automotive Finishes
-        39: {"BuyPrice" : 400, "Rent": (50, 200, 600, 1400, 1700, 2000), "SellValue": 200} # Goodwrench Service Plus
+        1: {"BuyPrice" : 60, "Rent": (2, 10, 30, 90, 160, 250), "SellValue": 30, "Image":"images/properties/P22.png"}, # First Union
+        3: {"BuyPrice" : 60, "Rent": (4, 20, 60, 180, 320, 450), "SellValue": 30, "Image":"images/properties/P13.png"}, # Caterpillar
+        5: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100, "Image":"images/properties/P14.png"}, # California Speedway
+        6: {"BuyPrice" : 100, "Rent": (6, 30, 90, 270, 400, 550), "SellValue": 50, "Image":"images/properties/P18.png"}, # Lowe's Home Improvement Warehouse
+        8: {"BuyPrice" : 100, "Rent": (6, 30, 90, 270, 400, 550), "SellValue": 50, "Image":"images/properties/P24.png"}, # Skittles
+        9: {"BuyPrice" : 120, "Rent": (8, 40, 100, 300, 450, 600), "SellValue": 60, "Image":"images/properties/P16.png"}, # Cartoon Network
+        11: {"BuyPrice" : 140, "Rent": (10, 50, 150, 450, 625, 750), "SellValue": 70, "Image":"images/properties/P17.png"}, # Bellsouth
+        12: {"BuyPrice" : 150, "Rent": (4, 10), "SellValue": 75, "Image":"images/properties/P28.png"}, # The Phone Company
+        13: {"BuyPrice" : 140, "Rent": (10, 50, 150, 450, 625, 750), "SellValue": 70, "Image":"images/properties/P1.png"}, # QVC
+        14: {"BuyPrice" : 160, "Rent": (12, 60, 180, 500, 700, 900), "SellValue": 80, "Image":"images/properties/P7.png"}, # Kodak Gold Film
+        15: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100, "Image":"images/properties/P23.png"}, # Talladega Speedway
+        16: {"BuyPrice" : 180, "Rent": (14, 70, 200, 550, 750, 950), "SellValue": 90, "Image":"images/properties/P9.png"}, # Interstate Batteries
+        18: {"BuyPrice" : 180, "Rent": (14, 70, 200, 550, 750, 950), "SellValue": 90, "Image":"images/properties/P8.png"}, # Exide Batteries
+        19: {"BuyPrice" : 200, "Rent": (16, 80, 220, 600, 800, 1000), "SellValue": 100, "Image":"images/properties/P10.png"}, # The Family Channel Primestar
+        21: {"BuyPrice" : 220, "Rent": (18, 90, 250, 700, 875, 1050), "SellValue": 110, "Image":"images/properties/P5.png"}, # Circuit City
+        23: {"BuyPrice" : 220, "Rent": (18, 90, 250, 700, 875, 1050), "SellValue": 110, "Image":"images/properties/P15.png"}, # Parts America
+        24: {"BuyPrice" : 240, "Rent": (20, 100, 300, 750, 925, 1100), "SellValue": 120, "Image":"images/properties/P6.png"}, # Pennzoil
+        25: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100, "Image":"images/properties/P27.png"}, # Charlotte Speedway
+        26: {"BuyPrice" : 260, "Rent": (22, 110, 330, 800, 975, 1150), "SellValue": 130, "Image":"images/properties/P11.png"}, # Texaco 
+        27: {"BuyPrice" : 260, "Rent": (22, 110, 330, 800, 975, 1150), "SellValue": 130, "Image":"images/properties/P12.png"}, # Tide
+        28: {"BuyPrice" : 150, "Rent": (4, 10), "SellValue": 75, "Image":"images/properties/P25.png"}, # The Gas Company
+        29: {"BuyPrice" : 280, "Rent": (24, 120, 360, 850, 1025, 1200), "SellValue": 140, "Image":"images/properties/P21.png"}, # Ford Quality Care
+        31: {"BuyPrice" : 300, "Rent": (26, 130, 390, 900, 1100, 1275), "SellValue": 150, "Image":"images/properties/P26.png"}, # Valvoline
+        32: {"BuyPrice" : 300, "Rent": (26, 130, 390, 900, 1100, 1275), "SellValue": 150, "Image":"images/properties/P3.png"}, # Kellog's
+        34: {"BuyPrice" : 320, "Rent": (28, 150, 450, 1000, 1200, 1400), "SellValue": 160, "Image":"images/properties/P19.png"}, # Mcdonald's
+        35: {"BuyPrice" : 200, "Rent": (25, 50, 100, 200), "SellValue": 100, "Image":"images/properties/P2.png"}, # Daytona Speedway
+        37: {"BuyPrice" : 350, "Rent": (35, 175, 500, 1100, 1300, 1500), "SellValue": 175, "Image":"images/properties/P4.png"}, # Du Pont Automotive Finishes
+        39: {"BuyPrice" : 400, "Rent": (50, 200, 600, 1400, 1700, 2000), "SellValue": 200, "Image":"images/properties/P20.png"} # Goodwrench Service Plus
     }
     
     # Property Constructor
     def __init__ (self, tileNumber: int, playersOnTile: Optional[List[Player]] = None):
         super().__init__(tileNumber, playersOnTile)
-        self.buyPrice = self.TILE_NUM_TO_INFO[tileNumber]["BuyPrice"]
-        self.rentList = self.TILE_NUM_TO_INFO[tileNumber]["Rent"]
-        self.sellValue = self.TILE_NUM_TO_INFO[tileNumber]["SellValue"]
+        self.buyPrice = self.PROPERTY_NUM_TO_INFO[tileNumber]["BuyPrice"]
+        self.rentList = self.PROPERTY_NUM_TO_INFO[tileNumber]["Rent"]
+        self.sellValue = self.PROPERTY_NUM_TO_INFO[tileNumber]["SellValue"]
+        self.image = self.PROPERTY_NUM_TO_INFO[tileNumber]["Image"]
 
     # Abstract getRent function
     def getRent(self, owner: Player) -> int:

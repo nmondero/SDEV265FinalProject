@@ -19,6 +19,7 @@ from p_menu import Player_Menu
 from number_players import PlayerNumberMenu  
 from classes import Dice, Event, Player, PlayerTokenImage, Tile
 from turn_order import show_turn_message
+from auction import Auction
 
 # Establish game clock
 clock = pygame.time.Clock()
@@ -33,7 +34,7 @@ players = []
 current_turn = 0 #tracks the current player's turn
 turn_displayed = False # track if turn message has been displayed
 running = True
-
+running_auction = False
 # Trying to fit the game board to the screen here (this orientation seems good)
 board_surf = pygame.transform.scale(pygame.image.load("images/GameBoard.png").convert(), (550, 550))
 board_rect = pygame.Rect(125, 125, 550, 550)
@@ -102,6 +103,11 @@ while running:
                 elif event.key == pygame.K_LSHIFT:  # Press LSHIFT to advance turn
                     current_turn = (current_turn + 1) % len(players)  # Move to the next player
                     turn_displayed = False #resets to show new player message
+                
+                elif event.key == pygame.K_a:
+                    property_num = 1
+                    auction_instance = Auction(players, property_num, current_turn)
+                    running_auction=True
 
             # Handle clicking events
             elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -131,7 +137,12 @@ while running:
         #draw other game elements
         dice.draw(screen)
         card_popup.draw(screen)
-
+        
+        if running_auction:
+            if auction_instance.is_running():
+                auction_instance.auction_screen(screen)
+                del auction_instance
+                running_auction = False
 
        # Show the current player's turn message if not already displayed, must be after all initial elements has been drawn.
         if not turn_displayed:
