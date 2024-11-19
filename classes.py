@@ -177,7 +177,7 @@ class Player:
         self.lastDiceResult = dice.roll.result() # The only reason I am keeping track of the last dice roll result is for the Utilities getRent function
 
         # Decide whether to increment consecutive doubles
-        doubles = dice.isDoubles
+        doubles = dice.isDoubles()
         if doubles:
             self.consecutiveDoubles += 1
         else:
