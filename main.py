@@ -20,6 +20,7 @@ from number_players import PlayerNumberMenu
 from classes import Dice, Event, Player, PlayerTokenImage, Tile, Property, ColorProperty
 from turn_order import show_turn_message
 from auction import Auction
+from button import Buttons
 
 # Establish game clock
 clock = pygame.time.Clock()
@@ -35,9 +36,14 @@ current_turn = 0 #tracks the current player's turn
 turn_displayed = False # track if turn message has been displayed
 running = True
 running_auction = False
+buttons = Buttons(screen)  # Create the buttons
+
+
+
 # Trying to fit the game board to the screen here (this orientation seems good)
 board_surf = pygame.transform.scale(pygame.image.load("images/GameBoard.png").convert(), (550, 550))
 board_rect = pygame.Rect(125, 125, 550, 550)
+
 
 
 while running:
@@ -78,16 +84,15 @@ while running:
                         print("Name: " + player.playerName)
                         print("Token " + player.token.tokenName)
 
-
                     tiles = []
                     for i in range(40):
                         tiles.append(Tile(i))
                     
-                        
-                        
-                        
+                    # Initialize buttons on the board after player setup
+                    buttons = Buttons(screen)    
+                                            
 
-            # Handle key pressing events
+           # Handle key pressing events
             elif event.type == pygame.KEYDOWN:
                 print("Input detected")
                 if event.key == pygame.K_RETURN:
@@ -137,6 +142,9 @@ while running:
         dice.draw(screen)
         card_popup.draw(screen)
         
+        # Draw buttons
+        buttons.draw_buttons()
+
         if running_auction:
             if auction_instance.is_running():
                 auction_instance.auction_screen(screen)
