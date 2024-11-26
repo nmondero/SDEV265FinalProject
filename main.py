@@ -45,8 +45,8 @@ buttons = Buttons(screen)  # Create the buttons
 board_surf = pygame.transform.scale(pygame.image.load("images/GameBoard.png").convert(), (550, 550))
 board_rect = pygame.Rect(125, 125, 550, 550)
 
-
-
+didImove = False
+diceResult = 0
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -90,7 +90,9 @@ while running:
                         tiles.append(Tile(i))
                     
                     # Initialize buttons on the board after player setup
-                    buttons = Buttons(screen)    
+                    buttons = Buttons(screen)
+                    gameboard = Board(screen, players)
+                    gameboard.assignPlayerPosition(players)    
                                             
 
            # Handle key pressing events
@@ -98,9 +100,15 @@ while running:
                 print("Input detected")
                 if event.key == pygame.K_RETURN:
                     dice.roll()
-                    print(f"Dice Result: {dice.result()}")
+                    diceResult = dice.result()
+                    print(f"Dice Result: {diceResult}")
+                    
+                    
                     if dice.isDoubles():
                         print("Doubles!")
+                    current_turn = (current_turn + 1) % len(players)  # Move to the next player
+                    turn_displayed = False #resets to show new player message
+                    didImove = True
 
                 elif event.key == pygame.K_SPACE:
                     card_popup.show_event_message(random.randint(1, 32))
@@ -109,6 +117,7 @@ while running:
                 elif event.key == pygame.K_LSHIFT:  # Press LSHIFT to advance turn
                     current_turn = (current_turn + 1) % len(players)  # Move to the next player
                     turn_displayed = False #resets to show new player message
+                    didImove = True
                 
                 elif event.key == pygame.K_a:
                     auction_instance = Auction(players, Property(1), current_turn)
@@ -138,8 +147,11 @@ while running:
 
         for player in players:
             player.drawScore(screen)
-        players[0].draw(screen, 50, 50) #Player Drawing
-        
+        if(didImove):
+            gameboard.movePlayer(players, current_turn, moveAmount=diceResult)
+            didImove=False
+        else:
+            gameboard.drawPlayers(players)
         #draw other game elements
         dice.draw(screen)
         card_popup.draw(screen)
