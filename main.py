@@ -17,7 +17,7 @@ pygame.display.set_caption("Speedopoly")
 from menu import Menu
 from p_menu import Player_Menu
 from number_players import PlayerNumberMenu  
-from classes import Dice, Event, Player, PlayerTokenImage, Tile, Property, ColorProperty
+from classes import Board, Dice, Event, Player, PlayerTokenImage, Tile, Property, ColorProperty
 from turn_order import show_turn_message
 from auction import Auction
 from button import Buttons
@@ -37,6 +37,7 @@ turn_displayed = False # track if turn message has been displayed
 running = True
 running_auction = False
 buttons = Buttons(screen)  # Create the buttons
+
 
 
 
@@ -137,6 +138,7 @@ while running:
 
         for player in players:
             player.drawScore(screen)
+        players[0].draw(screen, 50, 50) #Player Drawing
         
         #draw other game elements
         dice.draw(screen)
