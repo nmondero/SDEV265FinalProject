@@ -95,6 +95,27 @@ class Player:
 
     def drawScore(self, screen: pygame.Surface):
         screen.blit(self.scoreTextSurface, self.scoreTextRect)
+    
+    def draw(self, screen: pygame.Surface, x: int, y: int, outline_color: tuple = (0,0,0)):
+        circle_diameter = 24  # Diameter of the circle
+        outline_thickness = 1  # Outline thickness
+
+        # Create the circle surface and scale the image to fit
+        circle_surface = pygame.Surface((circle_diameter, circle_diameter), pygame.SRCALPHA)
+        image = pygame.transform.scale(self.token.tokenImg, (circle_diameter, circle_diameter))
+        
+        # Draw the inner white circle for the background
+        pygame.draw.circle(circle_surface, (255, 255, 255, 255), (circle_diameter // 2, circle_diameter // 2), circle_diameter // 2)
+        
+        # Blit the scaled image onto the circular surface
+        circle_surface.blit(image, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
+        
+        # Draw the outline on the main screen
+        pygame.draw.circle(screen, outline_color, (x, y), (circle_diameter // 2) + outline_thickness)
+        pygame.draw.circle(screen, (255,255,255), (x, y), (circle_diameter // 2))
+        
+        # Draw the image with the circular background on the main screen
+        screen.blit(circle_surface, (x - circle_diameter // 2, y - circle_diameter // 2))
 
     def putInJail(self, jailTile: Jail): 
         self.movePlayer(jumpToTile = 10, passGoViable = False)
@@ -106,7 +127,7 @@ class Player:
 
     #Add a property to player's property list
     def addProperty(self, propertyToAdd: Property) -> None:
-        self.propertyList.append(propertyToAdd) 
+        self.propertyList.append(propertyToAdd)
 
     #Remove a property from player's property list
     def removeProperty(self, propertyToRemove: Property) -> None:
@@ -249,13 +270,13 @@ class Player:
         initialTile.playersOnTile.remove(self) # Remove the player from the initial tile 
 
         if (index > 0 and index < 10) or index == 0 or index == 20 or index == 30: # Bottom row of board OR non-jail corner tile --> offset y downwards
-            self.token.moveToken(tileRect.centerx, tileRect.centery + offset)
+            self.draw(tileRect.centerx, tileRect.centery + offset)
 
         elif index > 10 and index < 20: # Left row of board --> offset x to the left
-            self.token.moveToken(tileRect.centerx - offset, tileRect.centery)
+            self.draw(tileRect.centerx - offset, tileRect.centery)
 
         elif index > 20 and index < 30: # Top row of board --> offset y upwards
-            self.token.moveToken(tileRect.centerx, tileRect.centery - offset)
+            self.draw(tileRect.centerx, tileRect.centery - offset)
 
         elif index > 30 and index < 40: # Right row of board --> offset x to the right
             self.token.moveToken(tileRect.centerx + offset, tileRect.centery)
