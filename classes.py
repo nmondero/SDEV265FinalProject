@@ -259,16 +259,21 @@ class Player:
 
         elif index > 30 and index < 40: # Right row of board --> offset x to the right
             self.token.moveToken(tileRect.centerx + offset, tileRect.centery)
+        
+        ''' This commented version was going for a more detailed version of displaying the Jail, we are going with the simpler version
 
         elif isinstance(tile, Jail): # Player is on the jail tile
             if self.isInJail:
                 offset = 10 * len(tile.playersInJail)
-            '''
+            
             if self.isInJail: # If player is currently jailed --> offset y down starting from the top right based on how many players on the jail tile are currently jailed
                 for player in gameBoard.playerTurnQueue:
                     if player.isInJail
                 self.token.moveToken(tileRect.right - 30, tileRect.top + 30 + offset) #NOTE: need to make sure to change offset based on number of player on jail tile that are actually jailed
-            '''
+
+        Following is the simpler version...'''
+
+        elif index
 
     def moveToken(self, fromTile: Tile, toTile: Tile):
         pass
