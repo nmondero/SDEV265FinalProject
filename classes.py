@@ -106,7 +106,7 @@ class Player:
 
     #Add a property to player's property list
     def addProperty(self, propertyToAdd: Property) -> None:
-        self.propertyList += propertyToAdd
+        self.propertyList.append(propertyToAdd) 
 
     #Remove a property from player's property list
     def removeProperty(self, propertyToRemove: Property) -> None:
