@@ -271,6 +271,8 @@ class Board:
     EVENT_INDEXES = (2, 7, 17, 22, 33)
     TAX_INDEXES = (4, 38)
     JAIL_INDEX = 10
+    GO_INDEX = 0
+    FREE_PARKING_INDEX = 20
     GO_TO_JAIL_INDEX = 30
     
     def __init__(self, screen: pygame.Surface, playerTurnQueue: List[Player], turnNumber: int = 1, eventCardDeck: List[int] = None):
@@ -282,8 +284,20 @@ class Board:
                 self.tileArray.append(Utility(i))
             elif i in self.SPEEDWAY_INDEXES:
                 self.tileArray.append(Railroad(i))
-            elif i == 10:
+            elif i == self.JAIL_INDEX:
                 self.tileArray.append(Jail())
+            elif i == self.GO_INDEX:
+                self.tileArray.append(Tile(i))
+            elif i == self.FREE_PARKING_INDEX:
+                self.tileArray.append(Tile(i))
+            elif i == self.GO_TO_JAIL_INDEX:
+                self.tileArray.append(Tile(i))
+            elif i in self.EVENT_INDEXES:  # Event card spaces
+                self.tileArray.append(Tile(i))
+            elif i in self.TAX_INDEXES:
+                self.tileArray.append(Tile(i))
+            else:
+                self.tileArray.append(Tile(i))
         self.playerTurnQueue = playerTurnQueue # We are looking at this like a queue. Current player is the player in position 0. At end of turn, remove at position 0 and append it to the end
         self.turnNumber = turnNumber
         self.GameActive = True
@@ -311,6 +325,7 @@ class Board:
     
     def assignPlayerPosition(self, players: Player[Player]):
         for player in players:
+            player.playerPosition = 0  # Explicitly set starting position
             tile = self.tileArray[0]
             tile.playersOnTile.append(player)
             
@@ -322,16 +337,13 @@ class Board:
             # Determine the magnitude of token offset from center of tile (before adding it to the tile itself) 
             tileRect = tile.tileRect                   
             index = tile.tileNumber # Get the tile's index (so we know what side of the board its on)
-            if (index > 0 and index < 10) or index == 0 or index == 20 or index == 30: # Bottom row of board OR non-jail corner tile --> offset y downwards
+            if 0 <= index <= 9:  # Bottom row only
                 player.draw(self.screen, tileRect.centerx, tileRect.centery + offset)
-
-            elif index > 10 and index < 20: # Left row of board --> offset x to the left
+            elif 10 <= index <= 19:  # Left row
                 player.draw(self.screen, tileRect.centerx - offset, tileRect.centery)
-
-            elif index > 20 and index < 30: # Top row of board --> offset y upwards
+            elif 20 <= index <= 29:  # Top row
                 player.draw(self.screen, tileRect.centerx, tileRect.centery - offset)
-
-            elif index > 30 and index < 40: # Right row of board --> offset x to the right
+            elif 30 <= index <= 39:  # Right row
                 player.draw(self.screen, tileRect.centerx + offset, tileRect.centery)
     
     def movePlayer(self, players: Player[Player], turn: int = 0, moveAmount: Optional[int] = None, jumpToTile: Optional[int] = None, passGoViable: Optional[bool] = None) -> None:
@@ -352,10 +364,11 @@ class Board:
         if moveAmount != None: 
             print(f"Move Amount: {moveAmount} and I started on tile: {players[turn].playerPosition}")
             players[turn].playerPosition += moveAmount
-            #Passing Go condition
-            if players[turn].playerPosition > 39: #39 is the last tile before the Go tile
+            #Passing Go condition - Apply modulo BEFORE any other operations
+            if players[turn].playerPosition >= 40: #Changed from > 39 to >= 40 for clarity
                 players[turn].playerPosition %= 40
                 players[turn].playerBalance += 200
+            print(f"I landed on tile: {players[turn].playerPosition}")
 
             #If the parameter indicated a tile to "teleport" to...
         else: 
@@ -363,30 +376,33 @@ class Board:
             #Passing Go check when jumping to a lower tile index
             if initialPosition > players[turn].playerPosition and passGoViable:
                 players[turn].playerBalance += 200
-
+                
         # Handle moving the player token rectangle
         tile = self.tileArray[players[turn].playerPosition] # Get the tile that the player landed on
-        offset = 10 * len(tile.playersOnTile) # Determine the magnitude of token offset from center of tile (before adding it to the tile itself) 
         tileRect = tile.tileRect
         index = tile.tileNumber # Get the tile's index (so we know what side of the board its on)
         
+        # First update the player lists
         tile.playersOnTile.append(players[turn]) # Add the player to the tile landed on
-        if(len(initialTile.playersOnTile) == 0):
-            pass
-        else:
+        if(len(initialTile.playersOnTile) > 0):
             initialTile.playersOnTile.remove(players[turn])
+        
+        # Now calculate offset based on player's position in the list
+        offset = 10 * tile.playersOnTile.index(players[turn]) # Use index instead of len to get this player's specific offset
+        
+        # Debug prints
+        print(f"Players on initial tile {initialPosition}: {[p.playerName for p in initialTile.playersOnTile]}")
+        print(f"Players on new tile {players[turn].playerPosition}: {[p.playerName for p in tile.playersOnTile]}")
+           
             
 
-        if (index > 0 and index < 10) or index == 0 or index == 20 or index == 30: # Bottom row of board OR non-jail corner tile --> offset y downwards
+        if 0 <= index <= 9:  # Bottom row only
             players[turn].draw(self.screen, tileRect.centerx, tileRect.centery + offset)
-
-        elif index > 10 and index < 20: # Left row of board --> offset x to the left
+        elif 10 <= index <= 19:  # Left row
             players[turn].draw(self.screen, tileRect.centerx - offset, tileRect.centery)
-
-        elif index > 20 and index < 30: # Top row of board --> offset y upwards
+        elif 20 <= index <= 29:  # Top row
             players[turn].draw(self.screen, tileRect.centerx, tileRect.centery - offset)
-
-        elif index > 30 and index < 40: # Right row of board --> offset x to the right
+        elif 30 <= index <= 39:  # Right row
             players[turn].draw(self.screen, tileRect.centerx + offset, tileRect.centery)
         '''
         elif isinstance(tile, Jail): # Player is on the jail tile

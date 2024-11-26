@@ -106,8 +106,6 @@ while running:
                     
                     if dice.isDoubles():
                         print("Doubles!")
-                    current_turn = (current_turn + 1) % len(players)  # Move to the next player
-                    turn_displayed = False #resets to show new player message
                     didImove = True
 
                 elif event.key == pygame.K_SPACE:
@@ -147,18 +145,34 @@ while running:
 
         for player in players:
             player.drawScore(screen)
-        if(didImove):
-            gameboard.movePlayer(players, current_turn, moveAmount=diceResult)
-            didImove=False
-        else:
+            
+        #BEGIN MAIN PLAYING LOOP
+        
+        
+        input = 0
+        while(input!=4): #input 4 is the end turn button
+            #Put everything that needs to be refreshed on the screen here
+            screen.blit(board_surf, board_rect)
             gameboard.drawPlayers(players)
-        #draw other game elements
-        dice.draw(screen)
+            buttons.draw_buttons()
+            
+            pygame.display.update()
+            input = buttons.getInput()
+            if input == 1:
+                dice.roll()
+                dice.draw(screen)
+                diceResult = dice.result()
+                print(f"Dice Result: {diceResult}")
+                gameboard.movePlayer(players, current_turn, moveAmount=diceResult)
+            elif input == 2:
+                pass
+            elif input == 3:
+                pass
+            elif input == 4:
+                current_turn = (current_turn + 1) % len(players)  # Move to the next player
+                turn_displayed = True #resets to show new player message
         card_popup.draw(screen)
         
-        # Draw buttons
-        buttons.draw_buttons()
-
         if running_auction:
             if auction_instance.is_running():
                 auction_instance.auction_screen(screen)
