@@ -39,11 +39,10 @@ class Buttons:
         
     def draw_buttons(self):
         # Clear the button area for refreshing
-        button_area_rect = pygame.Rect(0, self.screen.get_height() - 100, self.screen.get_width(), 100)
+        button_area_rect = pygame.Rect(0, self.screen.get_height() - 100, self.screen.get_width(), 150)
         self.screen.fill((200, 200, 200), button_area_rect)  # Use the same background color
 
         #draws all the buttons on the window
-        print(f"Dice Button: {self.canIrollDice}, End Turn Button: {self.canIendTurn}")
         if self.canIrollDice:
             self.screen.blit(self.dice_text, (self.roll_dice_button.centerx - self.dice_text.get_width() // 2, self.roll_dice_button.centery - self.dice_text.get_height() // 2))
         if self.canIendTurn:

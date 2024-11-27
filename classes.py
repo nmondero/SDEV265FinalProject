@@ -268,7 +268,7 @@ class Board:
     COLOR_PROPERTY_INDEXES = (1, 3, 5, 6, 8, 9, 11, 13, 14, 16, 18, 19, 21, 23, 24, 26, 27, 29, 31, 32, 34, 37, 39)
     UTILITIES_INDEXES = (12, 28)
     SPEEDWAY_INDEXES = (5, 15, 25, 35)
-    EVENT_INDEXES = (2, 7, 17, 22, 33)
+    EVENT_INDEXES = (2, 7, 17, 22, 33, 36)
     TAX_INDEXES = (4, 38)
     JAIL_INDEX = 10
     GO_INDEX = 0
@@ -389,10 +389,6 @@ class Board:
         
         # Now calculate offset based on player's position in the list
         offset = 10 * tile.playersOnTile.index(players[turn]) # Use index instead of len to get this player's specific offset
-        
-        # Debug prints
-        print(f"Players on initial tile {initialPosition}: {[p.playerName for p in initialTile.playersOnTile]}")
-        print(f"Players on new tile {players[turn].playerPosition}: {[p.playerName for p in tile.playersOnTile]}")
            
             
 
@@ -411,11 +407,109 @@ class Board:
             
             if self.isInJail: # If player is currently jailed --> offset y down starting from the top right based on how many players on the jail tile are currently jailed
                 for player in gameBoard.playerTurnQueue:
-                    if player.isInJail
+                    if player.isInJail:
+                        offset += 10
                 self.token.moveToken(tileRect.right - 30, tileRect.top + 30 + offset) #NOTE: need to make sure to change offset based on number of player on jail tile that are actually jailed
             
         '''
+    def show_turn_message(self, player_name):    
+        font = pygame.font.Font(None, 36)
+        text_color = (0, 0, 0)  # Black text
+        background_color = (200, 200, 200)  # Light gray background
 
+        # Render the message and get a centered rect
+        text_surface = font.render(f"{player_name}'s Turn", True, text_color)
+        text_rect = text_surface.get_rect(center=(self.screen.get_width() // 2, 50))  # position above game board
+        
+        # Draw a background rect, then the text
+        pygame.draw.rect(self.screen, background_color, text_rect.inflate(20, 20))  # Slight padding around text
+        self.screen.blit(text_surface, text_rect)
+
+        #update the display to show th message after being called in main loop
+        pygame.display.update()
+        
+    def moveResults(self, players: Player[Player], turn: int)->int:
+        currentPlayer = players[turn]
+        print(f"Current player: {currentPlayer.playerPosition}")
+        if (currentPlayer.playerPosition == self.GO_INDEX) or (currentPlayer.playerPosition == self.JAIL_INDEX) or (currentPlayer.playerPosition == self.FREE_PARKING_INDEX):
+            print("0 - Free space")
+            return 0
+        for property in currentPlayer.propertyList: #Look at all the properties of current player
+            if currentPlayer.playerPosition == property.tileNumber: #If the currentplayer is on their own property
+                    print("0 - My Property")
+                    return 0 #return 0 (do nothing)
+        for pos in self.EVENT_INDEXES: #If player landed on an event tile
+            if currentPlayer.playerPosition == pos:
+                print("2 - Event tile") 
+                return 2
+        for pos in self.TAX_INDEXES: #If player landed on a tax tile
+            if currentPlayer.playerPosition == pos:
+                print("3 - Tax tile")
+                return 3
+        if currentPlayer.playerPosition == self.GO_TO_JAIL_INDEX: #if player landed on go to jail tile
+            print("4 - Go to Jail tile")
+            return 4
+        for player in players: #For all players in the game
+            if player != currentPlayer: #Exclude the current player
+                for property in player.propertyList: #Look at all the properties they own
+                    if currentPlayer.playerPosition == property.tileNumber: #If the currentplayer is on an owned property
+                        print(f"{currentPlayer.playerName} pays ${property.getRent(player)} to {player.playerName}")
+                        currentPlayer.payPlayer(property.getRent(player), player) #Pay the player the rent
+                        print("0 - Already Owned Property")
+                        return 0 #And end the checks
+        print("1 - Unowned Property")
+        return 1
+    
+    def propertyDecision(self, player: Player) -> int:
+        currentPlayer = player
+        property_image = pygame.image.load(self.tileArray[currentPlayer.playerPosition].image)
+        font = pygame.font.SysFont("Arial", 22)
+        
+        self.screen.fill((200, 200, 200))
+
+        self.screen.blit(property_image, (self.screen.get_width() // 2 - property_image.get_width() // 2, 150))
+        
+        balance_text = font.render(f"Current Balance: ${currentPlayer.playerBalance}", True, (0, 0, 0))
+        self.screen.blit(balance_text, (self.screen.get_width() // 2 - balance_text.get_width() // 2, 50))
+        
+        button_width = 100
+        button_height = 50
+        button_gap = 50  # Gap between buttons
+        total_width = button_width * 2 + button_gap
+        start_x = (self.screen.get_width() - total_width) // 2
+
+        # Buy Button
+        buy_button = pygame.Rect(start_x, self.screen.get_height() - 150 + 20, button_width, button_height)
+        pygame.draw.rect(self.screen, (100, 100, 100), buy_button)
+        buy_button_text = font.render(f"Buy", True, (0, 0, 0))
+        self.screen.blit(buy_button_text, (buy_button.centerx - buy_button_text.get_width() // 2, buy_button.centery - buy_button_text.get_height() // 2))
+
+        # Auction Button
+        auction_button = pygame.Rect(start_x + button_width + button_gap, self.screen.get_height() - 150 + 20, button_width, button_height)
+        pygame.draw.rect(self.screen, (100, 100, 100), auction_button)
+        auction_button_text = font.render(f"Auction", True, (0, 0, 0))
+        self.screen.blit(auction_button_text, (auction_button.centerx - auction_button_text.get_width() // 2, auction_button.centery - auction_button_text.get_height() // 2))
+        
+        pygame.display.update()
+        
+        waitforinput = True
+        while(waitforinput):
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pass
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_pos = event.pos
+                    if buy_button.collidepoint(mouse_pos):
+                        waitforinput = False
+                        self.screen.fill((200, 200, 200))
+                        return 0
+                    if auction_button.collidepoint(mouse_pos):
+                        waitforinput = False
+                        self.screen.fill((200, 200, 200))
+                        return 1
+        return 0
+        pass
+    
 class PlayerTokenImage: 
     TOKEN_WIDTH = 20
     TOKEN_HEIGHT = 20

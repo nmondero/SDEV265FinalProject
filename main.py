@@ -18,7 +18,6 @@ from menu import Menu
 from p_menu import Player_Menu
 from number_players import PlayerNumberMenu  
 from classes import Board, Dice, Event, Player, PlayerTokenImage, Tile, Property, ColorProperty
-from turn_order import show_turn_message
 from auction import Auction
 from button import Buttons
 
@@ -143,19 +142,22 @@ while running:
         screen.blit(board_surf, board_rect)
 
 
-        for player in players:
-            player.drawScore(screen)
+        
             
         #BEGIN MAIN PLAYING LOOP
-        
-        
+        #Put anything the needs to be refreshed after a player turn here
+        print(f"\nPlayer: {players[current_turn].playerName}")
         input = 0
+        result = 0
         while(input!=4): #input 4 is the end turn button
-            #Put everything that needs to be refreshed on the screen here
+            #Put everything that needs to be refreshed during a player turn here
             screen.blit(board_surf, board_rect)
             gameboard.drawPlayers(players)
             buttons.draw_buttons()
-            
+            gameboard.show_turn_message(players[current_turn].playerName)
+            for player in players:
+                player.drawScore(screen)
+                
             pygame.display.update()
             input = buttons.getInput()
             if input == 1:
@@ -164,11 +166,27 @@ while running:
                 diceResult = dice.result()
                 print(f"Dice Result: {diceResult}")
                 gameboard.movePlayer(players, current_turn, moveAmount=diceResult)
-            elif input == 2:
+                result = gameboard.moveResults(players, current_turn)
+                if result == 0: #Landed on a free space (visitng jail, go, own property, free parking)
+                    pass
+                elif result == 1: #Landed on an unowned property
+                    if(gameboard.propertyDecision(players[current_turn]) == 1): #Asks if player wants to buy or auction
+                        pass #Auctions
+                    else: #Player wants to buy
+                        players[current_turn].addProperty(gameboard.tileArray[players[current_turn].playerPosition])
+                        players[current_turn].removeBalance(gameboard.tileArray[players[current_turn].playerPosition].buyPrice)
+                        print(f"Bought property for: {gameboard.tileArray[players[current_turn].playerPosition].buyPrice} - New balance: {players[current_turn].playerBalance}")
+                elif result == 2: #Landed on an event tile
+                    pass
+                elif result == 3: #Landed on a tax tile
+                    pass
+                elif result == 4: #Landed on go to jail
+                    pass
+            elif input == 2: #sell property
                 pass
-            elif input == 3:
+            elif input == 3: #Upgrade property
                 pass
-            elif input == 4:
+            elif input == 4: #End turn
                 current_turn = (current_turn + 1) % len(players)  # Move to the next player
                 turn_displayed = True #resets to show new player message
         card_popup.draw(screen)
@@ -178,12 +196,9 @@ while running:
                 auction_instance.auction_screen(screen)
                 del auction_instance
                 running_auction = False
-
-       # Show the current player's turn message if not already displayed, must be after all initial elements has been drawn.
-        if not turn_displayed:
-            show_turn_message(screen, players[current_turn].playerName) #displays the message
-            #turn_displayed = True  # Set to avoid re-displaying on every frame
         
 
     pygame.display.update()  # update the display
     clock.tick(60)  # one while loop 60 times per second
+
+
