@@ -238,14 +238,9 @@ class Player:
 
     # Determines if the player owns the full property set of the specified color
     def ownsPropertySet(self, color: str) -> bool:
-        # Make a set of each property ID in the players propertyList
-        playerPropertyIDs = {}
-        for prop in self.propertyList:
-            playerPropertyIDs.add(prop.tileNumber)
-
         # Check if the player has each property in the color set
         for colorMemberID in ColorProperty.COLOR_GROUPS[color]:
-            if colorMemberID not in playerPropertyIDs:
+            if colorMemberID not in self.propertyList:
                 return False # Return false if no match found
         
         return True # If player had the whole set
@@ -265,7 +260,7 @@ class Player:
         return minIndex
 
 class Board:
-    COLOR_PROPERTY_INDEXES = (1, 3, 5, 6, 8, 9, 11, 13, 14, 16, 18, 19, 21, 23, 24, 26, 27, 29, 31, 32, 34, 37, 39)
+    COLOR_PROPERTY_INDEXES = (1, 3, 6, 8, 9, 11, 13, 14, 16, 18, 19, 21, 23, 24, 26, 27, 29, 31, 32, 34, 37, 39)
     UTILITIES_INDEXES = (12, 28)
     SPEEDWAY_INDEXES = (5, 15, 25, 35)
     EVENT_INDEXES = (2, 7, 17, 22, 33, 36)
@@ -331,6 +326,23 @@ class Board:
             
     def drawPlayers(self, players: Player[Player]):
         offset = 0
+        font = pygame.font.Font(None, 20)  # Use pygame's default font, size 36
+    
+    # Draw player scores in each corner
+        score_positions = [
+            (250,100),     # 2nd position
+            (450,100),     # 3rd position
+            (50, 100),      # 1st position
+            (650,100)     # 4th position
+        ]
+
+        # Draw player scores
+        for i, player in enumerate(players):
+            if i < len(score_positions):  # Make sure we don't exceed available positions
+                score_text = font.render(f"Balance: {player.playerName} - ${player.playerBalance}", True, (0, 0, 0))
+                self.screen.blit(score_text, score_positions[i])
+            
+        #Drawing the players on the board
         for player in players:
             tile = self.tileArray[player.playerPosition] # Get the tile that the player landed on
             offset = 10 * tile.playersOnTile.index(player)
@@ -472,6 +484,9 @@ class Board:
         balance_text = font.render(f"Current Balance: ${currentPlayer.playerBalance}", True, (0, 0, 0))
         self.screen.blit(balance_text, (self.screen.get_width() // 2 - balance_text.get_width() // 2, 50))
         
+        cost_text = font.render(f"Cost: ${self.tileArray[currentPlayer.playerPosition].buyPrice}", True, (0, 0, 0))
+        self.screen.blit(cost_text, (self.screen.get_width() // 2 - cost_text.get_width() // 2, 100))
+
         button_width = 100
         button_height = 50
         button_gap = 50  # Gap between buttons
@@ -713,7 +728,6 @@ class ColorProperty(Property):
 
     def __init__(self, tileNumber: int, playersOnTile: Optional[List[Player]] = None, upgradeLevel: Optional[int] = 0):
         super().__init__(tileNumber, playersOnTile)
-
         # Handle upgradeLevel parameter
         if upgradeLevel < 0 or upgradeLevel > 5:
             raise ValueError("Exception: upgradeLevel" + upgradeLevel + " out of range")        
@@ -724,10 +738,14 @@ class ColorProperty(Property):
         self.upgradeCost = 50 + (50 * (tileNumber // 10))
 
         # Determine the color based on tile number
+        self.color = None  # Initialize color to None
         for group_name, group_values in self.COLOR_GROUPS.items():
             if tileNumber in group_values:
                 self.color = group_name
                 break
+        
+        if self.color is None:
+            raise ValueError(f"Invalid tile number {tileNumber} - no matching color group found")
 
     # Upgrades the property. Assumes player balance has already been verified to perform the upgrade
     def upgrade(self):
@@ -766,9 +784,9 @@ class Utility(Property):
             if isinstance(prop, Utility):
                 utilityCount += 1
                 if utilityCount == 2:
-                    break;
-        factor = self.rentList(utilityCount - 1)
-        return factor * owner.lastDiceResult # Multiply dice roll by the factor indicated by number of utilities owned (x4 or x10)
+                    break
+        factor = self.rentList[utilityCount - 1]
+        return factor * owner.lastDiceResult  # Multiply dice roll by the factor indicated by number of utilities owned (x4 or x10)
 
 
 class Railroad(Property):
@@ -782,7 +800,7 @@ class Railroad(Property):
             if isinstance(prop, Railroad):
                 railroadCount += 1
                 if railroadCount == 4:
-                    break;
+                    break
         return 25 * pow(2, railroadCount - 1) # Corresponds to 25, 50, 100, 200 at 1, 2, 3, and 4 railroads owned
     
 class Jail(Tile):
@@ -908,47 +926,64 @@ class Event:
     
     #creates a pop_up message when triggered to show player the event card message
     def show_event_message(self, event_code: int):
+        """Display the event message and draw it to the screen."""
         message = self.events.get(event_code, "Unknown Event")
-        self.font_surface = self.wrap_text(message, 250)  # Wrap text to fit a width of 300 pixels
+        self.font_surface = self.wrap_text(message, 250)  # Wrap text to fit a width of 250 pixels
         self.is_visible = True
+        self.draw(pygame.display.get_surface())  # Get the current display surface and draw to it
+
+    def draw(self, screen: pygame.Surface):
+        """Draw the event message box and text to the screen."""
+        if self.is_visible and self.font_surface:
+            # Create semi-transparent overlay
+            overlay = pygame.Surface((800, 800), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 128))  # Black with 50% transparency
+            screen.blit(overlay, (0, 0))
+
+            # Create message box
+            font_rect = pygame.Rect(200, 250, 400, 300)  # Centered text box
+            pygame.draw.rect(screen, (255, 255, 255), font_rect)  # White background
+            pygame.draw.rect(screen, (0, 0, 0), font_rect, 2)  # Black border
+
+            # Add a title
+            title_font = pygame.font.Font(None, 36)
+            title_surface = title_font.render("EVENT CARD", True, (0, 0, 0))
+            title_rect = title_surface.get_rect(centerx=font_rect.centerx, top=font_rect.top + 20)
+            screen.blit(title_surface, title_rect)
+
+            # Draw each line of wrapped text
+            total_height = sum(line.get_height() for line in self.font_surface)
+            start_y = font_rect.centery - total_height // 2
+
+            for i, line_surface in enumerate(self.font_surface):
+                line_rect = line_surface.get_rect(centerx=font_rect.centerx, top=start_y + i * self.font.get_height())
+                screen.blit(line_surface, line_rect)
 
     def wrap_text(self, text, max_width):
-        words = text.split(' ')
+        """Wrap text to fit within a given width."""
+        words = text.split()
         lines = []
-        current_line = ''
-        
-        for word in words:
-            # Check if adding the next word exceeds the max width
-            test_line = current_line + (word if not current_line else ' ' + word)
-            if self.font.size(test_line)[0] <= max_width:
-                current_line = test_line
-            else:
-                # If the current line is not empty, add it to lines
-                if current_line:
-                    lines.append(current_line)
-                current_line = word  # Start a new line with the current word
-                
-        # Add the last line if it's not empty
-        if current_line:
-            lines.append(current_line)
-            
-        # Render each line and create a surface to hold all lines
-        surfaces = [self.font.render(line, True, (0, 0, 0)) for line in lines]
-        return surfaces
+        current_line = []
+        current_width = 0
 
+        for word in words:
+            word_surface = self.font.render(word + " ", True, (0, 0, 0))
+            word_width = word_surface.get_width()
+
+            if current_width + word_width <= max_width:
+                current_line.append(word)
+                current_width += word_width
+            else:
+                if current_line:
+                    lines.append(" ".join(current_line))
+                current_line = [word]
+                current_width = word_width
+
+        if current_line:
+            lines.append(" ".join(current_line))
+
+        return [self.font.render(line, True, (0, 0, 0)) for line in lines]
+    
     # Hides the event message
     def hide_event_message(self):
         self.is_visible = False
-
-# Draws the event card on the screen
-    def draw(self, screen: pygame.Surface):
-        if self.is_visible and self.font_surface:
-            font_rect = pygame.Rect(250, 300, 300, 200)  # Text box size (LEFT, TOP, WIDTH, HEIGHT)
-            pygame.draw.rect(screen, (255, 255, 255), font_rect)  # White background box
-            pygame.draw.rect(screen, (0, 0, 0), font_rect, 2)  # Black border
-
-            # Draw each line of wrapped text
-            for i, line_surface in enumerate(self.font_surface):
-                line_rect = line_surface.get_rect(topleft=(font_rect.x + 10, font_rect.y + 70 + i * self.font.get_height()))
-                screen.blit(line_surface, line_rect)
-    
