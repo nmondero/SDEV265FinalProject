@@ -294,7 +294,9 @@ class Player:
 
         Following is the simpler version...'''
 
-        elif index
+        elif index == 10:
+            self.draw(tileRect.centerx, tileRect.centery + offset)
+    
 
     def moveToken(self, fromTile: Tile, toTile: Tile):
         pass
@@ -329,11 +331,39 @@ class Player:
         return minIndex
 
 class Board:
-    def __init__(self, tileArray: List[Tile], playerTurnQueue: List[Player], turnNumber: int = 1, eventCardDeck: List[int] = None):
-        self.tileArray = tileArray
-        self.playerTurnQueue = playerTurnQueue # We are looking at this like a queue. Current player is the player in position 0. At end of turn, remove at position 0 and append it to the end
-        self.turnNumber = turnNumber
-        self.GameActive = True
+    COLOR_PROPERTY_INDEXES = (1, 3, 5, 6, 8, 9, 11, 13, 14, 16, 18, 19, 21, 23, 24, 26, 27, 29, 31, 32, 34, 37, 39)
+    UTILITIES_INDEXES = (12, 28)
+    SPEEDWAY_INDEXES = (5, 15, 25, 35)
+    EVENT_INDEXES = (2, 7, 17, 22, 33)
+    TAX_INDEXES = (4, 38)
+    JAIL_INDEX = 10
+    GO_TO_JAIL_INDEX = 30
+
+    def __init__(self, playerTurnQueue: List[Player], turnNumber: int = 1, tileArray: Optional[List[Tile]] = None, eventCardDeck: List[int] = None):
+        # Initialize the tileArray if it is not provided
+        if tileArray == None:
+            self.tileArray = []
+            for i in range(40):
+                if i in self.COLOR_PROPERTY_INDEXES:
+                    self.tileArray.append(ColorProperty(i))
+                elif i in self.UTILITIES_INDEXES:
+                    self.tileArray.append(Utility(i))
+                elif i in self.SPEEDWAY_INDEXES:
+                    self.tileArray.append(Railroad(i))
+                elif i == self.JAIL_INDEX:
+                    self.tileArray.append(Jail()) # Don't need to pass i into Jail. The Jail Tile ID is always 10
+                else:
+                    self.tileArray.append(Tile(i)) # If this is just a regular (or not assigned yet) tile
+                '''
+                elif i in self.EVENT_INDEXES:
+                    self.tileArray[i] = Event(i)
+                elif i in self.TAX_INDEXES:
+                    self.tileArray[i] = Tax(i)'''
+        else:
+            self.tileArray = tileArray
+            self.playerTurnQueue = playerTurnQueue # We are looking at this like a queue. Current player is the player in position 0. At end of turn, remove at position 0 and append it to the end
+            self.turnNumber = turnNumber
+            self.GameActive = True
 
     def drawEvent(self) -> None:
         pass
@@ -347,7 +377,7 @@ class Board:
         '''
         1. Order players by playerBalance
         2. Make game board screen inactive
-        3. Make results screen active
+        3. Make results screen active -> Display end-of-game rankings and final net worths.
         '''
         pass
 
@@ -556,7 +586,7 @@ class ColorProperty(Property):
         "BLUE" : (37, 39)
     }
 
-    def __init__(self, tileNumber: int, playersOnTile: Optional[List[Player]] = None, upgradeLevel: Optional[int] = 0):
+    def __init__(self, tileNumber: int, playersOnTile: Optional[List[Player]] = None, upgradeLevel: int = 0):
         super().__init__(tileNumber, playersOnTile)
 
         # Handle upgradeLevel parameter
@@ -569,10 +599,9 @@ class ColorProperty(Property):
         self.upgradeCost = 50 + (50 * (tileNumber // 10))
 
         # Determine the color based on tile number
-        for color in self.COLOR_GROUPS.keys:
-            if tileNumber in self.COLOR_GROUPS[color]:
-                self.color = color
-                break;
+        for group_name, group_values in self.COLOR_GROUPS.items():
+            if tileNumber in group_values:
+                self.color = group_name
 
     # Upgrades the property. Assumes player balance has already been verified to perform the upgrade
     def upgrade(self):
@@ -632,7 +661,7 @@ class Railroad(Property):
     
 class Jail(Tile):
     def __init__(self, playersOnTile: Optional[List[Player]] = None, playersInJail: Optional[List[Player]] = None):
-        super.__init__(10, playersOnTile)
+        super().__init__(10, playersOnTile)
         self.playersInJail = playersInJail if playersInJail is not None else []
 
 
