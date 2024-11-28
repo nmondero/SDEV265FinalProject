@@ -231,73 +231,7 @@ class Player:
     ex. Go directly to jail, do not collect passing go money
         player1.movePlayer(jumpToTile = 10, passGoViable = False)
     '''
-    def movePlayer(self, gameBoard: Board, moveAmount: Optional[int] = None, jumpToTile: Optional[int] = None, passGoViable: Optional[bool] = None) -> None:
-        #Raise exception if parameters are not provided (this function requires either moveAmount alone, or jumpToTile and passGoViable)
-        if moveAmount == None and jumpToTile == None:
-            raise ValueError("Exception: Function must have at least one parameter of the following sets of parameters:\n\t-int moveAmount = combined dice roll\n\t-int jumpToTile = index of tile to jump to\tbool passGoViable determines if player can pass go from movement")
-        
-        if moveAmount != None and jumpToTile != None:
-            raise ValueError("Exception: Cannot include both a moveAmount and jumpToTile parameter")
-
-        if jumpToTile != None and passGoViable == None:
-            raise ValueError("Exception: A jumpToTile parameter must be accompanied by a passGoViable boolean parameter indicating whether the teleport allows the player to collect Passing Go money.")
-
-        initialPosition = self.playerPosition # Set initial position
-        initialTile = gameBoard.tileArray[initialPosition] # Set initial tile
-
-        #If the parameter indicated an amount of spaces to move...
-        if moveAmount != None: 
-            self.playerPosition += moveAmount
-            #Passing Go condition
-            if self.playerPosition > 39: #39 is the last tile before the Go tile
-                self.playerPosition %= 40
-                self.playerBalance += 200
-
-        #If the parameter indicated a tile to "teleport" to...
-        else: 
-            self.playerPosition = jumpToTile
-            #Passing Go check when jumping to a lower tile index
-            if initialPosition > self.playerPosition and passGoViable:
-                self.playerBalance += 200
-
-        # Handle moving the player token rectangle
-        tile = gameBoard.tileArray[self.playerPosition] # Get the tile that the player landed on
-        offset = 10 * len(tile.playersOnTile) # Determine the magnitude of token offset from center of tile (before adding it to the tile itself) 
-        tileRect = tile.tileRect
-        index = tile.tileNumber # Get the tile's index (so we know what side of the board its on)
-        
-        tile.playersOnTile.append(self) # Add the player to the tile landed on
-        initialTile.playersOnTile.remove(self) # Remove the player from the initial tile 
-
-        if (index > 0 and index < 10) or index == 0 or index == 20 or index == 30: # Bottom row of board OR non-jail corner tile --> offset y downwards
-            self.draw(tileRect.centerx, tileRect.centery + offset)
-
-        elif index > 10 and index < 20: # Left row of board --> offset x to the left
-            self.draw(tileRect.centerx - offset, tileRect.centery)
-
-        elif index > 20 and index < 30: # Top row of board --> offset y upwards
-            self.draw(tileRect.centerx, tileRect.centery - offset)
-
-        elif index > 30 and index < 40: # Right row of board --> offset x to the right
-            self.token.moveToken(tileRect.centerx + offset, tileRect.centery)
-        
-        ''' This commented version was going for a more detailed version of displaying the Jail, we are going with the simpler version
-
-        elif isinstance(tile, Jail): # Player is on the jail tile
-            if self.isInJail:
-                offset = 10 * len(tile.playersInJail)
-            
-            if self.isInJail: # If player is currently jailed --> offset y down starting from the top right based on how many players on the jail tile are currently jailed
-                for player in gameBoard.playerTurnQueue:
-                    if player.isInJail
-                self.token.moveToken(tileRect.right - 30, tileRect.top + 30 + offset) #NOTE: need to make sure to change offset based on number of player on jail tile that are actually jailed
-
-        Following is the simpler version...'''
-
-        elif index == 10:
-            self.draw(tileRect.centerx, tileRect.centery + offset)
     
-
     def moveToken(self, fromTile: Tile, toTile: Tile):
         pass
             
@@ -334,36 +268,40 @@ class Board:
     COLOR_PROPERTY_INDEXES = (1, 3, 5, 6, 8, 9, 11, 13, 14, 16, 18, 19, 21, 23, 24, 26, 27, 29, 31, 32, 34, 37, 39)
     UTILITIES_INDEXES = (12, 28)
     SPEEDWAY_INDEXES = (5, 15, 25, 35)
-    EVENT_INDEXES = (2, 7, 17, 22, 33)
+    EVENT_INDEXES = (2, 7, 17, 22, 33, 36)
     TAX_INDEXES = (4, 38)
     JAIL_INDEX = 10
+    GO_INDEX = 0
+    FREE_PARKING_INDEX = 20
     GO_TO_JAIL_INDEX = 30
-
-    def __init__(self, playerTurnQueue: List[Player], turnNumber: int = 1, tileArray: Optional[List[Tile]] = None, eventCardDeck: List[int] = None):
-        # Initialize the tileArray if it is not provided
-        if tileArray == None:
-            self.tileArray = []
-            for i in range(40):
-                if i in self.COLOR_PROPERTY_INDEXES:
-                    self.tileArray.append(ColorProperty(i))
-                elif i in self.UTILITIES_INDEXES:
-                    self.tileArray.append(Utility(i))
-                elif i in self.SPEEDWAY_INDEXES:
-                    self.tileArray.append(Railroad(i))
-                elif i == self.JAIL_INDEX:
-                    self.tileArray.append(Jail()) # Don't need to pass i into Jail. The Jail Tile ID is always 10
-                else:
-                    self.tileArray.append(Tile(i)) # If this is just a regular (or not assigned yet) tile
-                '''
-                elif i in self.EVENT_INDEXES:
-                    self.tileArray[i] = Event(i)
-                elif i in self.TAX_INDEXES:
-                    self.tileArray[i] = Tax(i)'''
-        else:
-            self.tileArray = tileArray
-            self.playerTurnQueue = playerTurnQueue # We are looking at this like a queue. Current player is the player in position 0. At end of turn, remove at position 0 and append it to the end
-            self.turnNumber = turnNumber
-            self.GameActive = True
+    
+    def __init__(self, screen: pygame.Surface, playerTurnQueue: List[Player], turnNumber: int = 1, eventCardDeck: List[int] = None):
+        self.tileArray = []
+        for i in range(40):
+            if i in self.COLOR_PROPERTY_INDEXES:
+                self.tileArray.append(ColorProperty(i)) 
+            elif i in self.UTILITIES_INDEXES:
+                self.tileArray.append(Utility(i))
+            elif i in self.SPEEDWAY_INDEXES:
+                self.tileArray.append(Railroad(i))
+            elif i == self.JAIL_INDEX:
+                self.tileArray.append(Jail())
+            elif i == self.GO_INDEX:
+                self.tileArray.append(Tile(i))
+            elif i == self.FREE_PARKING_INDEX:
+                self.tileArray.append(Tile(i))
+            elif i == self.GO_TO_JAIL_INDEX:
+                self.tileArray.append(Tile(i))
+            elif i in self.EVENT_INDEXES:  # Event card spaces
+                self.tileArray.append(Tile(i))
+            elif i in self.TAX_INDEXES:
+                self.tileArray.append(Tile(i))
+            else:
+                self.tileArray.append(Tile(i))
+        self.playerTurnQueue = playerTurnQueue # We are looking at this like a queue. Current player is the player in position 0. At end of turn, remove at position 0 and append it to the end
+        self.turnNumber = turnNumber
+        self.GameActive = True
+        self.screen = screen
 
     def drawEvent(self) -> None:
         pass
@@ -372,7 +310,7 @@ class Board:
         for player in self.playerTurnQueue:
             if player.playerBalance < 0:
                 return True
-            
+    
     def endGame(self, playerToRemove: Player) -> None:
         '''
         1. Order players by playerBalance
@@ -384,8 +322,195 @@ class Board:
     def endTurn(self):
         self.turnNumber += 1 
         self.playerTurnQueue.append(self.playerTurnQueue.pop(0)) # Rotate playerTurnQueue
+    
+    def assignPlayerPosition(self, players: Player[Player]):
+        for player in players:
+            player.playerPosition = 0  # Explicitly set starting position
+            tile = self.tileArray[0]
+            tile.playersOnTile.append(player)
+            
+    def drawPlayers(self, players: Player[Player]):
+        offset = 0
+        for player in players:
+            tile = self.tileArray[player.playerPosition] # Get the tile that the player landed on
+            offset = 10 * tile.playersOnTile.index(player)
+            # Determine the magnitude of token offset from center of tile (before adding it to the tile itself) 
+            tileRect = tile.tileRect                   
+            index = tile.tileNumber # Get the tile's index (so we know what side of the board its on)
+            if 0 <= index <= 9:  # Bottom row only
+                player.draw(self.screen, tileRect.centerx, tileRect.centery + offset)
+            elif 10 <= index <= 19:  # Left row
+                player.draw(self.screen, tileRect.centerx - offset, tileRect.centery)
+            elif 20 <= index <= 29:  # Top row
+                player.draw(self.screen, tileRect.centerx, tileRect.centery - offset)
+            elif 30 <= index <= 39:  # Right row
+                player.draw(self.screen, tileRect.centerx + offset, tileRect.centery)
+    
+    def movePlayer(self, players: Player[Player], turn: int = 0, moveAmount: Optional[int] = None, jumpToTile: Optional[int] = None, passGoViable: Optional[bool] = None) -> None:
+        #Raise exception if parameters are not provided (this function requires either moveAmount alone, or jumpToTile and passGoViable)
+        if moveAmount == None and jumpToTile == None:
+            raise ValueError("Exception: Function must have at least one parameter of the following sets of parameters:\n\t-int moveAmount = combined dice roll\n\t-int jumpToTile = index of tile to jump to\tbool passGoViable determines if player can pass go from movement")
+        
+        if moveAmount != None and jumpToTile != None:
+            raise ValueError("Exception: Cannot include both a moveAmount and jumpToTile parameter")
 
-class PlayerTokenImage:
+        if jumpToTile != None and passGoViable == None:
+            raise ValueError("Exception: A jumpToTile parameter must be accompanied by a passGoViable boolean parameter indicating whether the teleport allows the player to collect Passing Go money.")
+
+        initialPosition = players[turn].playerPosition # Set initial position
+        initialTile = self.tileArray[initialPosition] # Set initial tile
+        
+        #If the parameter indicated an amount of spaces to move...
+        if moveAmount != None: 
+            print(f"Move Amount: {moveAmount} and I started on tile: {players[turn].playerPosition}")
+            players[turn].playerPosition += moveAmount
+            #Passing Go condition - Apply modulo BEFORE any other operations
+            if players[turn].playerPosition >= 40: #Changed from > 39 to >= 40 for clarity
+                players[turn].playerPosition %= 40
+                players[turn].playerBalance += 200
+            print(f"I landed on tile: {players[turn].playerPosition}")
+
+            #If the parameter indicated a tile to "teleport" to...
+        else: 
+            players[turn].playerPosition = jumpToTile
+            #Passing Go check when jumping to a lower tile index
+            if initialPosition > players[turn].playerPosition and passGoViable:
+                players[turn].playerBalance += 200
+                
+        # Handle moving the player token rectangle
+        tile = self.tileArray[players[turn].playerPosition] # Get the tile that the player landed on
+        tileRect = tile.tileRect
+        index = tile.tileNumber # Get the tile's index (so we know what side of the board its on)
+        
+        # First update the player lists
+        tile.playersOnTile.append(players[turn]) # Add the player to the tile landed on
+        if(len(initialTile.playersOnTile) > 0):
+            initialTile.playersOnTile.remove(players[turn])
+        
+        # Now calculate offset based on player's position in the list
+        offset = 10 * tile.playersOnTile.index(players[turn]) # Use index instead of len to get this player's specific offset
+           
+            
+
+        if 0 <= index <= 9:  # Bottom row only
+            players[turn].draw(self.screen, tileRect.centerx, tileRect.centery + offset)
+        elif 10 <= index <= 19:  # Left row
+            players[turn].draw(self.screen, tileRect.centerx - offset, tileRect.centery)
+        elif 20 <= index <= 29:  # Top row
+            players[turn].draw(self.screen, tileRect.centerx, tileRect.centery - offset)
+        elif 30 <= index <= 39:  # Right row
+            players[turn].draw(self.screen, tileRect.centerx + offset, tileRect.centery)
+        '''
+        elif isinstance(tile, Jail): # Player is on the jail tile
+            if self.isInJail:
+                offset = 10 * len(tile.playersInJail)
+            
+            if self.isInJail: # If player is currently jailed --> offset y down starting from the top right based on how many players on the jail tile are currently jailed
+                for player in gameBoard.playerTurnQueue:
+                    if player.isInJail:
+                        offset += 10
+                self.token.moveToken(tileRect.right - 30, tileRect.top + 30 + offset) #NOTE: need to make sure to change offset based on number of player on jail tile that are actually jailed
+            
+        '''
+    def show_turn_message(self, player_name):    
+        font = pygame.font.Font(None, 36)
+        text_color = (0, 0, 0)  # Black text
+        background_color = (200, 200, 200)  # Light gray background
+
+        # Render the message and get a centered rect
+        text_surface = font.render(f"{player_name}'s Turn", True, text_color)
+        text_rect = text_surface.get_rect(center=(self.screen.get_width() // 2, 50))  # position above game board
+        
+        # Draw a background rect, then the text
+        pygame.draw.rect(self.screen, background_color, text_rect.inflate(20, 20))  # Slight padding around text
+        self.screen.blit(text_surface, text_rect)
+
+        #update the display to show th message after being called in main loop
+        pygame.display.update()
+        
+    def moveResults(self, players: Player[Player], turn: int)->int:
+        currentPlayer = players[turn]
+        print(f"Current player: {currentPlayer.playerPosition}")
+        if (currentPlayer.playerPosition == self.GO_INDEX) or (currentPlayer.playerPosition == self.JAIL_INDEX) or (currentPlayer.playerPosition == self.FREE_PARKING_INDEX):
+            print("0 - Free space")
+            return 0
+        for property in currentPlayer.propertyList: #Look at all the properties of current player
+            if currentPlayer.playerPosition == property.tileNumber: #If the currentplayer is on their own property
+                    print("0 - My Property")
+                    return 0 #return 0 (do nothing)
+        for pos in self.EVENT_INDEXES: #If player landed on an event tile
+            if currentPlayer.playerPosition == pos:
+                print("2 - Event tile") 
+                return 2
+        for pos in self.TAX_INDEXES: #If player landed on a tax tile
+            if currentPlayer.playerPosition == pos:
+                print("3 - Tax tile")
+                return 3
+        if currentPlayer.playerPosition == self.GO_TO_JAIL_INDEX: #if player landed on go to jail tile
+            print("4 - Go to Jail tile")
+            return 4
+        for player in players: #For all players in the game
+            if player != currentPlayer: #Exclude the current player
+                for property in player.propertyList: #Look at all the properties they own
+                    if currentPlayer.playerPosition == property.tileNumber: #If the currentplayer is on an owned property
+                        print(f"{currentPlayer.playerName} pays ${property.getRent(player)} to {player.playerName}")
+                        currentPlayer.payPlayer(property.getRent(player), player) #Pay the player the rent
+                        print("0 - Already Owned Property")
+                        return 0 #And end the checks
+        print("1 - Unowned Property")
+        return 1
+    
+    def propertyDecision(self, player: Player) -> int:
+        currentPlayer = player
+        property_image = pygame.image.load(self.tileArray[currentPlayer.playerPosition].image)
+        font = pygame.font.SysFont("Arial", 22)
+        
+        self.screen.fill((200, 200, 200))
+
+        self.screen.blit(property_image, (self.screen.get_width() // 2 - property_image.get_width() // 2, 150))
+        
+        balance_text = font.render(f"Current Balance: ${currentPlayer.playerBalance}", True, (0, 0, 0))
+        self.screen.blit(balance_text, (self.screen.get_width() // 2 - balance_text.get_width() // 2, 50))
+        
+        button_width = 100
+        button_height = 50
+        button_gap = 50  # Gap between buttons
+        total_width = button_width * 2 + button_gap
+        start_x = (self.screen.get_width() - total_width) // 2
+
+        # Buy Button
+        buy_button = pygame.Rect(start_x, self.screen.get_height() - 150 + 20, button_width, button_height)
+        pygame.draw.rect(self.screen, (100, 100, 100), buy_button)
+        buy_button_text = font.render(f"Buy", True, (0, 0, 0))
+        self.screen.blit(buy_button_text, (buy_button.centerx - buy_button_text.get_width() // 2, buy_button.centery - buy_button_text.get_height() // 2))
+
+        # Auction Button
+        auction_button = pygame.Rect(start_x + button_width + button_gap, self.screen.get_height() - 150 + 20, button_width, button_height)
+        pygame.draw.rect(self.screen, (100, 100, 100), auction_button)
+        auction_button_text = font.render(f"Auction", True, (0, 0, 0))
+        self.screen.blit(auction_button_text, (auction_button.centerx - auction_button_text.get_width() // 2, auction_button.centery - auction_button_text.get_height() // 2))
+        
+        pygame.display.update()
+        
+        waitforinput = True
+        while(waitforinput):
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pass
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_pos = event.pos
+                    if buy_button.collidepoint(mouse_pos):
+                        waitforinput = False
+                        self.screen.fill((200, 200, 200))
+                        return 0
+                    if auction_button.collidepoint(mouse_pos):
+                        waitforinput = False
+                        self.screen.fill((200, 200, 200))
+                        return 1
+        return 0
+        pass
+    
+class PlayerTokenImage: 
     TOKEN_WIDTH = 20
     TOKEN_HEIGHT = 20
     #Static map for token ID numbers to specific token image paths
@@ -602,6 +727,7 @@ class ColorProperty(Property):
         for group_name, group_values in self.COLOR_GROUPS.items():
             if tileNumber in group_values:
                 self.color = group_name
+                break
 
     # Upgrades the property. Assumes player balance has already been verified to perform the upgrade
     def upgrade(self):
