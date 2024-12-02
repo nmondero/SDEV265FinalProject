@@ -45,7 +45,7 @@ board_surf = pygame.transform.scale(pygame.image.load("images/GameBoard.png").co
 board_rect = pygame.Rect(125, 125, 550, 550)
 
 didImove = False
-diceResult = 0
+is_doubles = False
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -153,17 +153,15 @@ while running:
             #Put everything that needs to be refreshed during a player turn here
             screen.blit(board_surf, board_rect)
             gameboard.drawPlayers(players)
-            buttons.draw_buttons()
+            buttons.draw_buttons(is_doubles)
+            is_doubles = False
             gameboard.show_turn_message(players[current_turn].playerName)
                 
             pygame.display.update()
             input = buttons.getInput()
             if input == 1:
-                dice.roll()
+                is_doubles = gameboard.rollDice(dice, players, current_turn)
                 dice.draw(screen)
-                diceResult = dice.result()
-                print(f"Dice Result: {diceResult}")
-                gameboard.movePlayer(players, current_turn, moveAmount=diceResult)
                 result = gameboard.moveResults(players, current_turn)
                 if result == 0: #Landed on a free space (visitng jail, go, own property, free parking)
                     pass
@@ -181,7 +179,7 @@ while running:
                         screen.blit(board_surf, board_rect)
                         dice.draw(screen)
                         gameboard.drawPlayers(players)
-                        buttons.draw_buttons()
+                        buttons.draw_buttons(is_doubles)
                         gameboard.show_turn_message(players[current_turn].playerName)
                         # The auction instance will be automatically cleaned up by Python's garbage collector
                     else: #Player wants to buy
@@ -221,14 +219,15 @@ while running:
                     screen.blit(board_surf, board_rect)
                     dice.draw(screen)
                     gameboard.drawPlayers(players)
-                    buttons.draw_buttons()
+                    buttons.draw_buttons(is_doubles)
                     gameboard.show_turn_message(players[current_turn].playerName)
                     #Event.event_outcome(event_code, players[current_turn], gameboard)
                 
                 elif result == 3: #Landed on a tax tile
                     pass
                 elif result == 4: #Landed on go to jail
-                    pass
+                    players[current_turn].putInJail()
+                    gameboard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 10, passGoViable = False)
             elif input == 2: #sell property
                 pass
             elif input == 3: #Upgrade property
@@ -236,7 +235,6 @@ while running:
             elif input == 4: #End turn
                 current_turn = (current_turn + 1) % len(players)  # Move to the next player
                 turn_displayed = True #resets to show new player message
-        card_popup.draw(screen)
         
         if running_auction:
             if auction_instance.is_running():

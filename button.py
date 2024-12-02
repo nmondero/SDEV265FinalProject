@@ -37,15 +37,15 @@ class Buttons:
         self.end_text = font.render(f"End Turn", True, (0, 0, 255))
         
         
-    def draw_buttons(self):
+    def draw_buttons(self, is_doubles: bool):
         # Clear the button area for refreshing
         button_area_rect = pygame.Rect(0, self.screen.get_height() - 100, self.screen.get_width(), 150)
         self.screen.fill((200, 200, 200), button_area_rect)  # Use the same background color
 
         #draws all the buttons on the window
-        if self.canIrollDice:
+        if self.canIrollDice or is_doubles:
             self.screen.blit(self.dice_text, (self.roll_dice_button.centerx - self.dice_text.get_width() // 2, self.roll_dice_button.centery - self.dice_text.get_height() // 2))
-        if self.canIendTurn:
+        if self.canIendTurn and not is_doubles:
             self.screen.blit(self.end_text, (self.end_turn_button.centerx - self.end_text.get_width() // 2, self.end_turn_button.centery - self.end_text.get_height() // 2))
             
         self.screen.blit(self.property_text, (self.sell_property_button.centerx - self.property_text.get_width() // 2, self.sell_property_button.centery - self.property_text.get_height() // 2))
