@@ -117,12 +117,11 @@ class Player:
         # Draw the image with the circular background on the main screen
         screen.blit(circle_surface, (x - circle_diameter // 2, y - circle_diameter // 2))
 
-    def putInJail(self, jailTile: Jail): 
-        self.movePlayer(jumpToTile = 10, passGoViable = False)
+    def putInJail(self): 
         self.isInJail = True
         self.turnsLeftInJail = 3
 
-    def releaseFromJail(self, jailTile: Jail):
+    def releaseFromJail(self):
         self.isInJail = False
 
     #Add a property to player's property list
@@ -192,48 +191,6 @@ class Player:
                     Add property sell value to player balance
                     Remove the property from player property array
         '''
-
-
-    def rollDice(self, dice: Dice):
-        self.lastDiceResult = dice.roll.result() # The only reason I am keeping track of the last dice roll result is for the Utilities getRent function
-
-        # Decide whether to increment consecutive doubles
-        doubles = dice.isDoubles()
-        if doubles:
-            self.consecutiveDoubles += 1
-        else:
-            self.consecutiveDoubles = 0
-
-        # If in jail 
-        if self.isInJail:
-            if doubles:
-                self.isInJail = False
-                self.movePlayer(moveAmount = dice.result())
-
-            else:
-                self.turnsLeftInJail -= 1
-
-        # If not in jail
-        else:
-            if self.consecutiveDoubles == 3: # If 3 consecutive doubles, go directly to jail
-                self.putInJail()
-            
-            else: # Else, regular dice roll-based movement
-                self.movePlayer(moveAmount = self.lastDiceResult)
-
-
-    '''
-    I am thinking we simply just use this function to move the player by a specified amount (move amount) or move directly to a certain spot (jumpToTile) and a bool to specify if the jumpToTile should allow passing go
-    ex. Move via dice roll (totalDiceVal = 6): 
-        player1.movePlayer(moveAmount = totalDiceVal)
-    ex. Pass directly to Go tile (index of zero)
-        player1.movePlayer(jumpToTile = 0, passGoViable = True)
-    ex. Go directly to jail, do not collect passing go money
-        player1.movePlayer(jumpToTile = 10, passGoViable = False)
-    '''
-    
-    def moveToken(self, fromTile: Tile, toTile: Tile):
-        pass
             
 
     # Determines if the player owns the full property set of the specified color
@@ -269,6 +226,7 @@ class Board:
     GO_INDEX = 0
     FREE_PARKING_INDEX = 20
     GO_TO_JAIL_INDEX = 30
+    PLAYER_COLOR = [(255, 0, 0),(0,255,0),(0,0,255),(255,255,0)]
     
     def __init__(self, screen: pygame.Surface, playerTurnQueue: List[Player], turnNumber: int = 1, eventCardDeck: List[int] = None):
         self.tileArray = []
@@ -323,12 +281,54 @@ class Board:
             player.playerPosition = 0  # Explicitly set starting position
             tile = self.tileArray[0]
             tile.playersOnTile.append(player)
-            
+    
+    def rollDice(self, dice: Dice, players: Player[Player], turn: int = 0) -> bool:
+        dice.roll()
+        players[turn].lastDiceResult = dice.result() # The only reason I am keeping track of the last dice roll result is for the Utilities getRent function
+        print(f"Dice Result: {players[turn].lastDiceResult}")
+        print(f"Doubles: {dice.isDoubles()}")
+        print(f"Consecutive Doubles: {players[turn].consecutiveDoubles}")
+        print(f"Is In Jail: {players[turn].isInJail}")
+        print(f"Turns Left in Jail: {players[turn].turnsLeftInJail}")
+        
+        # Decide whether to increment consecutive doubles
+        doubles = dice.isDoubles()
+        
+        if players[turn].isInJail:
+            if doubles:
+                players[turn].isInJail = False
+                self.movePlayer(players, turn, moveAmount = players[turn].lastDiceResult)
+                players[turn].consecutiveDoubles += 1
+                players[turn].turnsLeftInJail = 0
+                return False #You don't roll again if you go to jail after rolling 3 doubles
+                
+
+            else:
+                players[turn].turnsLeftInJail -= 1
+        
+        else: #Else not in jail    
+            if doubles: #If doubles are rolled, check if 3 consecutive
+                players[turn].consecutiveDoubles += 1
+                if players[turn].consecutiveDoubles == 3: # If 3 consecutive doubles, go directly to jail
+                    players[turn].putInJail()
+                    self.movePlayer(players, turn, moveAmount = None, jumpToTile = self.JAIL_INDEX, passGoViable = False)
+                    return False
+
+                else: # Else, regular dice roll-based movement
+                    self.movePlayer(players, turn, moveAmount = players[turn].lastDiceResult)
+                    return True
+                
+            else: #If not doubles, just move
+                players[turn].consecutiveDoubles = 0
+                self.movePlayer(players, turn, moveAmount = players[turn].lastDiceResult)
+                return False
+
+    
     def drawPlayers(self, players: Player[Player]):
         offset = 0
         font = pygame.font.Font(None, 20)  # Use pygame's default font, size 36
     
-    # Draw player scores in each corner
+        # Draw player scores in each corner
         score_positions = [
             (250,100),     # 2nd position
             (450,100),     # 3rd position
@@ -341,7 +341,22 @@ class Board:
             if i < len(score_positions):  # Make sure we don't exceed available positions
                 score_text = font.render(f"Balance: {player.playerName} - ${player.playerBalance}", True, (0, 0, 0))
                 self.screen.blit(score_text, score_positions[i])
-            
+        
+        #Drawing Player Properties
+        for player in players:
+            for property in player.propertyList:
+                tile = self.tileArray[property.tileNumber]
+                tileRect = tile.tileRect
+                index = tile.tileNumber # Get the tile's index (so we know what side of the board its on)
+                if 0 <= index <= 9:  # Bottom row only
+                    property.draw(self.screen, tileRect.centerx, tileRect.centery - 50, self.PLAYER_COLOR[players.index(player)])
+                elif 10 <= index <= 19:  # Left row
+                    property.draw(self.screen, tileRect.centerx + 50, tileRect.centery, self.PLAYER_COLOR[players.index(player)])
+                elif 20 <= index <= 29:  # Top row
+                    property.draw(self.screen, tileRect.centerx, tileRect.centery + 50, self.PLAYER_COLOR[players.index(player)])
+                elif 30 <= index <= 39:  # Right row
+                    property.draw(self.screen, tileRect.centerx - 50, tileRect.centery, self.PLAYER_COLOR[players.index(player)])
+        
         #Drawing the players on the board
         for player in players:
             tile = self.tileArray[player.playerPosition] # Get the tile that the player landed on
@@ -350,13 +365,13 @@ class Board:
             tileRect = tile.tileRect                   
             index = tile.tileNumber # Get the tile's index (so we know what side of the board its on)
             if 0 <= index <= 9:  # Bottom row only
-                player.draw(self.screen, tileRect.centerx, tileRect.centery + offset)
+                player.draw(self.screen, tileRect.centerx, tileRect.centery + offset, self.PLAYER_COLOR[players.index(player)])
             elif 10 <= index <= 19:  # Left row
-                player.draw(self.screen, tileRect.centerx - offset, tileRect.centery)
+                player.draw(self.screen, tileRect.centerx - offset, tileRect.centery, self.PLAYER_COLOR[players.index(player)])
             elif 20 <= index <= 29:  # Top row
-                player.draw(self.screen, tileRect.centerx, tileRect.centery - offset)
+                player.draw(self.screen, tileRect.centerx, tileRect.centery - offset, self.PLAYER_COLOR[players.index(player)])
             elif 30 <= index <= 39:  # Right row
-                player.draw(self.screen, tileRect.centerx + offset, tileRect.centery)
+                player.draw(self.screen, tileRect.centerx + offset, tileRect.centery, self.PLAYER_COLOR[players.index(player)])
     
     def movePlayer(self, players: Player[Player], turn: int = 0, moveAmount: Optional[int] = None, jumpToTile: Optional[int] = None, passGoViable: Optional[bool] = None) -> None:
         #Raise exception if parameters are not provided (this function requires either moveAmount alone, or jumpToTile and passGoViable)
@@ -374,13 +389,11 @@ class Board:
         
         #If the parameter indicated an amount of spaces to move...
         if moveAmount != None: 
-            print(f"Move Amount: {moveAmount} and I started on tile: {players[turn].playerPosition}")
             players[turn].playerPosition += moveAmount
             #Passing Go condition - Apply modulo BEFORE any other operations
             if players[turn].playerPosition >= 40: #Changed from > 39 to >= 40 for clarity
                 players[turn].playerPosition %= 40
                 players[turn].playerBalance += 200
-            print(f"I landed on tile: {players[turn].playerPosition}")
 
             #If the parameter indicated a tile to "teleport" to...
         else: 
@@ -712,6 +725,16 @@ class Property(Tile):
     # Abstract getRent function
     def getRent(self, owner: Player) -> int:
         pass
+    
+    #Default draw function with no upgrade level
+    def draw(self, screen: pygame.Surface, x: int, y: int, circle_color: tuple = (0,0,0)):
+        # Define circle properties
+        outline_color = (0, 0, 0)  #Black circle
+        circle_radius = 10  #radius size
+
+        # Draw the circle with outline
+        pygame.draw.circle(screen, outline_color, (x,y), circle_radius + 2)
+        pygame.draw.circle(screen, circle_color, (x,y), circle_radius)
 
 class ColorProperty(Property):
     # Define groups of tiles that belong to specific colors
@@ -771,6 +794,22 @@ class ColorProperty(Property):
             return self.rentList[0] * 2
         else: # Else, just return the rent from the rentList at the upgradeLevel index
             return self.rentList[self.upgradeLevel]
+    
+    # Draw color properties with upgrade level
+    def draw(self, screen: pygame.Surface, x: int, y: int, circle_color: tuple = (0,0,0)):
+        # Define circle properties
+        outline_color = (0, 0, 0)  # Black circle
+        circle_radius = 10  #radius size
+
+        # Draw the circle with outline
+        pygame.draw.circle(screen, outline_color, (x,y), circle_radius + 2)
+        pygame.draw.circle(screen, circle_color, (x,y), circle_radius)
+
+        # Render the upgrade level number
+        font = pygame.font.Font(None, 24)  # Example font size
+        text = font.render(str(self.upgradeLevel + 1), True, outline_color)
+        text_rect = text.get_rect(center=(x,y))
+        screen.blit(text, text_rect)
 
 class Utility(Property):
     def __init__(self, tileNumber: int, playersOnTile: Optional[List[Player]] = None):
