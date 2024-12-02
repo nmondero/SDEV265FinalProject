@@ -1,5 +1,7 @@
 import pygame
 from classes import Property, Player
+from typing import Optional, Tuple
+
 # Constants for screen size, colors, and font size
 SCREEN_WIDTH, SCREEN_HEIGHT = 800, 800
 FONT_SIZE = 24
@@ -16,17 +18,19 @@ class Auction:
 
         Args:
             players (list): List of players participating in the auction.
-            property_id (int): The ID of the property being auctioned.
+            property1 (Property): The property being auctioned.
             current_player_index (int): The index of the player starting the auction.
         """
-        self.players = players
+        self.players = players.copy()  # Make a copy of the players list
         self.auction_property = property1
         self.current_bid = 0
         self.bids = []
         self.current_player_index = current_player_index
         self.running = True
         self.exceded = False
-        self.property_image = pygame.image.load(self.auction_property.image)  # Load image for property
+        self.property_image = pygame.image.load(self.auction_property.image)
+        self.winner = None
+        self.winning_bid = 0
 
     def load_property_image(self):
         """Load the image for the auctioned property (placeholder here)."""
@@ -61,16 +65,24 @@ class Auction:
         """Finishes the auction and determines the winner."""
         self.running = False
         if self.bids:
-            winner = self.players[self.current_player_index]  # Last bid is the winning bid
-            self.players[self.current_player_index].removeBalance(self.current_bid)
-            self.players[self.current_player_index].addProperty(self.auction_property)
-            print(f"Winner: {winner.playerName} - Balance: {winner.playerBalance} - Added Property: {winner.propertyList}")
+            self.winner = self.players[self.current_player_index]  # Last bid is the winning bid
+            self.winning_bid = self.current_bid
+        else:
+            self.winner = None
+            self.winning_bid = 0
 
+    def run_auction(self, screen) -> Tuple[Optional[Player], int]:
+        """
+        Runs the auction and returns the winner and winning bid.
         
+        Returns:
+            tuple: (winner: Player or None, winning_bid: int)
+        """
+        self.auction_screen(screen)
+        return self.winner, self.winning_bid
 
-    
     def auction_screen(self, screen):
-        while len(self.players) != 1:
+        while len(self.players) > 1 and self.running:
             screen.fill(BOX_COLOR)
             font = pygame.font.SysFont("Arial", FONT_SIZE)
             
@@ -106,7 +118,7 @@ class Auction:
             screen.blit(withdraw_text, (withdraw_button.centerx - withdraw_text.get_width() // 2, withdraw_button.centery - withdraw_text.get_height() // 2))
             
             if(self.exceded):
-                exceded_text = font.render("You cannot bid that much as it excedes your current balance", True, (255,0,0))
+                exceded_text = font.render("You cannot bid that much as it exceeds your current balance", True, (255,0,0))
                 screen.blit(exceded_text, (SCREEN_WIDTH // 2 - (exceded_text.get_width()//2), withdraw_button.bottom + 5))
             
             pygame.display.update()
