@@ -64,12 +64,8 @@ class Auction:
     def finish_auction(self):
         """Finishes the auction and determines the winner."""
         self.running = False
-        if self.bids:
-            self.winner = self.players[self.current_player_index]  # Last bid is the winning bid
-            self.winning_bid = self.current_bid
-        else:
-            self.winner = None
-            self.winning_bid = 0
+        self.winner = self.players[self.current_player_index]  # Last bid is the winning bid
+        self.winning_bid = self.current_bid
 
     def run_auction(self, screen) -> Tuple[Optional[Player], int]:
         """

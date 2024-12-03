@@ -142,7 +142,7 @@ class Player:
 
     #Remove an amount from player balance
     def removeBalance(self, balanceToRemove: int) -> None:
-        if (balanceToRemove <= 0): #Raise exception if invalid parameter
+        if (balanceToRemove < 0): #Raise exception if invalid parameter
             raise ValueError("Exception: Balance to remove (${balanceToRemove}) is not greater than 0.")
 
         self.playerBalance -= balanceToRemove #Remove specified amount from player 
@@ -214,7 +214,7 @@ class Player:
         minIndex = railroadIndices[0]
         minDistance = abs(minIndex - pos)
         for index in railroadIndices[1:]:
-            current_distance = abs(railroadIndices[index] - pos)
+            current_distance = abs(index - pos)
             if current_distance < minDistance:
                 minDistance = current_distance
                 minIndex = index
@@ -275,10 +275,6 @@ class Board:
         3. Make results screen active -> Display end-of-game rankings and final net worths.
         '''
         pass
-
-    def endTurn(self):
-        self.turnNumber += 1 
-        self.playerTurnQueue.append(self.playerTurnQueue.pop(0)) # Rotate playerTurnQueue
     
     def assignPlayerPosition(self, players: Player[Player]):
         for player in players:
@@ -482,10 +478,10 @@ class Board:
             if player != currentPlayer: #Exclude the current player
                 for property in player.propertyList: #Look at all the properties they own
                     if currentPlayer.playerPosition == property.tileNumber: #If the currentplayer is on an owned property
-                        print(f"{currentPlayer.playerName} pays ${property.getRent(player)} to {player.playerName}")
-                        currentPlayer.payPlayer(property.getRent(player), player) #Pay the player the rent
+                        print(f"{currentPlayer.playerName} pays ${property.getRent(player, currentPlayer)} to {player.playerName}")
+                        currentPlayer.payPlayer(property.getRent(player, currentPlayer), player) #Pay the player the rent
                         print("0 - Already Owned Property")
-                        return 0 #And end the checks
+                        return 5 #And end the checks
         print("1 - Unowned Property")
         return 1
     
@@ -511,10 +507,11 @@ class Board:
         start_x = (self.screen.get_width() - total_width) // 2
 
         # Buy Button
-        buy_button = pygame.Rect(start_x, self.screen.get_height() - 150 + 20, button_width, button_height)
-        pygame.draw.rect(self.screen, (100, 100, 100), buy_button)
-        buy_button_text = font.render(f"Buy", True, (0, 0, 0))
-        self.screen.blit(buy_button_text, (buy_button.centerx - buy_button_text.get_width() // 2, buy_button.centery - buy_button_text.get_height() // 2))
+        if(player.playerBalance >= self.tileArray[currentPlayer.playerPosition].buyPrice):
+            buy_button = pygame.Rect(start_x, self.screen.get_height() - 150 + 20, button_width, button_height)
+            pygame.draw.rect(self.screen, (100, 100, 100), buy_button)
+            buy_button_text = font.render(f"Buy", True, (0, 0, 0))
+            self.screen.blit(buy_button_text, (buy_button.centerx - buy_button_text.get_width() // 2, buy_button.centery - buy_button_text.get_height() // 2))
 
         # Auction Button
         auction_button = pygame.Rect(start_x + button_width + button_gap, self.screen.get_height() - 150 + 20, button_width, button_height)
@@ -531,14 +528,15 @@ class Board:
                     pass
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     mouse_pos = event.pos
-                    if buy_button.collidepoint(mouse_pos):
-                        waitforinput = False
-                        self.screen.fill((200, 200, 200))
-                        return 0
                     if auction_button.collidepoint(mouse_pos):
                         waitforinput = False
                         self.screen.fill((200, 200, 200))
                         return 1
+                    elif buy_button.collidepoint(mouse_pos):
+                        waitforinput = False
+                        self.screen.fill((200, 200, 200))
+                        return 0
+                    
         return 0
         pass
     
@@ -727,7 +725,7 @@ class Property(Tile):
         self.image = self.PROPERTY_NUM_TO_INFO[tileNumber]["Image"]
 
     # Abstract getRent function
-    def getRent(self, owner: Player) -> int:
+    def getRent(self, owner: Player, currentPlayer: Player) -> int:
         pass
     
     #Default draw function with no upgrade level
@@ -793,7 +791,7 @@ class ColorProperty(Property):
         self.upgradeLevel = 0
         
     # Override: Determine the rent due from landing on this spot given the player that owns the property
-    def getRent(self, owner: Player) -> int:
+    def getRent(self, owner: Player, currentPlayer: Player) -> int:
         if owner.ownsPropertySet(self.color) and self.upgradeLevel == 0: # If the owner owns the property set but hasnt upgraded yet, return double the base rent (special case)
             return self.rentList[0] * 2
         else: # Else, just return the rent from the rentList at the upgradeLevel index
@@ -820,7 +818,7 @@ class Utility(Property):
         super().__init__(tileNumber, playersOnTile)
 
     # Override: Determine the rent due according to the diceRollTotal
-    def getRent(self, owner: Player) -> int:
+    def getRent(self, owner: Player, currentPlayer: Player) -> int:
         # Count the number of utilities owned by the player to determine the resulting dice multiplication value from rentList
         utilityCount = 0
         for prop in owner.propertyList:
@@ -829,7 +827,7 @@ class Utility(Property):
                 if utilityCount == 2:
                     break
         factor = self.rentList[utilityCount - 1]
-        return factor * owner.lastDiceResult  # Multiply dice roll by the factor indicated by number of utilities owned (x4 or x10)
+        return factor * currentPlayer.lastDiceResult  # Multiply dice roll by the factor indicated by number of utilities owned (x4 or x10)
 
 
 class Railroad(Property):
@@ -837,7 +835,7 @@ class Railroad(Property):
         super().__init__(tileNumber, playersOnTile)
 
     # getRent override for railroads. counts railroads that the player owns
-    def getRent(self, owner: Player) -> int:
+    def getRent(self, owner: Player, currentPlayer: Player) -> int:
         railroadCount = 0
         for prop in owner.propertyList:
             if isinstance(prop, Railroad):
@@ -862,9 +860,9 @@ class Jail(Tile):
 class Event:
     def __init__(self):
         self.events = {1:"Elected to racing hall of fame. Collect $100",2:"Sign associate sponsorship. Collect $100",3:"First Union race fund matures! Collect $100",4:"Won first pole position! Collect $20",5:"Collect $50 from ever player for guest passes.",6:"Go to jail!",7:"Get out of Jail free!",8:"You are assessed for track repairs. Pay $40 for every upgrade you've made.",9:"Car needs new tires. Pay $100",10:"Speeding on pit row. Pay $50",
-        11:"Won first Race! Collect $200",12:"Pay driving school fee of $150",13:"Fastest pit crew! Receive $25 prize.",14:"From sale of surplus race equipment you get $45",15:"In second place collect $10",16:"Race over to go and collect $200",17:"Pay $25 for each upgrade you've made",18:"You make the cover story in Inside Nascar magazine! Collect $150",19:"Need new spark plugs. Advance to parts America.",20:"Advance token to the nearest Speedway and pay owner twice the rent. If the speedway is unowned, you may buy it.",
-        21:"Cut off driver. Go back 3 spaces.",22:"Nascar winston cup scene names you driver of the year! Pay each player $50",23:"Go to jail.",24:"Get out of jail free",25:"Licensed souveniers pay. Pay $15",26:"Race over to QVC",27:"Free pit pass. Advance token to Goodwrench service plus.",28:"You qualified! Drive over to Charlotte Motor Speedway.",29:"Advance token to the nearest Speedway and pay owner twice the rent. If the speedway is unowned, you may buy it.",30:"Speed over to go and collect $200",
-        31:"First Union pays you dividend of $50",32:"Advance to nearest utility. If unowned, you may buy it. Otherwise pay the owner 10x the amount thrown on the dice."}
+        11:"Won first Race! Collect $200",12:"Pay driving school fee of $150",13:"Fastest pit crew! Receive $25 prize.",14:"From sale of surplus race equipment you get $45",15:"In second place collect $10",16:"Race over to go and collect $200",17:"Pay $25 for each upgrade you've made",18:"You make the cover story in Inside Nascar magazine! Collect $150",19:"Need new spark plugs. Advance to parts America.",20:"Advance token to the nearest Speedway and pay owner the rent. If the speedway is unowned, you may buy it.",
+        21:"Cut off driver. Go back 3 spaces.",22:"Nascar winston cup scene names you driver of the year! Pay each player $50",23:"Go to jail.",24:"Get out of jail free",25:"Licensed souveniers pay. Pay $15",26:"Race over to QVC",27:"Free pit pass. Advance token to Goodwrench service plus.",28:"You qualified! Drive over to Charlotte Motor Speedway.",29:"Advance token to the nearest Speedway and pay owner the rent. If the speedway is unowned, you may buy it.",30:"Speed over to go and collect $200",
+        31:"First Union pays you dividend of $50"}
         
         #initializing variables initially for future references 
         self.font = pygame.font.Font(None, 24) #sets font and size
@@ -874,6 +872,9 @@ class Event:
 
     def event_outcome(event_code: int, player: Player, gameBoard: Board):
 
+        players = [player]
+        current_turn = 0
+        
         if(event_code == 1 or event_code == 2 or event_code == 3):
             player.addBalance(100)
             #gain $100
@@ -886,13 +887,19 @@ class Event:
                     payer.payPlayer(50, player)
             #gain $50 from all players
         elif (event_code == 6 or event_code == 23):
-            player.movePlayer(jumpToTile = 10, passGoViable = False)
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 10, passGoViable = False)
+            player.putInJail()
+            
             #go to jail
         elif (event_code == 7 or event_code == 24):
             player.numGetOutOfJailCards += 1
             #get out of jail
         elif (event_code == 8):
-            player.removeBalance(40)
+            upgradeCount = 0
+            for prop in player.propertyList:
+                if isinstance(prop, ColorProperty):
+                    upgradeCount += prop.upgradeLevel
+            player.removeBalance(40 * upgradeCount)
             #pay $40
         elif (event_code == 9):
             player.removeBalance(100)
@@ -916,7 +923,7 @@ class Event:
             player.addBalance(10)
             #gain $10
         elif (event_code == 16 or event_code == 30):
-            player.movePlayer(jumpToTile = 0, passGoViable = True)
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 0, passGoViable = True)
             #advance to go
         elif (event_code == 17):
             upgradeCount = 0
@@ -929,18 +936,18 @@ class Event:
             player.addBalance(150)
             #gain $150
         elif (event_code == 19):
-            player.movePlayer(jumpToTile = 23, passGoViable = True)
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 23, passGoViable = True)
             #advance to parts america
         elif (event_code == 20 or event_code == 29):
             # Move the player to the property
-            player.movePlayer(jumpToTile = player.nearestSpeedway(), passGoViable = True)
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = player.nearestSpeedway(), passGoViable = True)
 
             #MAKE SURE TO PROCESS BUYING/AUCTIONING IF SPEEDWAY NOT OWNED
             #OR PROCESS PAYING DOUBLE RENT!!!
             
             #advance to nearest speedway and pay double rent or buy property
         elif (event_code == 21):
-            player.movePlayer(moveAmount = -3)
+            gameBoard.movePlayer(moveAmount = -3)
             #go back 3 spaces
         elif (event_code == 22):
             for recipient in gameBoard.playerTurnQueue:
@@ -950,24 +957,17 @@ class Event:
             player.removeBalance(15)
             #pay 15
         elif (event_code == 26):
-            player.movePlayer(jumpToTile = 23, passGoViable = True)
+            gameBoard.movePlayer(jumpToTile = 23, passGoViable = True)
             #go to QVC
         elif (event_code == 27):
-            player.movePlayer(jumpToTile = 39, passGoViable = True)
+            gameBoard.movePlayer(jumpToTile = 39, passGoViable = True)
             #go to Goodwrench service plus
         elif (event_code == 28):
-            player.movePlayer(jumpToTile = 15, passGoViable = True)
+            gameBoard.movePlayer(jumpToTile = 15, passGoViable = True)
             #go to Charlotte Motor Speedway
         elif (event_code == 31):
             player.addBalance(50)
             #gain $50
-        elif (event_code == 32):
-            player.movePlayer(jumpToTile = player.nearestSpeedway(), passGoViable = True)
-            
-            # MAKE SURE TO HANDLE PAYING 10x PROPERTY VALUE OR GOING TO AUCTION
-            #go to nearest speedway. Pay 10x of dice value or buy property
-    
-    #creates a pop_up message when triggered to show player the event card message
     def show_event_message(self, event_code: int):
         """Display the event message and draw it to the screen."""
         message = self.events.get(event_code, "Unknown Event")

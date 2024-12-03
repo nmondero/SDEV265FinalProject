@@ -38,7 +38,13 @@ running_auction = False
 buttons = Buttons(screen)  # Create the buttons
 
 
-
+def cleanScreen():
+    screen.fill(backgroundColor)
+    screen.blit(board_surf, board_rect)
+    dice.draw(screen)
+    gameboard.drawPlayers(players)
+    buttons.draw_buttons(is_doubles)
+    gameboard.show_turn_message(players[current_turn].playerName)
 
 # Trying to fit the game board to the screen here (this orientation seems good)
 board_surf = pygame.transform.scale(pygame.image.load("images/GameBoard.png").convert(), (550, 550))
@@ -156,6 +162,11 @@ while running:
             buttons.draw_buttons(is_doubles)
             is_doubles = False
             gameboard.show_turn_message(players[current_turn].playerName)
+            
+            # Check if the current player is in jail and display red text if so
+            if players[current_turn].isInJail:
+                jail_text = pygame.font.Font(None, 24).render("You are in jail! Roll doubles to get out.", True, (255, 0, 0))
+                screen.blit(jail_text, ((screen.get_width() // 2) - (jail_text.get_width() // 2),725))
                 
             pygame.display.update()
             input = buttons.getInput()
@@ -164,7 +175,7 @@ while running:
                 dice.draw(screen)
                 result = gameboard.moveResults(players, current_turn)
                 if result == 0: #Landed on a free space (visitng jail, go, own property, free parking)
-                    pass
+                    cleanScreen()
                 elif result == 1: #Landed on an unowned property
                     if(gameboard.propertyDecision(players[current_turn]) == 1): #Asks if player wants to buy or auction
                         # Create and run auction
@@ -175,20 +186,16 @@ while running:
                             winner.addProperty(gameboard.tileArray[players[current_turn].playerPosition])
                             print(f"Auction winner: {winner.playerName} - Paid: ${winning_bid}")
                         ##Clean up the screen after an auction
-                        screen.fill(backgroundColor)
-                        screen.blit(board_surf, board_rect)
-                        dice.draw(screen)
-                        gameboard.drawPlayers(players)
-                        buttons.draw_buttons(is_doubles)
-                        gameboard.show_turn_message(players[current_turn].playerName)
+                        cleanScreen()
                         # The auction instance will be automatically cleaned up by Python's garbage collector
                     else: #Player wants to buy
                         players[current_turn].addProperty(gameboard.tileArray[players[current_turn].playerPosition])
                         players[current_turn].removeBalance(gameboard.tileArray[players[current_turn].playerPosition].buyPrice)
+                        cleanScreen()
                         print(f"Bought property for: {gameboard.tileArray[players[current_turn].playerPosition].buyPrice} - New balance: {players[current_turn].playerBalance}")
                 
                 elif result == 2: #Landed on an event tile
-                    event_code = random.randint(1,32)  
+                    event_code = random.randint(1,31)
                     event_start_time = pygame.time.get_ticks()
                     card_popup.show_event_message(event_code)
                     waiting_for_event = True
@@ -215,19 +222,34 @@ while running:
                     
                     # Process the event outcome after showing the card
                     ##Clean up the screen after an auction
-                    screen.fill(backgroundColor)
-                    screen.blit(board_surf, board_rect)
-                    dice.draw(screen)
-                    gameboard.drawPlayers(players)
-                    buttons.draw_buttons(is_doubles)
-                    gameboard.show_turn_message(players[current_turn].playerName)
-                    #Event.event_outcome(event_code, players[current_turn], gameboard)
-                
+                    Event.event_outcome(event_code, players[current_turn], gameboard)
+                    cleanScreen()
+                    if(event_code == 20 or event_code == 29):
+                        result = gameboard.moveResults(players, current_turn)
+                        if result != 5 and result != 0: #Means the property is not owned
+                            if(gameboard.propertyDecision(players[current_turn]) == 1): #Asks if player wants to buy or auction
+                            # Create and run auction
+                                auction_instance = Auction(players, gameboard.tileArray[players[current_turn].playerPosition], current_turn)
+                                winner, winning_bid = auction_instance.run_auction(screen)
+                                if winner:
+                                    winner.removeBalance(winning_bid)
+                                    winner.addProperty(gameboard.tileArray[players[current_turn].playerPosition])
+                                    print(f"Auction winner: {winner.playerName} - Paid: ${winning_bid}")
+                                    # The auction instance will be automatically cleaned up by Python's garbage collector
+                            else: #Player wants to buy
+                                players[current_turn].addProperty(gameboard.tileArray[players[current_turn].playerPosition])
+                                players[current_turn].removeBalance(gameboard.tileArray[players[current_turn].playerPosition].buyPrice)
+                                print(f"Bought property for: {gameboard.tileArray[players[current_turn].playerPosition].buyPrice} - New balance: {players[current_turn].playerBalance}")
+                    cleanScreen()
+                    
                 elif result == 3: #Landed on a tax tile
                     pass
                 elif result == 4: #Landed on go to jail
                     players[current_turn].putInJail()
                     gameboard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 10, passGoViable = False)
+                elif result == 5: #Landed on own property
+                    #Functionality for paying rent is within the gameboard class moveResults
+                    cleanScreen()
             elif input == 2: #sell property
                 pass
             elif input == 3: #Upgrade property
