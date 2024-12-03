@@ -195,13 +195,17 @@ class Player:
 
     # Determines if the player owns the full property set of the specified color
     def ownsPropertySet(self, color: str) -> bool:
+        # Get a list of the property I
+        propIds = []
+        for p in self.propertyList: 
+            propIds.append(p.tileNumber)
         # Check if the player has each property in the color set
         for colorMemberID in ColorProperty.COLOR_GROUPS[color]:
-            if colorMemberID not in self.propertyList:
+            if colorMemberID not in propIds:
                 return False # Return false if no match found
         
         return True # If player had the whole set
-    
+
     # Return the value of the nearest speedway
     def nearestSpeedway(self) -> int:
         # Determine index of closest speedway
