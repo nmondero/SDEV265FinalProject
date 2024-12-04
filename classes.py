@@ -947,7 +947,7 @@ class Event:
             
             #advance to nearest speedway and pay double rent or buy property
         elif (event_code == 21):
-            gameBoard.movePlayer(moveAmount = -3)
+            gameBoard.movePlayer(players, current_turn, moveAmount = -3)
             #go back 3 spaces
         elif (event_code == 22):
             for recipient in gameBoard.playerTurnQueue:
