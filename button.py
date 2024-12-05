@@ -25,16 +25,16 @@ class Buttons:
     
         # Initialize buttons
         self.roll_dice_button = pygame.Rect(start_x, y_position, button_width, button_height)
-        self.dice_text = font.render(f"Roll Dice", True, (0, 0, 255))
+        self.dice_text = font.render(f"Roll Dice", True, (194,207,160))
         
         self.sell_property_button = pygame.Rect(start_x + button_width + button_gap, y_position, button_width, button_height)
-        self.property_text = font.render(f"Sell Property", True, (0, 0, 255))
+        self.property_text = font.render(f"Sell Property", True, (194,207,160))
        
         self.upgrade_button = pygame.Rect(start_x + (button_width + button_gap) * 2, y_position, button_width, button_height)
-        self.upgrade_text = font.render(f"Upgrade", True, (0, 0, 255))
+        self.upgrade_text = font.render(f"Upgrade", True, (194,207,160))
         
         self.end_turn_button = pygame.Rect(start_x + (button_width + button_gap) * 3, y_position, button_width, button_height)
-        self.end_text = font.render(f"End Turn", True, (0, 0, 255))
+        self.end_text = font.render(f"End Turn", True, (194,207,160))
         
         
     def draw_buttons(self, is_doubles: bool):
@@ -45,11 +45,15 @@ class Buttons:
 
         #draws all the buttons on the window
         if self.canIrollDice or self.doubles:
+            pygame.draw.rect(self.screen, (150, 0, 0), self.roll_dice_button)
             self.screen.blit(self.dice_text, (self.roll_dice_button.centerx - self.dice_text.get_width() // 2, self.roll_dice_button.centery - self.dice_text.get_height() // 2))
         if self.canIendTurn and not self.doubles:
+            pygame.draw.rect(self.screen, (150, 0, 0), self.end_turn_button)
             self.screen.blit(self.end_text, (self.end_turn_button.centerx - self.end_text.get_width() // 2, self.end_turn_button.centery - self.end_text.get_height() // 2))
             
+        pygame.draw.rect(self.screen, (150, 0, 0), self.sell_property_button)
         self.screen.blit(self.property_text, (self.sell_property_button.centerx - self.property_text.get_width() // 2, self.sell_property_button.centery - self.property_text.get_height() // 2))
+        pygame.draw.rect(self.screen, (150, 0, 0), self.upgrade_button)
         self.screen.blit(self.upgrade_text, (self.upgrade_button.centerx - self.upgrade_text.get_width() // 2, self.upgrade_button.centery - self.upgrade_text.get_height() // 2))
         
         pygame.display.update()

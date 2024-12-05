@@ -230,7 +230,7 @@ class Board:
     GO_INDEX = 0
     FREE_PARKING_INDEX = 20
     GO_TO_JAIL_INDEX = 30
-    PLAYER_COLOR = [(255, 0, 0),(0,255,0),(0,0,255),(255,255,0)]
+    PLAYER_COLOR = [(218,36,44),(20,167,89),(3,102,165),(253,239,5)]
     
     def __init__(self, screen: pygame.Surface, playerTurnQueue: List[Player], turnNumber: int = 1, eventCardDeck: List[int] = None):
         self.tileArray = []
@@ -301,7 +301,10 @@ class Board:
                 players[turn].consecutiveDoubles += 1
                 players[turn].turnsLeftInJail = 0
                 return False #You don't roll again if you go to jail after rolling 3 doubles
-                
+            elif players[turn].turnsLeftInJail == 0:
+                players[turn].isInJail = False
+                self.movePlayer(players, turn, moveAmount = players[turn].lastDiceResult)
+                return False
 
             else:
                 players[turn].turnsLeftInJail -= 1
@@ -328,7 +331,7 @@ class Board:
         offset = 0
         font = pygame.font.Font(None, 20)  # Use pygame's default font, size 36
     
-        # Draw player scores in each corner
+        # Draw player balance positions
         score_positions = [
             (250,100),     # 2nd position
             (450,100),     # 3rd position
@@ -336,10 +339,10 @@ class Board:
             (650,100)     # 4th position
         ]
 
-        # Draw player scores
+        # Draw player balance
         for i, player in enumerate(players):
             if i < len(score_positions):  # Make sure we don't exceed available positions
-                score_text = font.render(f"Balance: {player.playerName} - ${player.playerBalance}", True, (0, 0, 0))
+                score_text = font.render(f"Balance: {player.playerName} - ${player.playerBalance}", True, self.PLAYER_COLOR[i])
                 self.screen.blit(score_text, score_positions[i])
         
         #Drawing Player Properties
@@ -425,21 +428,12 @@ class Board:
             players[turn].draw(self.screen, tileRect.centerx, tileRect.centery - offset)
         elif 30 <= index <= 39:  # Right row
             players[turn].draw(self.screen, tileRect.centerx + offset, tileRect.centery)
-        '''
-        elif isinstance(tile, Jail): # Player is on the jail tile
-            if self.isInJail:
-                offset = 10 * len(tile.playersInJail)
-            
-            if self.isInJail: # If player is currently jailed --> offset y down starting from the top right based on how many players on the jail tile are currently jailed
-                for player in gameBoard.playerTurnQueue:
-                    if player.isInJail:
-                        offset += 10
-                self.token.moveToken(tileRect.right - 30, tileRect.top + 30 + offset) #NOTE: need to make sure to change offset based on number of player on jail tile that are actually jailed
-            
-        '''
+        
     def show_turn_message(self, player_name):    
         font = pygame.font.Font(None, 36)
-        text_color = (0, 0, 0)  # Black text
+        for player in self.playerTurnQueue:
+            if player_name == player.playerName:
+                text_color = self.PLAYER_COLOR[self.playerTurnQueue.index(player)]
         background_color = (200, 200, 200)  # Light gray background
 
         # Render the message and get a centered rect
@@ -538,7 +532,233 @@ class Board:
                         return 0
                     
         return 0
-        pass
+    
+    def upgradeScreen(self, player: Player):
+        font = pygame.font.SysFont("Arial", 22)
+        self.screen.fill((200, 200, 200))
+
+        PropertyScreen = True
+        UpgradeScreen = False
+
+        color_sets = self.getCompleteColorSets(player)
+        button_width = 200
+        button_height = 50
+
+        # Define fixed positions for the buttons
+        button_positions = [
+            ((self.screen.get_width() // 2) - 250, 100 + 100), ((self.screen.get_width() // 2) + 50, 100 + 100),  # First row
+            ((self.screen.get_width() // 2) - 250, 200 + 100), ((self.screen.get_width() // 2) + 50, 200 + 100),  # Second row
+            ((self.screen.get_width() // 2) - 250, 300 + 100), ((self.screen.get_width() // 2) + 50, 300 + 100),  # Third row
+            ((self.screen.get_width() // 2) - 250, 400 + 100), ((self.screen.get_width() // 2) + 50, 400 + 100)   # Fourth row
+        ]
+        while(True):
+            if PropertyScreen:
+                self.screen.fill((200, 200, 200))
+                title = font.render("Upgrade Properties", True, (0, 0, 0))
+                self.screen.blit(title, (self.screen.get_width() // 2 - title.get_width() // 2, 50))
+                instructions = font.render("Select a color set to upgrade. Only completed color sets will appear.", True, (0, 0, 0))
+                self.screen.blit(instructions, (self.screen.get_width() // 2 - instructions.get_width() // 2, 100))
+
+                # Draw buttons
+                for color in color_sets:
+                    purple_button_rect = pygame.Rect(button_positions[0][0], button_positions[0][1], button_width, button_height)
+                    purple_button_text = font.render(f"Purple", True, (0, 0, 0))
+                    cyan_button_rect = pygame.Rect(button_positions[1][0], button_positions[1][1], button_width, button_height)
+                    cyan_button_text = font.render(f"Cyan", True, (0, 0, 0))
+                    magenta_button_rect = pygame.Rect(button_positions[2][0], button_positions[2][1], button_width, button_height)
+                    magenta_button_text = font.render(f"Magenta", True, (0, 0, 0))
+                    orange_button_rect = pygame.Rect(button_positions[3][0], button_positions[3][1], button_width, button_height)
+                    orange_button_text = font.render(f"Orange", True, (0, 0, 0))
+                    red_button_rect = pygame.Rect(button_positions[4][0], button_positions[4][1], button_width, button_height)
+                    red_button_text = font.render(f"Red", True, (0, 0, 0))
+                    yellow_button_rect = pygame.Rect(button_positions[5][0], button_positions[5][1], button_width, button_height)
+                    yellow_button_text = font.render(f"Yellow", True, (0, 0, 0))
+                    green_button_rect = pygame.Rect(button_positions[6][0], button_positions[6][1], button_width, button_height)
+                    green_button_text = font.render(f"Green", True, (0, 0, 0))
+                    blue_button_rect = pygame.Rect(button_positions[7][0], button_positions[7][1], button_width, button_height)
+                    blue_button_text = font.render(f"Blue", True, (0, 0, 0))
+                    if color == "PURPLE":
+                        pygame.draw.rect(self.screen, (126,15,221), purple_button_rect)
+                        self.screen.blit(purple_button_text, (purple_button_rect.centerx - purple_button_text.get_width() // 2, purple_button_rect.centery - purple_button_text.get_height() // 2))
+                    if color == "CYAN":
+                        pygame.draw.rect(self.screen, (160,229,238), cyan_button_rect)
+                        self.screen.blit(cyan_button_text, (cyan_button_rect.centerx - cyan_button_text.get_width() // 2, cyan_button_rect.centery - cyan_button_text.get_height() // 2))
+                    if color == "MAGENTA":
+                        pygame.draw.rect(self.screen, (249,74,185), magenta_button_rect)
+                        self.screen.blit(magenta_button_text, (magenta_button_rect.centerx - magenta_button_text.get_width() // 2, magenta_button_rect.centery - magenta_button_text.get_height() // 2))
+                    if color == "ORANGE":
+                        pygame.draw.rect(self.screen, (233,142,40), orange_button_rect)
+                        self.screen.blit(orange_button_text, (orange_button_rect.centerx - orange_button_text.get_width() // 2, orange_button_rect.centery - orange_button_text.get_height() // 2))
+                    if color == "RED":
+                        pygame.draw.rect(self.screen, (218,36,44), red_button_rect)
+                        self.screen.blit(red_button_text, (red_button_rect.centerx - red_button_text.get_width() // 2, red_button_rect.centery - red_button_text.get_height() // 2))
+                    if color == "YELLOW":
+                        pygame.draw.rect(self.screen, (253,239,5), yellow_button_rect)
+                        self.screen.blit(yellow_button_text, (yellow_button_rect.centerx - yellow_button_text.get_width() // 2, yellow_button_rect.centery - yellow_button_text.get_height() // 2))
+                    if color == "GREEN":                        
+                        pygame.draw.rect(self.screen, (20,167,89), green_button_rect)
+                        self.screen.blit(green_button_text, (green_button_rect.centerx - green_button_text.get_width() // 2, green_button_rect.centery - green_button_text.get_height() // 2))
+                    if color == "BLUE":                        
+                        pygame.draw.rect(self.screen, (3,102,165), blue_button_rect)
+                        self.screen.blit(blue_button_text, (blue_button_rect.centerx - blue_button_text.get_width() // 2, blue_button_rect.centery - blue_button_text.get_height() // 2))
+
+            elif UpgradeScreen:
+                self.screen.fill((200, 200, 200))
+                # Display property details for the selected color set with reduced image size and side by side
+                properties_in_set = [prop for prop in self.tileArray if isinstance(prop, ColorProperty) and prop.color == selection]
+                image_scale = 0.5  # Scale images to half size
+                x_offset = (self.screen.get_width() - (len(properties_in_set) * 100 * image_scale)) // 2  # Center images
+                for prop in properties_in_set:
+                    prop_image = pygame.image.load(prop.image)
+                    prop_image = pygame.transform.scale(prop_image, (int(prop_image.get_width() * image_scale), int(prop_image.get_height() * image_scale)))
+                    self.screen.blit(prop_image, (x_offset-275, 150))
+                    x_offset += prop_image.get_width() + 10  # Move x_offset for next image
+
+                # Calculate and display the total upgrade cost
+                total_upgrade_cost = properties_in_set[0].upgradeCost * len(properties_in_set)
+                cost_text = font.render(f"Total Upgrade Cost: ${total_upgrade_cost}", True, (0, 0, 0))
+                self.screen.blit(cost_text, (self.screen.get_width() // 2 - cost_text.get_width() // 2, 450))
+
+                # Add an Upgrade button
+                upgrade_button_rect = pygame.Rect(
+                    (self.screen.get_width() - button_width) // 2,
+                    500,
+                    button_width,
+                    button_height
+                )
+                pygame.draw.rect(self.screen, (0, 150, 0), upgrade_button_rect)
+                upgrade_button_text = font.render("Upgrade", True, (255, 255, 255))
+                self.screen.blit(upgrade_button_text, (upgrade_button_rect.centerx - upgrade_button_text.get_width() // 2, upgrade_button_rect.centery - upgrade_button_text.get_height() // 2))
+
+            # Draw back button
+            back_button_rect = pygame.Rect(
+                (self.screen.get_width() - button_width) // 2,
+                self.screen.get_height() - 100,
+                button_width,
+                button_height
+            )
+            pygame.draw.rect(self.screen, (150, 0, 0), back_button_rect)
+            back_button_text = font.render("Back", True, (255, 255, 255))
+            self.screen.blit(back_button_text, (back_button_rect.centerx - back_button_text.get_width() // 2, back_button_rect.centery - back_button_text.get_height() // 2))
+
+            pygame.display.update()
+
+            selection = ""
+            message = ""
+            waitforinput = True
+            while(waitforinput):
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        break
+                    elif event.type == pygame.MOUSEBUTTONDOWN:
+                        mouse_pos = event.pos
+
+                        if (back_button_rect.collidepoint(mouse_pos) and PropertyScreen == True):
+                            waitforinput = False
+                            self.screen.fill((200, 200, 200))
+                            return
+                        elif (back_button_rect.collidepoint(mouse_pos) and UpgradeScreen == True):
+                            self.screen.fill((200, 200, 200))
+                            PropertyScreen = True
+                            UpgradeScreen = False
+                            selection = ""
+                            waitforinput = False
+
+                        #button logic for Property Selection Screen
+                        if(PropertyScreen):
+                            if (purple_button_rect.collidepoint(mouse_pos)):
+                                selection = "PURPLE"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+                            if (cyan_button_rect.collidepoint(mouse_pos)):
+                                selection = "CYAN"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+                            if (magenta_button_rect.collidepoint(mouse_pos)):
+                                selection = "MAGENTA"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+                            if (orange_button_rect.collidepoint(mouse_pos)):
+                                selection = "ORANGE"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+                            if (red_button_rect.collidepoint(mouse_pos)):
+                                selection = "RED"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+                            if (yellow_button_rect.collidepoint(mouse_pos)):
+                                selection = "YELLOW"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+                            if (green_button_rect.collidepoint(mouse_pos)):
+                                selection = "GREEN"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+                            if (blue_button_rect.collidepoint(mouse_pos)):
+                                selection = "BLUE"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+
+                        #button Logic for Upgrade Selection Screen
+                        elif(UpgradeScreen):
+                            if(upgrade_button_rect.collidepoint(mouse_pos)):
+                                print(f"Upgrading {selection} for {player.playerName}")
+                                # Calculate total upgrade cost
+                                if player.playerBalance < total_upgrade_cost:
+                                    message = "You don't have enough money to Upgrade"
+                                else:
+                                    message = ""
+                                    for prop in properties_in_set:
+                                        if prop.upgradeLevel >= 5:
+                                                message = "You have reached the maximum upgrade level for this color set"
+                                        else:
+                                            self.screen.fill((200, 200, 200))
+                                            self.upgradeProperty(player, prop)
+                                            PropertyScreen = True
+                                            UpgradeScreen = False    
+                                            waitforinput = False
+                                            selection = ""
+                                            print(f"Upgraded {prop.tileNumber} from {prop.upgradeLevel -1 } to {prop.upgradeLevel}")
+                                # Display error message if any
+                                if message:
+                                        error_text = font.render(message, True, (255, 0, 0))
+                                        self.screen.blit(error_text, (self.screen.get_width() // 2 - error_text.get_width() // 2, 550))
+                                pygame.display.update()
+            #End while loop                
+    def getCompleteColorSets(self, player: Player) -> List[str]:
+        # Use the ownsPropertySet method to determine complete color sets
+        complete_sets = []
+        for color in ColorProperty.COLOR_GROUPS.keys():
+            if player.ownsPropertySet(color):
+                complete_sets.append(color)
+        return complete_sets
+
+    def upgradeProperty(self, player: Player, property: ColorProperty):
+        print(f"Upgrading {property.tileNumber} for {player.playerName}")
+        try:
+            property.upgrade()
+            if(player.playerBalance < property.upgradeCost):
+                raise Exception ("Not enough money to upgrade property")
+            else:
+                player.removeBalance(property.upgradeCost)
+        except Exception as e:
+            print(f"Upgrade failed: {str(e)}")
+
+    def downgradeProperty(self, player: Player, property: ColorProperty):
+        print(f"Downgrading {property.tileNumber} for {player.playerName}")
+        try:
+            property.downgrade()
+            player.addBalance(property.upgradeCost)
+        except Exception as e:
+            print(f"Downgrade failed: {str(e)}")
     
 class PlayerTokenImage: 
     TOKEN_WIDTH = 20
@@ -957,13 +1177,13 @@ class Event:
             player.removeBalance(15)
             #pay 15
         elif (event_code == 26):
-            gameBoard.movePlayer(jumpToTile = 23, passGoViable = True)
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 23, passGoViable = True)
             #go to QVC
         elif (event_code == 27):
-            gameBoard.movePlayer(jumpToTile = 39, passGoViable = True)
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 39, passGoViable = True)
             #go to Goodwrench service plus
         elif (event_code == 28):
-            gameBoard.movePlayer(jumpToTile = 15, passGoViable = True)
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 15, passGoViable = True)
             #go to Charlotte Motor Speedway
         elif (event_code == 31):
             player.addBalance(50)

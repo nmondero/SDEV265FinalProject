@@ -98,7 +98,12 @@ while running:
                     buttons = Buttons(screen)
                     gameboard = Board(screen, players)
                     gameboard.assignPlayerPosition(players)    
-                                            
+                    '''
+                    # assignment of all properties to the first player for testing purposes
+                    first_player = players[0]
+                    all_properties = [Property(tileNumber=i) for i in range(40) if i in Property.PROPERTY_NUM_TO_INFO.keys()]
+                    first_player.propertyList = all_properties
+                    '''
 
            # Handle key pressing events
             elif event.type == pygame.KEYDOWN:
@@ -153,14 +158,18 @@ while running:
         #BEGIN MAIN PLAYING LOOP
         #Put anything the needs to be refreshed after a player turn here
         print(f"\nPlayer: {players[current_turn].playerName}")
+        buttons.draw_buttons(is_doubles)
+        if (input == 2 or input == 3) and is_doubles:
+                #If the other buttons are pressed instead of roll dice, you still have doubles you need to roll for
+                is_doubles = True
+        else:
+            is_doubles = False
         input = 0
         result = 0
         while(input!=4): #input 4 is the end turn button
             #Put everything that needs to be refreshed during a player turn here
             screen.blit(board_surf, board_rect)
             gameboard.drawPlayers(players)
-            buttons.draw_buttons(is_doubles)
-            is_doubles = False
             gameboard.show_turn_message(players[current_turn].playerName)
             
             # Check if the current player is in jail and display red text if so
@@ -253,7 +262,9 @@ while running:
             elif input == 2: #sell property
                 pass
             elif input == 3: #Upgrade property
-                pass
+                gameboard.upgradeScreen(players[current_turn])
+                
+                cleanScreen()
             elif input == 4: #End turn
                 current_turn = (current_turn + 1) % len(players)  # Move to the next player
                 turn_displayed = True #resets to show new player message
