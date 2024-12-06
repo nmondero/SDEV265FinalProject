@@ -39,7 +39,6 @@ class Player_Menu:
 
         # Create variables to hold name entry info
         self.name_input_string = ""
-        self.name_input_active = False
         
         # Create surfaces and flags for error messages (Flags default to false so their error messages do not appear until the error arises)
         self.max_length_error_surface = self.small_font.render("Player name is at max length", True, self.RED)
@@ -107,58 +106,38 @@ class Player_Menu:
         if event.type == pygame.MOUSEBUTTONDOWN:
             # Get location of mouse click
             mouse_pos = event.pos
-
-            # Check if name input box clicked
-            if self.name_input_rect.collidepoint(mouse_pos):
-                self.name_input_active = True
-            
-            # If name input box not clicked, set it's activity flag to False and check for every other collision
-            else:
-                self.name_input_active = False
                 
-                # Handle clicking "Finalize Player"
-                if self.finalize_player_rect.collidepoint(mouse_pos):
-                    # If you try to finalize a character with no token selected (token_id_selected == -1, the default value), turn on the error flag to print error during draw
-                    if self.token_id_selected == self.DEFAULT_TOKEN: 
-                        self.no_token_selected = True
+            # Handle clicking "Finalize Player"
+            if self.finalize_player_rect.collidepoint(mouse_pos):
+                # If you try to finalize a character with no token selected (token_id_selected == -1, the default value), turn on the error flag to print error during draw
+                if self.token_id_selected == self.DEFAULT_TOKEN: 
+                    self.no_token_selected = True
 
-                    # If you try to finalize a player with an empty name, turn on the error flag to print error during draw
-                    elif len(self.name_input_string) == 0: 
-                        self.is_empty_input = True
+                # If you try to finalize a player with an empty name, turn on the error flag to print error during draw
+                elif len(self.name_input_string) == 0: 
+                    self.is_empty_input = True
 
-                    # Create new Player with name_input_string and a new token with the ID of the selected token
-                    else:
-                        if len(self.players) < self.current_player + 1:
-                            self.current_player += 1
-                            self.players.append(Player(self.current_player, self.name_input_string, PlayerTokenImage(self.token_id_selected)))
-                            if self.current_player >= self.total_players:
-                                self.player_setup_active = False
-                            
-                            # Reset selections and error flags to default
-                            self.token_id_selected = self.DEFAULT_TOKEN
-                            self.name_input_string = ""
-                            self.name_input_active = False
-                            self.is_max_length = False
-                            self.is_empty_input = False
-                            self.no_token_selected = False
+                # Create new Player with name_input_string and a new token with the ID of the selected token
+                else:
+                    self.finalizePlayers()
 
 
-                else: # Handle token selection
-                    for i, rect in enumerate(self.token_rects):
-                        if rect.collidepoint(mouse_pos):
-                            token_data = self.tokens[i]
-                            if not token_data['taken']:  # Check taken status from dictionary
-                                if self.token_id_selected is not self.DEFAULT_TOKEN: # Remember: DEFAULT_TOKEN (-1) is the value that denotes the player has not selected a token yet
-                                    self.tokens[self.token_id_selected]["taken"] = False
+            else: # Handle token selection
+                for i, rect in enumerate(self.token_rects):
+                    if rect.collidepoint(mouse_pos):
+                        token_data = self.tokens[i]
+                        if not token_data['taken']:  # Check taken status from dictionary
+                            if self.token_id_selected is not self.DEFAULT_TOKEN: # Remember: DEFAULT_TOKEN (-1) is the value that denotes the player has not selected a token yet
+                                self.tokens[self.token_id_selected]["taken"] = False
                                 
-                                token_data['taken'] = True  # Mark as taken in dictionary
-                                self.token_id_selected = i # Assign selected index (the token ID)
-                                self.no_token_selected = False # Reset no token selected error flag
+                            token_data['taken'] = True  # Mark as taken in dictionary
+                            self.token_id_selected = i # Assign selected index (the token ID)
+                            self.no_token_selected = False # Reset no token selected error flag
 
-                            # If the token clicked was already selected by current player, return token_id_selected to default value and deselect token
-                            elif i == self.token_id_selected:
-                                self.token_id_selected = self.DEFAULT_TOKEN
-                                token_data['taken'] = False
+                        # If the token clicked was already selected by current player, return token_id_selected to default value and deselect token
+                        elif i == self.token_id_selected:
+                            self.token_id_selected = self.DEFAULT_TOKEN
+                            token_data['taken'] = False
 
         # Handle keyboard input for the name input box
         if event.type == pygame.KEYDOWN:
@@ -167,13 +146,24 @@ class Player_Menu:
                 self.name_input_string = self.name_input_string[:-1] # Shave off the last character from the name string
                 self.is_max_length = False # Reset error flag indicating name_input_string is no longer max length
 
-            # Handle pressing any other key provided input is active
-            elif self.name_input_active:
-                if self.name_input_surface.get_width() + 15 > self.name_input_rect.width: # If you try to input a character past the max length...
-                    self.is_max_length = True # ...set error flag for max name length
+            elif event.key == pygame.K_RETURN:
+                if self.token_id_selected == self.DEFAULT_TOKEN: 
+                    self.no_token_selected = True
+
+                # If you try to finalize a player with an empty name, turn on the error flag to print error during draw
+                elif len(self.name_input_string) == 0: 
+                    self.is_empty_input = True
+
+                # Create new Player with name_input_string and a new token with the ID of the selected token
                 else:
-                    self.name_input_string += event.unicode # Append the new character to the name string
-                    self.is_empty_input = False # Reset error flag that appears when you try to finalize a character with no name
+                    self.finalizePlayers()
+
+            # Handle pressing any other key
+            elif self.name_input_surface.get_width() + 15 > self.name_input_rect.width: # If you try to input a character past the max length...
+                self.is_max_length = True # ...set error flag for max name length
+            else:
+                self.name_input_string += event.unicode # Append the new character to the name string
+                self.is_empty_input = False # Reset error flag that appears when you try to finalize a character with no name
 
                 
 
@@ -211,11 +201,7 @@ class Player_Menu:
         # Draw name input prompt
         self.screen.blit(self.prompt_surface, self.prompt_rect)
 
-        # Change name input box color depending on if active or not
-        if self.name_input_active:
-            pygame.draw.rect(self.screen, (255, 255, 255), self.name_input_rect)
-        else:
-            pygame.draw.rect(self.screen, (240, 240, 240), self.name_input_rect)
+        pygame.draw.rect(self.screen, (255, 255, 255), self.name_input_rect)
         
         #Draw the name input box
         self.name_input_surface = self.small_font.render(self.name_input_string, True, self.BLACK)
@@ -237,3 +223,17 @@ class Player_Menu:
 
     def getPlayers(self) -> list:
         return self.players
+    
+    def finalizePlayers(self):
+        if len(self.players) < self.current_player + 1:
+            self.current_player += 1
+            self.players.append(Player(self.current_player, self.name_input_string, PlayerTokenImage(self.token_id_selected)))
+            if self.current_player >= self.total_players:
+                self.player_setup_active = False
+                            
+            # Reset selections and error flags to default
+            self.token_id_selected = self.DEFAULT_TOKEN
+            self.name_input_string = ""
+            self.is_max_length = False
+            self.is_empty_input = False
+            self.no_token_selected = False

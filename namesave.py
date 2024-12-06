@@ -51,6 +51,12 @@ class NameSaveFile:
                 self.input_string = self.input_string[:-1]
                 self.is_max_length = False
 
+            elif event.key == pygame.K_RETURN:
+                if len(self.input_string) == 0:
+                    self.is_empty_input = True
+                else:
+                    self.finalize_save_file_name()
+
             # Handle typing while at max length
             elif self.input_surface.get_width() + 15 > self.input_rect.width: # If you try to input a character past the max length...
                 self.is_max_length = True # ...set error flag for max name length
@@ -70,25 +76,7 @@ class NameSaveFile:
 
                 # Handle CORRECTLY finalizing a valid save file name
                 else:
-                    files = os.listdir(SAVEFILE_DIRECTORY_NAME) # List of save file names in the savefiles folder
-                    pattern = fr"^{re.escape(self.input_string)}(?:\((\d+)\))?\.txt$" # Regex to capture file names in the savefiles folder matching the current input (including duplicate file designators: ex. duplicate_file(1).txt)
-                    
-                    # Count duplicate file names, including duplicates with duplicate numbers (ex. duplicate_file.txt vs duplicate_file(1).txt) to determine the final save file name
-                    duplicate_filename_count = 0
-                    for file in files:
-                        regex_match = re.search(pattern, file)
-                        if regex_match:
-                            duplicate_filename_count += 1
-
-                    # IF the save file name entered is already present, make sure to add the appropriate duplicate number in parentheses
-                    if duplicate_filename_count > 0:
-                        self.input_string += f"({duplicate_filename_count})"
-
-                    # Append the .txt extension to the filename
-                    self.input_string += ".txt"
-
-                    # Deactivate the name selection screen to continue logic in main
-                    self.name_savegame_active = False
+                    self.finalize_save_file_name()
 
     # Draw each element to the screen  
     def draw(self):
@@ -116,3 +104,25 @@ class NameSaveFile:
     # Return the name of the savefile
     def get_save_name(self):
         return self.save_file_name
+    
+    # 
+    def finalize_save_file_name(self):
+        files = os.listdir(SAVEFILE_DIRECTORY_NAME) # List of save file names in the savefiles folder
+        pattern = fr"^{re.escape(self.input_string)}(?:\((\d+)\))?\.txt$" # Regex to capture file names in the savefiles folder matching the current input (including duplicate file designators: ex. duplicate_file(1).txt)
+                    
+        # Count duplicate file names, including duplicates with duplicate numbers (ex. duplicate_file.txt vs duplicate_file(1).txt) to determine the final save file name
+        duplicate_filename_count = 0
+        for file in files:
+            regex_match = re.search(pattern, file)
+            if regex_match:
+                duplicate_filename_count += 1
+
+        # IF the save file name entered is already present, make sure to add the appropriate duplicate number in parentheses
+        if duplicate_filename_count > 0:
+            self.input_string += f"({duplicate_filename_count})"
+
+        # Append the .txt extension to the filename
+        self.input_string += ".txt"
+
+        # Deactivate the name selection screen to continue logic in main
+        self.name_savegame_active = False

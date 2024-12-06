@@ -195,23 +195,23 @@ while running:
                 if result == 0: #Landed on a free space (visitng jail, go, own property, free parking)
                     cleanScreen()
                 elif result == 1: #Landed on an unowned property
+                    current_property = gameboard.tileArray[current_player.playerPosition]
                     if(gameboard.propertyDecision(current_player) == 1): #Asks if player wants to buy or auction
                         # Create and run auction
-                        auction_property = gameboard.tileArray[current_player.playerPosition]
-                        auction_instance = Auction(players, auction_property, current_turn)
+                        auction_instance = Auction(players, current_property, current_turn)
                         winner, winning_bid = auction_instance.run_auction(screen)
                         if winner:
                             winner.removeBalance(winning_bid)
-                            winner.addProperty(auction_property)
+                            winner.addProperty(current_property)
                             print(f"Auction winner: {winner.playerName} - Paid: ${winning_bid}")
                         ##Clean up the screen after an auction
                         cleanScreen()
                         # The auction instance will be automatically cleaned up by Python's garbage collector
                     else: #Player wants to buy
-                        current_player.addProperty(auction_property)
-                        current_player.removeBalance(auction_property.buyPrice)
+                        current_player.addProperty(current_property)
+                        current_player.removeBalance(current_property.buyPrice)
                         cleanScreen()
-                        print(f"Bought property for: {auction_property.buyPrice} - New balance: {current_player.playerBalance}")
+                        print(f"Bought property for: {current_property.buyPrice} - New balance: {current_player.playerBalance}")
                 
                 elif result == 2: #Landed on an event tile
                     event_code = random.randint(1,31)
@@ -246,20 +246,20 @@ while running:
                     if(event_code == 20 or event_code == 29):
                         result = gameboard.moveResults(players, current_turn)
                         if result != 5 and result != 0: #Means the property is not owned
+                            current_property = gameboard.tileArray[current_player.playerPosition]
                             if(gameboard.propertyDecision(current_player) == 1): #Asks if player wants to buy or auction
                             # Create and run auction
-                                auction_property = gameboard.tileArray[current_player.playerPosition]
-                                auction_instance = Auction(players, auction_property, current_turn)
+                                auction_instance = Auction(players, current_property, current_turn)
                                 winner, winning_bid = auction_instance.run_auction(screen)
                                 if winner:
                                     winner.removeBalance(winning_bid)
-                                    winner.addProperty(auction_property)
+                                    winner.addProperty(current_property)
                                     print(f"Auction winner: {winner.playerName} - Paid: ${winning_bid}")
                                     # The auction instance will be automatically cleaned up by Python's garbage collector
                             else: #Player wants to buy
-                                current_player.addProperty(auction_property)
-                                current_player.removeBalance(auction_property.buyPrice)
-                                print(f"Bought property for: {auction_property.buyPrice} - New balance: {current_player.playerBalance}")
+                                current_player.addProperty(current_property)
+                                current_player.removeBalance(current_property.buyPrice)
+                                print(f"Bought property for: {current_property.buyPrice} - New balance: {current_player.playerBalance}")
                     cleanScreen()
                     
                 elif result == 3: #Landed on a tax tile
