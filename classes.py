@@ -130,7 +130,7 @@ class Player:
 
     #Remove a property from player's property list
     def removeProperty(self, propertyToRemove: Property) -> None:
-        if propertyToRemove not in self.properties: #Raise exception if the property is not in the player's property list
+        if propertyToRemove not in self.propertyList: #Raise exception if the property is not in the player's property list
             raise ValueError("Exception: Property to remove is not in player's property list.")
         self.propertyList.remove(propertyToRemove) #Remove the property from the player's property list
 
@@ -552,6 +552,16 @@ class Board:
             ((self.screen.get_width() // 2) - 250, 400 + 100), ((self.screen.get_width() // 2) + 50, 400 + 100)   # Fourth row
         ]
         while(True):
+            button_states = {
+                "PURPLE": False,
+                "CYAN": False,
+                "MAGENTA": False,
+                "ORANGE": False,
+                "RED": False,
+                "YELLOW": False,
+                "GREEN": False,
+                "BLUE": False,
+            }
             if PropertyScreen:
                 self.screen.fill((200, 200, 200))
                 title = font.render("Upgrade Properties", True, (0, 0, 0))
@@ -560,47 +570,55 @@ class Board:
                 self.screen.blit(instructions, (self.screen.get_width() // 2 - instructions.get_width() // 2, 100))
 
                 # Draw buttons
+                purple_button_rect = pygame.Rect(button_positions[0][0], button_positions[0][1], button_width, button_height)
+                purple_button_text = font.render(f"Purple", True, (0, 0, 0))
+                cyan_button_rect = pygame.Rect(button_positions[1][0], button_positions[1][1], button_width, button_height)
+                cyan_button_text = font.render(f"Cyan", True, (0, 0, 0))
+                magenta_button_rect = pygame.Rect(button_positions[2][0], button_positions[2][1], button_width, button_height)
+                magenta_button_text = font.render(f"Magenta", True, (0, 0, 0))
+                orange_button_rect = pygame.Rect(button_positions[3][0], button_positions[3][1], button_width, button_height)
+                orange_button_text = font.render(f"Orange", True, (0, 0, 0))
+                red_button_rect = pygame.Rect(button_positions[4][0], button_positions[4][1], button_width, button_height)
+                red_button_text = font.render(f"Red", True, (0, 0, 0))
+                yellow_button_rect = pygame.Rect(button_positions[5][0], button_positions[5][1], button_width, button_height)
+                yellow_button_text = font.render(f"Yellow", True, (0, 0, 0))
+                green_button_rect = pygame.Rect(button_positions[6][0], button_positions[6][1], button_width, button_height)
+                green_button_text = font.render(f"Green", True, (0, 0, 0))
+                blue_button_rect = pygame.Rect(button_positions[7][0], button_positions[7][1], button_width, button_height)
+                blue_button_text = font.render(f"Blue", True, (0, 0, 0))
                 for color in color_sets:
-                    purple_button_rect = pygame.Rect(button_positions[0][0], button_positions[0][1], button_width, button_height)
-                    purple_button_text = font.render(f"Purple", True, (0, 0, 0))
-                    cyan_button_rect = pygame.Rect(button_positions[1][0], button_positions[1][1], button_width, button_height)
-                    cyan_button_text = font.render(f"Cyan", True, (0, 0, 0))
-                    magenta_button_rect = pygame.Rect(button_positions[2][0], button_positions[2][1], button_width, button_height)
-                    magenta_button_text = font.render(f"Magenta", True, (0, 0, 0))
-                    orange_button_rect = pygame.Rect(button_positions[3][0], button_positions[3][1], button_width, button_height)
-                    orange_button_text = font.render(f"Orange", True, (0, 0, 0))
-                    red_button_rect = pygame.Rect(button_positions[4][0], button_positions[4][1], button_width, button_height)
-                    red_button_text = font.render(f"Red", True, (0, 0, 0))
-                    yellow_button_rect = pygame.Rect(button_positions[5][0], button_positions[5][1], button_width, button_height)
-                    yellow_button_text = font.render(f"Yellow", True, (0, 0, 0))
-                    green_button_rect = pygame.Rect(button_positions[6][0], button_positions[6][1], button_width, button_height)
-                    green_button_text = font.render(f"Green", True, (0, 0, 0))
-                    blue_button_rect = pygame.Rect(button_positions[7][0], button_positions[7][1], button_width, button_height)
-                    blue_button_text = font.render(f"Blue", True, (0, 0, 0))
                     if color == "PURPLE":
                         pygame.draw.rect(self.screen, (126,15,221), purple_button_rect)
                         self.screen.blit(purple_button_text, (purple_button_rect.centerx - purple_button_text.get_width() // 2, purple_button_rect.centery - purple_button_text.get_height() // 2))
+                        button_states["PURPLE"] = True
                     if color == "CYAN":
                         pygame.draw.rect(self.screen, (160,229,238), cyan_button_rect)
                         self.screen.blit(cyan_button_text, (cyan_button_rect.centerx - cyan_button_text.get_width() // 2, cyan_button_rect.centery - cyan_button_text.get_height() // 2))
+                        button_states["CYAN"] = True
                     if color == "MAGENTA":
                         pygame.draw.rect(self.screen, (249,74,185), magenta_button_rect)
                         self.screen.blit(magenta_button_text, (magenta_button_rect.centerx - magenta_button_text.get_width() // 2, magenta_button_rect.centery - magenta_button_text.get_height() // 2))
+                        button_states["MAGENTA"] = True
                     if color == "ORANGE":
                         pygame.draw.rect(self.screen, (233,142,40), orange_button_rect)
                         self.screen.blit(orange_button_text, (orange_button_rect.centerx - orange_button_text.get_width() // 2, orange_button_rect.centery - orange_button_text.get_height() // 2))
+                        button_states["ORANGE"] = True
                     if color == "RED":
                         pygame.draw.rect(self.screen, (218,36,44), red_button_rect)
                         self.screen.blit(red_button_text, (red_button_rect.centerx - red_button_text.get_width() // 2, red_button_rect.centery - red_button_text.get_height() // 2))
+                        button_states["RED"] = True
                     if color == "YELLOW":
                         pygame.draw.rect(self.screen, (253,239,5), yellow_button_rect)
                         self.screen.blit(yellow_button_text, (yellow_button_rect.centerx - yellow_button_text.get_width() // 2, yellow_button_rect.centery - yellow_button_text.get_height() // 2))
+                        button_states["YELLOW"] = True
                     if color == "GREEN":                        
                         pygame.draw.rect(self.screen, (20,167,89), green_button_rect)
                         self.screen.blit(green_button_text, (green_button_rect.centerx - green_button_text.get_width() // 2, green_button_rect.centery - green_button_text.get_height() // 2))
+                        button_states["GREEN"] = True
                     if color == "BLUE":                        
                         pygame.draw.rect(self.screen, (3,102,165), blue_button_rect)
                         self.screen.blit(blue_button_text, (blue_button_rect.centerx - blue_button_text.get_width() // 2, blue_button_rect.centery - blue_button_text.get_height() // 2))
+                        button_states["BLUE"] = True
 
             elif UpgradeScreen:
                 self.screen.fill((200, 200, 200))
@@ -666,42 +684,42 @@ class Board:
 
                         #button logic for Property Selection Screen
                         if(PropertyScreen):
-                            if (purple_button_rect.collidepoint(mouse_pos)):
+                            if (purple_button_rect.collidepoint(mouse_pos) and button_states["PURPLE"]):
                                 selection = "PURPLE"
                                 PropertyScreen = False
                                 UpgradeScreen = True
                                 waitforinput = False
-                            if (cyan_button_rect.collidepoint(mouse_pos)):
+                            if (cyan_button_rect.collidepoint(mouse_pos) and button_states["CYAN"]):
                                 selection = "CYAN"
                                 PropertyScreen = False
                                 UpgradeScreen = True
                                 waitforinput = False
-                            if (magenta_button_rect.collidepoint(mouse_pos)):
+                            if (magenta_button_rect.collidepoint(mouse_pos) and button_states["MAGENTA"]):
                                 selection = "MAGENTA"
                                 PropertyScreen = False
                                 UpgradeScreen = True
                                 waitforinput = False
-                            if (orange_button_rect.collidepoint(mouse_pos)):
+                            if (orange_button_rect.collidepoint(mouse_pos) and button_states["ORANGE"]):
                                 selection = "ORANGE"
                                 PropertyScreen = False
                                 UpgradeScreen = True
                                 waitforinput = False
-                            if (red_button_rect.collidepoint(mouse_pos)):
+                            if (red_button_rect.collidepoint(mouse_pos) and button_states["RED"]):
                                 selection = "RED"
                                 PropertyScreen = False
                                 UpgradeScreen = True
                                 waitforinput = False
-                            if (yellow_button_rect.collidepoint(mouse_pos)):
+                            if (yellow_button_rect.collidepoint(mouse_pos) and button_states["YELLOW"]):
                                 selection = "YELLOW"
                                 PropertyScreen = False
                                 UpgradeScreen = True
                                 waitforinput = False
-                            if (green_button_rect.collidepoint(mouse_pos)):
+                            if (green_button_rect.collidepoint(mouse_pos) and button_states["GREEN"]):
                                 selection = "GREEN"
                                 PropertyScreen = False
                                 UpgradeScreen = True
                                 waitforinput = False
-                            if (blue_button_rect.collidepoint(mouse_pos)):
+                            if (blue_button_rect.collidepoint(mouse_pos) and button_states["BLUE"]):
                                 selection = "BLUE"
                                 PropertyScreen = False
                                 UpgradeScreen = True
@@ -753,12 +771,276 @@ class Board:
             print(f"Upgrade failed: {str(e)}")
 
     def downgradeProperty(self, player: Player, property: ColorProperty):
-        print(f"Downgrading {property.tileNumber} for {player.playerName}")
+        print(f"Downgrading {property.tileNumber} from {property.upgradeLevel} to {property.upgradeLevel - 1} for {player.playerName}")
         try:
             property.downgrade()
-            player.addBalance(property.upgradeCost)
+            player.addBalance(property.upgradeCost/2)
         except Exception as e:
             print(f"Downgrade failed: {str(e)}")
+    
+    def sellScreen(self, player: Player):
+        font = pygame.font.SysFont("Arial", 22)
+        self.screen.fill((200, 200, 200))
+
+        PropertyScreen = True
+        SellScreen = False
+
+        # Get all color groups the player owns properties in
+        
+
+        button_width = 200
+        button_height = 50
+        button_positions = [
+            ((self.screen.get_width() // 2) - 250, 100 + 100), ((self.screen.get_width() // 2) + 50, 100 + 100),
+            ((self.screen.get_width() // 2) - 250, 200 + 100), ((self.screen.get_width() // 2) + 50, 200 + 100),
+            ((self.screen.get_width() // 2) - 250, 300 + 100), ((self.screen.get_width() // 2) + 50, 300 + 100),
+            ((self.screen.get_width() // 2) - 250, 400 + 100), ((self.screen.get_width() // 2) + 50, 400 + 100),
+            ((self.screen.get_width() // 2) - 250, 500 + 100), ((self.screen.get_width() // 2) + 50, 500 + 100),
+        ]
+
+        while True:
+            button_states = {
+                "PURPLE": False,
+                "CYAN": False,
+                "MAGENTA": False,
+                "ORANGE": False,
+                "RED": False,
+                "YELLOW": False,
+                "GREEN": False,
+                "BLUE": False,
+                "RAILROAD": False,
+                "UTILITY": False
+            }
+            owned_colors = set(prop.color for prop in player.propertyList if isinstance(prop, ColorProperty))
+            if PropertyScreen:
+                self.screen.fill((200, 200, 200))
+                title = font.render("Sell Properties", True, (0, 0, 0))
+                self.screen.blit(title, (self.screen.get_width() // 2 - title.get_width() // 2, 50))
+                instructions = font.render("Select a color to sell properties. Only owned colors will appear.", True, (0, 0, 0))
+                self.screen.blit(instructions, (self.screen.get_width() // 2 - instructions.get_width() // 2, 100))
+
+                # Draw color buttons
+                purple_button_rect = pygame.Rect(button_positions[0][0], button_positions[0][1], button_width, button_height)
+                purple_button_text = font.render(f"Purple", True, (0, 0, 0))
+                cyan_button_rect = pygame.Rect(button_positions[1][0], button_positions[1][1], button_width, button_height)
+                cyan_button_text = font.render(f"Cyan", True, (0, 0, 0))
+                magenta_button_rect = pygame.Rect(button_positions[2][0], button_positions[2][1], button_width, button_height)
+                magenta_button_text = font.render(f"Magenta", True, (0, 0, 0))
+                orange_button_rect = pygame.Rect(button_positions[3][0], button_positions[3][1], button_width, button_height)
+                orange_button_text = font.render(f"Orange", True, (0, 0, 0))
+                red_button_rect = pygame.Rect(button_positions[4][0], button_positions[4][1], button_width, button_height)
+                red_button_text = font.render(f"Red", True, (0, 0, 0))
+                yellow_button_rect = pygame.Rect(button_positions[5][0], button_positions[5][1], button_width, button_height)
+                yellow_button_text = font.render(f"Yellow", True, (0, 0, 0))
+                green_button_rect = pygame.Rect(button_positions[6][0], button_positions[6][1], button_width, button_height)
+                green_button_text = font.render(f"Green", True, (0, 0, 0))
+                blue_button_rect = pygame.Rect(button_positions[7][0], button_positions[7][1], button_width, button_height)
+                blue_button_text = font.render(f"Blue", True, (0, 0, 0))
+                for color in owned_colors:
+                    if color == "PURPLE":
+                        pygame.draw.rect(self.screen, (126,15,221), purple_button_rect)
+                        self.screen.blit(purple_button_text, (purple_button_rect.centerx - purple_button_text.get_width() // 2, purple_button_rect.centery - purple_button_text.get_height() // 2))
+                        button_states["PURPLE"] = True
+                    if color == "CYAN":
+                        pygame.draw.rect(self.screen, (160,229,238), cyan_button_rect)
+                        self.screen.blit(cyan_button_text, (cyan_button_rect.centerx - cyan_button_text.get_width() // 2, cyan_button_rect.centery - cyan_button_text.get_height() // 2))
+                        button_states["CYAN"] = True
+                    if color == "MAGENTA":
+                        pygame.draw.rect(self.screen, (249,74,185), magenta_button_rect)
+                        self.screen.blit(magenta_button_text, (magenta_button_rect.centerx - magenta_button_text.get_width() // 2, magenta_button_rect.centery - magenta_button_text.get_height() // 2))
+                        button_states["MAGENTA"] = True
+                    if color == "ORANGE":
+                        pygame.draw.rect(self.screen, (233,142,40), orange_button_rect)
+                        self.screen.blit(orange_button_text, (orange_button_rect.centerx - orange_button_text.get_width() // 2, orange_button_rect.centery - orange_button_text.get_height() // 2))
+                        button_states["ORANGE"] = True
+                    if color == "RED":
+                        pygame.draw.rect(self.screen, (218,36,44), red_button_rect)
+                        self.screen.blit(red_button_text, (red_button_rect.centerx - red_button_text.get_width() // 2, red_button_rect.centery - red_button_text.get_height() // 2))
+                        button_states["RED"] = True
+                    if color == "YELLOW":
+                        pygame.draw.rect(self.screen, (253,239,5), yellow_button_rect)
+                        self.screen.blit(yellow_button_text, (yellow_button_rect.centerx - yellow_button_text.get_width() // 2, yellow_button_rect.centery - yellow_button_text.get_height() // 2))
+                        button_states["YELLOW"] = True
+                    if color == "GREEN":                        
+                        pygame.draw.rect(self.screen, (20,167,89), green_button_rect)
+                        self.screen.blit(green_button_text, (green_button_rect.centerx - green_button_text.get_width() // 2, green_button_rect.centery - green_button_text.get_height() // 2))
+                        button_states["GREEN"] = True
+                    if color == "BLUE":                        
+                        pygame.draw.rect(self.screen, (3,102,165), blue_button_rect)
+                        self.screen.blit(blue_button_text, (blue_button_rect.centerx - blue_button_text.get_width() // 2, blue_button_rect.centery - blue_button_text.get_height() // 2))
+                        button_states["BLUE"] = True
+                
+                #Draw Utility and Railroad buttons
+                railroad_button_rect = pygame.Rect(button_positions[8][0], button_positions[8][1], button_width, button_height)
+                railroad_button_text = font.render(f"Railroad", True, (0, 0, 0))
+                utility_button_rect = pygame.Rect(button_positions[9][0], button_positions[9][1], button_width, button_height)
+                utility_button_text = font.render(f"Utility", True, (0, 0, 0))
+                for prop in player.propertyList:
+                    if isinstance(prop, Railroad):
+                        pygame.draw.rect(self.screen, (170, 170, 170), railroad_button_rect)
+                        self.screen.blit(railroad_button_text, (railroad_button_rect.centerx - railroad_button_text.get_width() // 2, railroad_button_rect.centery - railroad_button_text.get_height() // 2))
+                        button_states["RAILROAD"] = True
+                    elif isinstance(prop, Utility):
+                        pygame.draw.rect(self.screen, (170, 170, 170), utility_button_rect)
+                        self.screen.blit(utility_button_text, (utility_button_rect.centerx - utility_button_text.get_width() // 2, utility_button_rect.centery - utility_button_text.get_height() // 2))
+                        button_states["UTILITY"] = True
+            
+            elif SellScreen: 
+                self.screen.fill((200, 200, 200))
+                title = font.render(f"Sell {selected_color} Properties", True, (0, 0, 0))
+                self.screen.blit(title, (self.screen.get_width() // 2 - title.get_width() // 2, 50))
+
+                if selected_color == "RAILROAD" or selected_color == "UTILITY":
+                    if selected_color == "RAILROAD":
+                        properties = [prop for prop in player.propertyList if isinstance(prop, Railroad)]
+                    else:
+                        properties = [prop for prop in player.propertyList if isinstance(prop, Utility)]
+                else:
+                    # Display properties in the selected color
+                    properties = [prop for prop in player.propertyList if isinstance(prop, ColorProperty) and prop.color == selected_color]
+                property_buttons = [] 
+                for idx, prop in enumerate(properties):
+                    # Load the image from the file path
+                    loaded_image = pygame.image.load(prop.image)
+                    # Scale the image to a smaller size to fit four on the screen
+                    scale_factor = 0.4  # Adjust this factor to make the images smaller
+                    prop_image = pygame.transform.scale(loaded_image, (int(loaded_image.get_width() * scale_factor), int(loaded_image.get_height() * scale_factor)))
+                    
+                    # Calculate the x position for horizontal alignment
+                    x_position = 225 + (idx % 2) * (prop_image.get_width() + 10)  # Two cards per row
+                    # Calculate the y position for vertical alignment
+                    y_position = 150 if idx < 2 else 150 + prop_image.get_height() + 10  # New row for the third and fourth cards
+                
+                    prop_rect = prop_image.get_rect(topleft=(x_position, y_position))
+                    self.screen.blit(prop_image, prop_rect)
+                    property_buttons.append((prop_rect, prop))
+
+                # Draw sell button
+                sell_button_rect = pygame.Rect(
+                    (self.screen.get_width() - button_width) // 2,
+                    self.screen.get_height() - 150,
+                    button_width,
+                    button_height
+                )
+                if selected_color == "RAILROAD" or selected_color == "UTILITY":
+                    sell_button_text = font.render("Sell", True, (255, 255, 255)) 
+                else:
+                    sell_button_text = font.render("Sell" if not any(prop.upgradeLevel > 0 for prop in properties) else "Downgrade", True, (255, 255, 255))
+                pygame.draw.rect(self.screen, (0, 150, 0), sell_button_rect)
+                self.screen.blit(sell_button_text, (sell_button_rect.centerx - sell_button_text.get_width() // 2, sell_button_rect.centery - sell_button_text.get_height() // 2))
+                
+            # Draw back button
+            back_button_rect = pygame.Rect(
+                (self.screen.get_width() - button_width) // 2,
+                self.screen.get_height() - 100,
+                button_width,
+                button_height
+            )
+            pygame.draw.rect(self.screen, (150, 0, 0), back_button_rect)
+            back_button_text = font.render("Back", True, (255, 255, 255))
+            self.screen.blit(back_button_text, (back_button_rect.centerx - back_button_text.get_width() // 2, back_button_rect.centery - back_button_text.get_height() // 2))
+
+            pygame.display.update()
+
+            selected_color = None
+            selected_property = None
+            
+            if SellScreen:
+                while SellScreen:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            return
+                        elif event.type == pygame.MOUSEBUTTONDOWN:
+                            mouse_pos = event.pos
+                            if back_button_rect.collidepoint(mouse_pos):
+                                SellScreen = False
+                                PropertyScreen = True
+                                break
+                            if sell_button_rect.collidepoint(mouse_pos) and selected_property:
+                                self.sellProperty(player, selected_property)
+                                selected_property = None
+                                SellScreen = False
+                                PropertyScreen = True
+                                break
+                            for prop_rect, prop in property_buttons:
+                                if prop_rect.collidepoint(mouse_pos):
+                                    selected_property = prop
+                                    # Highlight the selected property
+                                    pygame.draw.rect(self.screen, (255, 255, 0), prop_rect, 3)
+                                    pygame.display.update()
+            
+            elif PropertyScreen:
+                while PropertyScreen:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            return
+                        elif event.type == pygame.MOUSEBUTTONDOWN:
+                            mouse_pos = event.pos
+                            if back_button_rect.collidepoint(mouse_pos) and PropertyScreen:
+                                PropertyScreen = False
+                                return
+                            if purple_button_rect.collidepoint(mouse_pos) and button_states["PURPLE"]:  
+                                selected_color = "PURPLE"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if cyan_button_rect.collidepoint(mouse_pos) and button_states["CYAN"]:
+                                selected_color = "CYAN"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if magenta_button_rect.collidepoint(mouse_pos) and button_states["MAGENTA"]:
+                                selected_color = "MAGENTA"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if orange_button_rect.collidepoint(mouse_pos) and button_states["ORANGE"]:
+                                selected_color = "ORANGE"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if red_button_rect.collidepoint(mouse_pos) and button_states["RED"]:
+                                selected_color = "RED"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if yellow_button_rect.collidepoint(mouse_pos) and button_states["YELLOW"]:
+                                selected_color = "YELLOW"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if green_button_rect.collidepoint(mouse_pos) and button_states["GREEN"]:
+                                selected_color = "GREEN"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if blue_button_rect.collidepoint(mouse_pos) and button_states["BLUE"]:
+                                selected_color = "BLUE"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if railroad_button_rect.collidepoint(mouse_pos) and button_states["RAILROAD"]:
+                                selected_color = "RAILROAD"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if utility_button_rect.collidepoint(mouse_pos) and button_states["UTILITY"]:
+                                selected_color = "UTILITY"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+
+
+    def sellProperty(self, player: Player, prop: Property):
+        if(isinstance(prop, ColorProperty) and prop.upgradeLevel > 0):
+            color_group = prop.color
+            for tile in self.tileArray:
+                if(isinstance(tile, ColorProperty) and tile.color == color_group and tile.upgradeLevel > 0):
+                    self.downgradeProperty(player, tile)
+        else:
+            player.removeProperty(prop)
+            player.addBalance(prop.sellValue)
+    
     
 class PlayerTokenImage: 
     TOKEN_WIDTH = 20
@@ -1079,10 +1361,39 @@ class Jail(Tile):
         
 class Event:
     def __init__(self):
-        self.events = {1:"Elected to racing hall of fame. Collect $100",2:"Sign associate sponsorship. Collect $100",3:"First Union race fund matures! Collect $100",4:"Won first pole position! Collect $20",5:"Collect $50 from ever player for guest passes.",6:"Go to jail!",7:"Get out of Jail free!",8:"You are assessed for track repairs. Pay $40 for every upgrade you've made.",9:"Car needs new tires. Pay $100",10:"Speeding on pit row. Pay $50",
-        11:"Won first Race! Collect $200",12:"Pay driving school fee of $150",13:"Fastest pit crew! Receive $25 prize.",14:"From sale of surplus race equipment you get $45",15:"In second place collect $10",16:"Race over to go and collect $200",17:"Pay $25 for each upgrade you've made",18:"You make the cover story in Inside Nascar magazine! Collect $150",19:"Need new spark plugs. Advance to parts America.",20:"Advance token to the nearest Speedway and pay owner the rent. If the speedway is unowned, you may buy it.",
-        21:"Cut off driver. Go back 3 spaces.",22:"Nascar winston cup scene names you driver of the year! Pay each player $50",23:"Go to jail.",24:"Get out of jail free",25:"Licensed souveniers pay. Pay $15",26:"Race over to QVC",27:"Free pit pass. Advance token to Goodwrench service plus.",28:"You qualified! Drive over to Charlotte Motor Speedway.",29:"Advance token to the nearest Speedway and pay owner the rent. If the speedway is unowned, you may buy it.",30:"Speed over to go and collect $200",
-        31:"First Union pays you dividend of $50"}
+        self.events = {
+                    1:"Elected to racing hall of fame. Collect $100",
+                    2:"Sign associate sponsorship. Collect $100",
+                    3:"First Union race fund matures! Collect $100",
+                    4:"Won first pole position! Collect $20",
+                    5:"Collect $50 from ever player for guest passes.",
+                    6:"Go to jail!",
+                    7:"Get out of Jail free!",
+                    8:"You are assessed for track repairs. Pay $40 for every upgrade you've made.",
+                    9:"Car needs new tires. Pay $100",
+                    10:"Speeding on pit row. Pay $50",
+                    11:"Won first Race! Collect $200",
+                    12:"Pay driving school fee of $150",
+                    13:"Fastest pit crew! Receive $25 prize.",
+                    14:"From sale of surplus race equipment you get $45",
+                    15:"In second place collect $10",
+                    16:"Race over to go and collect $200",
+                    17:"Pay $25 for each upgrade you've made",
+                    18:"You make the cover story in Inside Nascar magazine! Collect $150",
+                    19:"Need new spark plugs. Advance to parts America.",
+                    20:"Advance token to the nearest Speedway and pay owner the rent. If the speedway is unowned, you may buy it.",
+                    21:"Cut off driver. Go back 3 spaces.",
+                    22:"Nascar winston cup scene names you driver of the year! Pay each player $50",
+                    23:"Go to jail.",
+                    24:"Get out of jail free",
+                    25:"Licensed souveniers pay. Pay $15",
+                    26:"Race over to QVC",
+                    27:"Free pit pass. Advance token to Goodwrench service plus.",
+                    28:"You qualified! Drive over to Charlotte Motor Speedway.",
+                    29:"Advance token to the nearest Speedway and pay owner the rent. If the speedway is unowned, you may buy it.",
+                    30:"Speed over to go and collect $200",
+                    31:"First Union pays you dividend of $50"
+        }
         
         #initializing variables initially for future references 
         self.font = pygame.font.Font(None, 24) #sets font and size
