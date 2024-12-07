@@ -90,7 +90,6 @@ class Player:
         self.turnsLeftInJail = turnsLeftInJail
         
         self.isBankrupt = isBankrupt # Might not need this, we just end the game on bankruptcy anyways... although might be useful if we 
-        self.playerNumber = playerNumber # Dont think we need this
         self.lastDiceResult = lastDiceResult # The only reason I am keeping track of the last total roll result is for the Utilities getRent() function
 
     def drawScore(self, screen: pygame.Surface):
@@ -232,36 +231,38 @@ class Board:
     GO_TO_JAIL_INDEX = 30
     PLAYER_COLOR = [(218,36,44),(20,167,89),(3,102,165),(253,239,5)]
     
-    def __init__(self, screen: pygame.Surface, playerTurnQueue: List[Player], turnNumber: int = 1, eventCardDeck: List[int] = None):
-        self.tileArray = []
-        for i in range(40):
-            if i in self.COLOR_PROPERTY_INDEXES:
-                self.tileArray.append(ColorProperty(i)) 
-            elif i in self.UTILITIES_INDEXES:
-                self.tileArray.append(Utility(i))
-            elif i in self.SPEEDWAY_INDEXES:
-                self.tileArray.append(Railroad(i))
-            elif i == self.JAIL_INDEX:
-                self.tileArray.append(Jail())
-            elif i == self.GO_INDEX:
-                self.tileArray.append(Tile(i))
-            elif i == self.FREE_PARKING_INDEX:
-                self.tileArray.append(Tile(i))
-            elif i == self.GO_TO_JAIL_INDEX:
-                self.tileArray.append(Tile(i))
-            elif i in self.EVENT_INDEXES:  # Event card spaces
-                self.tileArray.append(Tile(i))
-            elif i in self.TAX_INDEXES:
-                self.tileArray.append(Tile(i))
-            else:
-                self.tileArray.append(Tile(i))
+    def __init__(self, screen: pygame.Surface, playerTurnQueue: List[Player], savefile: str, currentTurn: int = 0, tileArray: Optional[List[Tile]] = None):
+        if tileArray != None:
+            self.tileArray = tileArray
+        else:
+            self.tileArray = []
+            for i in range(40):
+                if i in self.COLOR_PROPERTY_INDEXES:
+                    self.tileArray.append(ColorProperty(i)) 
+                elif i in self.UTILITIES_INDEXES:
+                    self.tileArray.append(Utility(i))
+                elif i in self.SPEEDWAY_INDEXES:
+                    self.tileArray.append(Railroad(i))
+                elif i == self.JAIL_INDEX:
+                    self.tileArray.append(Jail())
+                elif i == self.GO_INDEX:
+                    self.tileArray.append(Tile(i))
+                elif i == self.FREE_PARKING_INDEX:
+                    self.tileArray.append(Tile(i))
+                elif i == self.GO_TO_JAIL_INDEX:
+                    self.tileArray.append(Tile(i))
+                elif i in self.EVENT_INDEXES:  # Event card spaces
+                    self.tileArray.append(Tile(i))
+                elif i in self.TAX_INDEXES:
+                    self.tileArray.append(Tile(i))
+                else:
+                    self.tileArray.append(Tile(i))
+        
         self.playerTurnQueue = playerTurnQueue # We are looking at this like a queue. Current player is the player in position 0. At end of turn, remove at position 0 and append it to the end
-        self.turnNumber = turnNumber
+        self.currentTurn = currentTurn
         self.GameActive = True
         self.screen = screen
-
-    def drawEvent(self) -> None:
-        pass
+        self.savefile = savefile
 
     def checkEndGame(self) -> bool:
         for player in self.playerTurnQueue:
@@ -759,7 +760,50 @@ class Board:
             player.addBalance(property.upgradeCost)
         except Exception as e:
             print(f"Downgrade failed: {str(e)}")
-    
+
+    def save_the_game(self):
+        sf = open(self.savefile, "w") # Open the save file (write mode)
+
+        # Record current turn
+        sf.write(f"{self.currentTurn}\n")
+        
+        # Record player information
+        sf.write(f"{len(self.playerTurnQueue)}\n") # Print the number of players so we know how many times to iterate over individual players
+        for p in self.playerTurnQueue:
+            # Declare a list of lines of strings containing player info
+            player_info = [f"{p.playerNumber}\n", f"{p.playerName}\n", f"{p.playerBalance}\n", f"{p.playerPosition}\n", f"{p.token.tokenID}\n", f"{p.isInJail}\n"]
+            player_info += [f"{p.isBankrupt}\n", f"{p.lastDiceResult}\n", f"{p.consecutiveDoubles}\n", f"{p.numGetOutOfJailCards}\n", f"{p.turnsLeftInJail}\n"]
+            sf.writelines(player_info) # Print the player_info lines to the save file
+
+            # Record player property IDs
+            sf.write(f"{len(p.propertyList)}\n") # This allows us to know how many times to iterate when loading from the save file
+            for prop in p.propertyList: # We record only the property IDs that the player owns for now
+                sf.write(f"{prop.tileNumber}\n")
+
+            # For Loading: After reading in all the players information, construct the Player with an empty propertyList for now, but keep track of the property IDs for later manual
+            #              assignment via player.addProperty(property indicated by player property ID list)
+
+        # Record tile information (player list will be recorded by player number )
+        for t in self.tileArray:
+            sf.write(f"{t.tileNumber}\n") 
+
+            # Output number of players on the tile
+            sf.write(f"{len(t.playersOnTile)}\n")
+            for p in t.playersOnTile: # For each player on the tile, give their player number
+                sf.write(f"{p.playerNumber}\n") 
+
+            # If color property, output the upgrade level
+            if t.tileNumber in self.COLOR_PROPERTY_INDEXES:
+                sf.write(f"{t.upgradeLevel}\n")
+
+            # If Jail Tile, also output players in jail
+            elif t.tileNumber == self.JAIL_INDEX:
+                sf.write(f"{len(t.playersInJail)}\n") # Output length of players in jail
+                for p in t.playersInJail:
+                    sf.write(f"{p.playerNumber}\n")
+
+        sf.close()
+
 class PlayerTokenImage: 
     TOKEN_WIDTH = 20
     TOKEN_HEIGHT = 20
@@ -1068,8 +1112,6 @@ class Jail(Tile):
     def __init__(self, playersOnTile: Optional[List[Player]] = None, playersInJail: Optional[List[Player]] = None):
         super().__init__(10, playersOnTile)
         self.playersInJail = playersInJail if playersInJail is not None else []
-
-
 
     def arrest(self, player: Player):
         self.playersInJail.append(player)

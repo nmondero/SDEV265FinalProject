@@ -35,6 +35,10 @@ class Buttons:
         
         self.end_turn_button = pygame.Rect(start_x + (button_width + button_gap) * 3, y_position, button_width, button_height)
         self.end_text = font.render(f"End Turn", True, (194,207,160))
+
+        self.save_game_text = font.render("Save Game", True, (194, 207, 160))
+        self.save_button = pygame.Rect(20, 20, self.save_game_text.get_width() + 10, self.save_game_text.get_height() + 10)
+
         
         
     def draw_buttons(self, is_doubles: bool):
@@ -55,6 +59,8 @@ class Buttons:
         self.screen.blit(self.property_text, (self.sell_property_button.centerx - self.property_text.get_width() // 2, self.sell_property_button.centery - self.property_text.get_height() // 2))
         pygame.draw.rect(self.screen, (150, 0, 0), self.upgrade_button)
         self.screen.blit(self.upgrade_text, (self.upgrade_button.centerx - self.upgrade_text.get_width() // 2, self.upgrade_button.centery - self.upgrade_text.get_height() // 2))
+        pygame.draw.rect(self.screen, (0, 150, 0), self.save_button)
+        self.screen.blit(self.save_game_text, (self.save_button.x + 5, self.save_button.y + 5) )
         
         pygame.display.update()
 
@@ -85,3 +91,6 @@ class Buttons:
                             self.canIendTurn = False
                             self.canIrollDice = True
                             return 4
+                    if self.save_button.collidepoint(mouse_pos):
+                        waitforinput = False
+                        return 5

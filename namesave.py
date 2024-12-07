@@ -103,7 +103,7 @@ class NameSaveFile:
     
     # Return the name of the savefile
     def get_save_name(self):
-        return self.save_file_name
+        return self.input_string
     
     # 
     def finalize_save_file_name(self):
@@ -123,6 +123,9 @@ class NameSaveFile:
 
         # Append the .txt extension to the filename
         self.input_string += ".txt"
+
+        # Insert the savefile directory name before the .txt file name
+        self.input_string = SAVEFILE_DIRECTORY_NAME + "/" + self.input_string
 
         # Deactivate the name selection screen to continue logic in main
         self.name_savegame_active = False
