@@ -47,6 +47,10 @@ class Buttons:
         button_area_rect = pygame.Rect(0, self.screen.get_height() - 100, self.screen.get_width(), 150)
         self.screen.fill((200, 200, 200), button_area_rect)  # Use the same background color
 
+        if self.canIrollDice:
+            pygame.draw.rect(self.screen, (0, 150, 0), self.save_button)
+            self.screen.blit(self.save_game_text, (self.save_button.x + 5, self.save_button.y + 5) )
+
         #draws all the buttons on the window
         if self.canIrollDice or self.doubles:
             pygame.draw.rect(self.screen, (150, 0, 0), self.roll_dice_button)
@@ -59,8 +63,6 @@ class Buttons:
         self.screen.blit(self.property_text, (self.sell_property_button.centerx - self.property_text.get_width() // 2, self.sell_property_button.centery - self.property_text.get_height() // 2))
         pygame.draw.rect(self.screen, (150, 0, 0), self.upgrade_button)
         self.screen.blit(self.upgrade_text, (self.upgrade_button.centerx - self.upgrade_text.get_width() // 2, self.upgrade_button.centery - self.upgrade_text.get_height() // 2))
-        pygame.draw.rect(self.screen, (0, 150, 0), self.save_button)
-        self.screen.blit(self.save_game_text, (self.save_button.x + 5, self.save_button.y + 5) )
         
         pygame.display.update()
 
@@ -91,6 +93,6 @@ class Buttons:
                             self.canIendTurn = False
                             self.canIrollDice = True
                             return 4
-                    if self.save_button.collidepoint(mouse_pos):
+                    if self.save_button.collidepoint(mouse_pos) and self.canIrollDice:
                         waitforinput = False
                         return 5

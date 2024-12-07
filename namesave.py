@@ -1,6 +1,6 @@
 import pygame, os, re
 
-SAVEFILE_DIRECTORY_NAME = "savefiles"
+SAVEFILE_DIRECTORY_NAME = "savefiles/"
 
 class NameSaveFile:
 
@@ -125,7 +125,7 @@ class NameSaveFile:
         self.input_string += ".txt"
 
         # Insert the savefile directory name before the .txt file name
-        self.input_string = SAVEFILE_DIRECTORY_NAME + "/" + self.input_string
+        self.input_string = SAVEFILE_DIRECTORY_NAME + self.input_string
 
         # Deactivate the name selection screen to continue logic in main
         self.name_savegame_active = False
