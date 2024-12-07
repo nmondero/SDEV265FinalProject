@@ -4,7 +4,7 @@ from classes import PlayerTokenImage, Player
 class Player_Menu:
     def __init__(self, screen):
         self.screen = screen
-        self.player_setup_active = True
+        self.player_setup_active = False
         self.current_player = 0
         self.total_players = 2
         self.players = []

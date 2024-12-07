@@ -18,6 +18,7 @@ pygame.display.set_caption("Speedopoly")
 from menu import Menu
 from p_menu import Player_Menu
 from number_players import PlayerNumberMenu  
+from loadgame import LoadGame
 from classes import Board, Dice, Event, Player, PlayerTokenImage, Tile, Property, ColorProperty, Jail, Utility, Railroad
 from auction import Auction
 from button import Buttons
@@ -29,8 +30,10 @@ clock = pygame.time.Clock()
 dice = Dice()
 card_popup = Event()
 menu = Menu(screen)
+name_save_file = NameSaveFile(screen)
 player_menu = Player_Menu(screen)
 number_menu = PlayerNumberMenu(screen)
+load_game_menu = LoadGame(screen)
 players = []
 current_turn = 0 #tracks the current player's turn
 turn_displayed = False # track if turn message has been displayed
@@ -46,6 +49,99 @@ def cleanScreen():
     gameboard.drawPlayers(players)
     buttons.draw_buttons(is_doubles)
     gameboard.show_turn_message(players[current_turn].playerName)
+
+# Loads a game given the savefile_name and the screen (screen is only used to construct the gameboard)
+def load_the_game(savefile_name: str, screen: pygame.Surface) -> Board:
+    file = open(savefile_name, "r")
+    
+    global current_turn # Declare we are using the current_turn in the rest of main.py
+    current_turn = int(file.readline())
+
+    # Process the players
+    player_property_ids = {}
+    players = []
+    num_players = int(file.readline())
+    for i in range(num_players):
+        playerNumber = int(file.readline()) # Read in player number
+        player_property_ids[playerNumber] = [] # Create an empty array for the player's property ids
+        
+        # Read in the rest of the player specific information
+        name = file.readline()
+        name = name[:-1] # Shave off the \n character from readLine
+        balance = int(file.readline())
+        position = int(file.readline())
+        playerTokenId = int(file.readline())
+        token = PlayerTokenImage(playerTokenId)
+        isInJail = (file.readline() == "True")
+        isBankrupt = (file.readline() == "True")
+        lastDiceResult = int(file.readline())
+        consecutiveDoubles = int(file.readline())
+        cards = int(file.readline())
+        turnsLeftInJail = int(file.readline())
+
+        # For each property in player's property list, read in the tile ID
+        num_properties = int(file.readline())
+        for j in range(num_properties):
+            player_property_ids[playerNumber].append(int(file.readline()))
+
+        # Append a new player to our player list (Without properties)
+        players.append(Player(playerNumber = playerNumber, name = name, token = token, balance = balance, position = position, isInJail = isInJail, isBankrupt = isBankrupt, lastDiceResult = lastDiceResult, consecutiveDoubles = consecutiveDoubles, cards = cards, turnsLeftInJail = turnsLeftInJail))
+
+    # Process the tiles
+    tiles = []
+    for i in range(40): # Iterate through each tile ID number
+        players_on_tile = []
+        tileNumber = int(file.readline())
+        players_in_jail = []
+    
+        # Get players by their player numbers and add them to the players on the tile
+        num_on_tile = int(file.readline())
+        for j in range(num_on_tile): # Iterate for each player on the current tile
+            current_player_number = int(file.readline()) # Declare the current player number
+            
+            # Compare player numbers from our currently constructed players with the current player number from the save file
+            for p in players:
+                if current_player_number == p.playerNumber:
+                    players_on_tile.append(p)
+
+        # If the current index is a color property, get the upgrade level
+        if tileNumber in Board.COLOR_PROPERTY_INDEXES:
+            upgradeLevel = int(file.readline())
+            tiles.append(ColorProperty(tileNumber = tileNumber, playersOnTile = players_on_tile, upgradeLevel = upgradeLevel))
+
+        # If the current index is jail, get a list of the players in jail
+        elif tileNumber == Board.JAIL_INDEX:
+            
+            num_in_jail = int(file.readline())
+            for j in range(num_in_jail):
+                current_player_number = int(file.readline())
+
+                for p in players:
+                    if current_player_number == p.playerNumber:
+                        players_in_jail.append(p)
+
+            tiles.append(Jail(playersOnTile = players_on_tile, playersInJail = players_in_jail))
+
+        elif tileNumber in Board.UTILITIES_INDEXES:
+            tiles.append(Utility(tileNumber = tileNumber, playersOnTile = players_on_tile))
+
+        elif tileNumber in Board.SPEEDWAY_INDEXES:
+            tiles.append(Railroad(tileNumber = tileNumber, playersOnTile = players_on_tile))
+        
+        else:
+            tiles.append(Tile(tileNumber = tileNumber, playersOnTile = players_on_tile))
+
+    # Assign tiles to player lists based on previously recorded ownership
+    for p in players:
+        for prop_id in player_property_ids[p.playerNumber]:
+            p.propertyList.append(tiles[prop_id])
+
+    # Create and return the new gameboard object
+    return Board(screen = screen, playerTurnQueue = players, savefile = savefile_name, currentTurn = current_turn, tileArray = tiles)
+
+
+#           MAIN EVENT HANDLER STARTS HERE
+
 
 # Trying to fit the game board to the screen here (this orientation seems good)
 board_surf = pygame.transform.scale(pygame.image.load("images/GameBoard.png").convert(), (550, 550))
@@ -63,22 +159,40 @@ while running:
                 menu.handle_event(event)
                 # When start game is clicked in main menu
                 if (not menu.isActive()):  # Check if Start Game was clicked
-                      name_save_file = NameSaveFile(screen)
+                    if menu.new_game_clicked:
+                        name_save_file = NameSaveFile(screen)
+                        name_save_file.name_savegame_active = True
+                        menu.new_game_clicked = False
+                    elif menu.load_game_clicked:
+                        load_game_menu = LoadGame(screen)
+                        load_game_menu.load_game_active = True
+                        menu.new_game_clicked = False
+
+            elif load_game_menu and load_game_menu.isActive():
+                load_game_menu.handle_event(event)
+                if not load_game_menu.isActive():
+                    savefile_name = load_game_menu.get_file_name()
+                    gameboard = load_the_game(savefile_name, screen)
+                    players = []
+                    for player in gameboard.playerTurnQueue:
+                        players.append(player)
 
             elif name_save_file and name_save_file.isActive():
                 name_save_file.handle_event(event)
                 if not name_save_file.isActive():
                     savefile = name_save_file.get_save_name()
-                    player_number_menu = PlayerNumberMenu(screen)  # Show player number selection first
+                    number_menu = PlayerNumberMenu(screen)  # Show player number selection first
+                    number_menu.menu_active = True
             
             # Handle player number selection
-            elif player_number_menu and player_number_menu.isActive():
-                player_number_menu.handle_event(event)
+            elif number_menu and number_menu.isActive():
+                number_menu.handle_event(event)
                 # When player count is selected
-                if not player_number_menu.isActive():
-                    num_players = player_number_menu.getPlayerCount()
+                if not number_menu.isActive():
+                    num_players = number_menu.getPlayerCount()
                     player_menu = Player_Menu(screen)
                     player_menu.total_players = num_players  # Set the number of players
+                    player_menu.player_setup_active = True
 
             # Handle player menu events if it exists and is active
             elif player_menu and player_menu.isActive():
@@ -153,10 +267,12 @@ while running:
     # Draw appropriate screen based on game state
     if menu.isActive():  # if player in main menu
         menu.draw()
+    elif load_game_menu and load_game_menu.isActive():
+        load_game_menu.draw()
     elif name_save_file and name_save_file.isActive():
         name_save_file.draw()
-    elif player_number_menu and player_number_menu.isActive(): #if player is in the number menu
-        player_number_menu.draw()
+    elif number_menu and number_menu.isActive(): #if player is in the number menu
+        number_menu.draw()
     elif player_menu and player_menu.isActive(): #if player is in the player menu
         player_menu.draw()
     else: #if in game
@@ -296,101 +412,3 @@ while running:
 
     pygame.display.update()  # update the display
     clock.tick(60)  # one while loop 60 times per second
-
-def load_game(savefile_name: str, screen: pygame.Surface) -> Board:
-    file = open(savefile_name, "r")
-    
-    global current_turn # Declare we are using the current_turn in the rest of main.py
-    current_turn = int(file.readline())
-
-    # Process the players
-    player_property_ids = {}
-    players = []
-    num_players = int(file.readline())
-    for i in range(num_players):
-        playerNumber = int(file.readline()) # Read in player number
-        player_property_ids[playerNumber] = [] # Create an empty array for the player's property ids
-        
-        # Read in the rest of the player specific information
-        name = file.readline()
-        balance = int(file.readline())
-        position = int(file.readline())
-        playerTokenId = int(file.readline())
-        token = PlayerTokenImage(playerTokenId)
-        isInJail = (file.readline() == "True")
-        isBankrupt = (file.readline() == "True")
-        lastDiceResult = int(file.readline())
-        consecutiveDoubles = int(file.readline())
-        cards = int(file.readline())
-        turnsLeftInJail = int(file.readline())
-
-        # For each property in player's property list, read in the tile ID
-        num_properties = int(file.readline())
-        for j in range(num_properties):
-            player_property_ids[playerNumber].append(int(file.readline()))
-
-        # Append a new player to our player list (Without properties)
-        players.append(Player(name, token, balance = balance, position = position, token = token, isInJail = isInJail, isBankrupt = isBankrupt, lastDiceResult = lastDiceResult, consecutiveDoubles = consecutiveDoubles, cards = cards, turnsLeftInJail = turnsLeftInJail))
-
-    # Process the tiles
-    tiles = []
-    for i in range(40): # Iterate through each tile ID number
-        players_on_tile = []
-        tileNumber = int(file.readline())
-        players_in_jail = []
-    
-        # Get players by their player numbers and add them to the players on the tile
-        num_on_tile = int(file.readline())
-        for j in range(num_on_tile): # Iterate for each player on the current tile
-            current_player_number = int(file.readline()) # Declare the current player number
-            
-            # Compare player numbers from our currently constructed players with the current player number from the save file
-            for p in players:
-                if current_player_number == p.playerNumber:
-                    players_on_tile.append(p)
-
-        # If the current index is a color property, get the upgrade level
-        if tileNumber in Board.COLOR_PROPERTY_INDEXES:
-            upgradeLevel = int(file.readline())
-            tiles.append(ColorProperty(tileNumber, players_on_tile, upgradeLevel))
-
-        # If the current index is jail, get a list of the players in jail
-        elif tileNumber == Board.JAIL_INDEX:
-            
-            num_in_jail = int(file.readline())
-            for j in range(num_in_jail):
-                current_player_number = int(file.readline())
-
-                for p in players:
-                    if current_player_number == p.playerNumber:
-                        players_in_jail.append(p)
-
-            tiles.append(Jail(players_on_tile, players_in_jail))
-
-        elif tileNumber in Board.UTILITIES_INDEXES:
-            tiles.append(Utility(tileNumber, players_on_tile))
-
-        elif tileNumber in Board.SPEEDWAY_INDEXES:
-            tiles.append(Railroad(tileNumber, players_on_tile))
-        
-        else:
-            tiles.append(Tile(tileNumber, players_on_tile))
-
-    # Assign tiles to player lists based on previously recorded ownership
-    for p in players:
-        for prop_id in player_property_ids[p.playerNumber]:
-            p.propertyList.append(tiles[prop_id])
-
-    # Create and return the new gameboard object
-    gameboard = Board(screen, players, savefile_name, currentTurn = current_turn)
-
-            
-
-
-
-        
-
-
-        
-
-

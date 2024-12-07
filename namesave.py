@@ -7,7 +7,7 @@ class NameSaveFile:
     def __init__(self, screen):
         # Basic class properties
         self.screen = screen
-        self.name_savegame_active = True # Says if the save game naming screen is active
+        self.name_savegame_active = False # Says if the save game naming screen is active
         self.font = pygame.font.Font(None, 36)
         self.small_font = pygame.font.Font(None, 24)
         self.BACKGROUND_WHITE = (200, 200, 200)
