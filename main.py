@@ -382,7 +382,10 @@ while running:
                     cleanScreen()
                     
                 elif result == 3: #Landed on a tax tile
-                    pass
+                    if current_player.playerPosition == 4: # BLACK FLAG tile
+                        current_player.removeBalance(int(current_player.playerBalance * 0.1))
+                    elif current_player.playerPosition == 38: # LUXURY SUITE tile
+                        current_player.removeBalance(75)
                 elif result == 4: #Landed on go to jail
                     current_player.putInJail()
                     gameboard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 10, passGoViable = False)
