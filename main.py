@@ -3,7 +3,7 @@ import random
 os.environ['SDL_AUDIODRIVER'] = 'dsp'
 from menu import Menu
 from namesave import NameSaveFile
-
+import sys
 import pygame
 pygame.init()
 
@@ -49,6 +49,43 @@ def cleanScreen():
     gameboard.drawPlayers(players)
     buttons.draw_buttons(is_doubles)
     gameboard.show_turn_message(players[current_turn].playerName)
+
+def debug_player(player):
+    for attr in dir(player):
+        if not attr.startswith("__"):
+            value = getattr(player, attr)
+            print(f"Attribute: {attr}, Type: {type(value)}")
+    # Use this function to print out the types of all attributes in a Player instance
+
+
+def endGame():
+    # Sort players by net worth in descending order
+    player_net_worths = [(player, player.isPossibletoLive()) for player in players]
+    player_net_worths.sort(key=lambda x: x[1], reverse=True)
+
+    # Clear the screen
+    screen.fill(backgroundColor)
+
+    # Display the end game results
+    font = pygame.font.SysFont("Arial", 24)
+    title = font.render("Game Over - Final Standings", True, (0, 0, 0))
+    screen.blit(title, (screen.get_width() // 2 - title.get_width() // 2, 50))
+
+    # Display each player's net worth
+    y_offset = 100
+    for player, net_worth in player_net_worths:
+        player_text = font.render(f"{player.playerName}: ${net_worth}", True, (0, 0, 0))
+        screen.blit(player_text, (screen.get_width() // 2 - player_text.get_width() // 2, y_offset))
+        y_offset += 40
+
+    pygame.display.update()
+
+    
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
 
 # Loads a game given the savefile_name and the screen (screen is only used to construct the gameboard)
 def load_the_game(savefile_name: str, screen: pygame.Surface) -> Board:
@@ -280,13 +317,74 @@ while running:
         player_menu.draw()
     else: #if in game
         screen.blit(board_surf, board_rect)
-
-
         
             
         #BEGIN MAIN PLAYING LOOP
         #Put anything the needs to be refreshed after a player turn here
         current_player = players[current_turn]
+        
+        while current_player.playerBalance < 0:
+            #debug_player(current_player)
+            if current_player.bankruptcyCheck() == True:
+                #Player is bankrupt with no way of getting out
+                print(f"Player: {current_player.playerName} is bankrupt with no way of getting out")
+                font = pygame.font.SysFont("Arial", 18)
+                event_start_time = pygame.time.get_ticks()
+                popup_rect2 = pygame.Rect(screen.get_width() // 2 - 405, screen.get_height() // 2 - 55, 810, 110)
+                pygame.draw.rect(screen, (0,0,0), popup_rect2, border_radius=20)
+                popup_rect = pygame.Rect(screen.get_width() // 2 - 400, screen.get_height() // 2 - 50, 800, 100)
+                pygame.draw.rect(screen, (200,200,200), popup_rect, border_radius=20)
+                popup_message = font.render("You have run out of money and cannot make it back! The game is over.", True, (0,0,0))
+                screen.blit(popup_message, (screen.get_width() // 2 - popup_message.get_width() // 2, screen.get_height() // 2 - popup_message.get_height() // 2))
+                waiting_for_event = True
+                    
+                    # Keep updating the screen while waiting
+                while waiting_for_event:
+                    # Check if 6 seconds have passed
+                    if pygame.time.get_ticks() - event_start_time >= 6000:
+                        waiting_for_event = False
+                    
+                    # Keep processing events to prevent the game from appearing frozen
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            running = False
+                            waiting_for_event = False
+                        elif event.type == pygame.MOUSEBUTTONDOWN:  # Optional: allow clicking to dismiss
+                            waiting_for_event = False
+                    
+                    pygame.display.update()
+                    clock.tick(60)  # Maintain frame rate
+                endGame() #end the game and show result screen
+            else:
+                font = pygame.font.SysFont("Arial", 18)
+                event_start_time = pygame.time.get_ticks()
+                popup_rect2 = pygame.Rect(screen.get_width() // 2 - 405, screen.get_height() // 2 - 55, 810, 110)
+                pygame.draw.rect(screen, (0,0,0), popup_rect2, border_radius=20)
+                popup_rect = pygame.Rect(screen.get_width() // 2 - 400, screen.get_height() // 2 - 50, 800, 100)
+                pygame.draw.rect(screen, (200,200,200), popup_rect, border_radius=20)
+                popup_message = font.render("You have run out of money! Sell properties to get out of debt. Click Back when you are done.", True, (0,0,0))
+                screen.blit(popup_message, (screen.get_width() // 2 - popup_message.get_width() // 2, screen.get_height() // 2 - popup_message.get_height() // 2))
+                waiting_for_event = True
+                    
+                    # Keep updating the screen while waiting
+                while waiting_for_event:
+                    # Check if 6 seconds have passed
+                    if pygame.time.get_ticks() - event_start_time >= 6000:
+                        waiting_for_event = False
+                    
+                    # Keep processing events to prevent the game from appearing frozen
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            running = False
+                            waiting_for_event = False
+                        elif event.type == pygame.MOUSEBUTTONDOWN:  # Optional: allow clicking to dismiss
+                            waiting_for_event = False
+                    
+                    pygame.display.update()
+                    clock.tick(60)  # Maintain frame rate
+                gameboard.sellScreen(current_player)
+                cleanScreen()
+        
         print(f"\nPlayer: {current_player.playerName}")
         buttons.draw_buttons(is_doubles)
         if (input == 2 or input == 3) and is_doubles:
@@ -312,6 +410,7 @@ while running:
             input = buttons.getInput()
             if input == 1:
                 is_doubles = gameboard.rollDice(dice, players, current_turn)
+                cleanScreen()
                 dice.draw(screen)
                 result = gameboard.moveResults(players, current_turn)
                 if result == 0: #Landed on a free space (visitng jail, go, own property, free parking)
@@ -365,7 +464,7 @@ while running:
                     ##Clean up the screen after an auction
                     Event.event_outcome(event_code, current_player, gameboard)
                     cleanScreen()
-                    if(event_code == 20 or event_code == 29):
+                    if(event_code == 20 or event_code == 29 or event_code == 19 or event_code == 26 or event_code == 27 or event_code == 28):
                         result = gameboard.moveResults(players, current_turn)
                         if result != 5 and result != 0: #Means the property is not owned
                             current_property = gameboard.tileArray[current_player.playerPosition]
