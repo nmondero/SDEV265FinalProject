@@ -48,6 +48,10 @@ class LoadGame:
         self.file_not_found_rect = pygame.Rect(400 - self.file_not_found_surface.get_width() // 2, self.finalize_rect.bottom + 50, self.file_not_found_surface.get_width(), 24)
         self.is_invalid_file = False
 
+        self.x_text = self.font.render("X", True, self.BLACK)
+        self.close_button_rect = pygame.Rect(770, 20, 20, 20)
+        self.x_clicked = False
+
     def get_file_name(self):
         return self.input_string
     
@@ -90,6 +94,10 @@ class LoadGame:
                 # Handle CORRECTLY finalizing a valid save file name
                 else:
                     self.finalize_save_file_name()
+            
+            elif self.close_button_rect.collidepoint(event.pos):
+                self.load_game_active = False
+                self.x_clicked = True
 
     # Draw each element to the screen  
     def draw(self):
@@ -103,6 +111,8 @@ class LoadGame:
         self.screen.blit(self.input_surface, (self.input_rect.x + 5, self.input_rect.y + 5)) # Draw the current input text
         pygame.draw.rect(self.screen, self.GREEN, self.finalize_rect) # Draw the finalization button border
         self.screen.blit(self.finalize_name_surface, (self.finalize_rect.x, self.finalize_rect.y + 5))
+
+        self.screen.blit(self.x_text, self.close_button_rect)
         
         # Check for errors and draw them (only one at a time)
         if self.is_max_length:

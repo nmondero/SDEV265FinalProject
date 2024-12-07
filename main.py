@@ -170,12 +170,15 @@ while running:
 
             elif load_game_menu and load_game_menu.isActive():
                 load_game_menu.handle_event(event)
-                if not load_game_menu.isActive():
+                if not load_game_menu.isActive() and not load_game_menu.x_clicked:
                     savefile_name = load_game_menu.get_file_name()
                     gameboard = load_the_game(savefile_name, screen)
                     players = []
                     for player in gameboard.playerTurnQueue:
                         players.append(player)
+
+                elif not load_game_menu.isActive() and load_game_menu.x_clicked:
+                    menu.menu_active = True
 
             elif name_save_file and name_save_file.isActive():
                 name_save_file.handle_event(event)
