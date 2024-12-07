@@ -183,10 +183,11 @@ while running:
             gameboard.drawPlayers(players)
             gameboard.show_turn_message(current_player.playerName)
             
+            buttons.draw_buttons(is_doubles)
             # Check if the current player is in jail and display red text if so
             if current_player.isInJail:
                 jail_text = pygame.font.Font(None, 24).render("You are in jail! Roll doubles to get out.", True, (255, 0, 0))
-                screen.blit(jail_text, ((screen.get_width() // 2) - (jail_text.get_width() // 2),725))
+                screen.blit(jail_text, ((screen.get_width() // 2) - (jail_text.get_width() // 2),700))
                 
             pygame.display.update()
             input = buttons.getInput()
@@ -273,10 +274,10 @@ while running:
                     #Functionality for paying rent is within the gameboard class moveResults
                     cleanScreen()
             elif input == 2: #sell property
-                pass
+                gameboard.sellScreen(current_player)
+                cleanScreen()
             elif input == 3: #Upgrade property
                 gameboard.upgradeScreen(current_player)
-                
                 cleanScreen()
             elif input == 4: #End turn
                 current_turn = (current_turn + 1) % len(players)  # Move to the next player
