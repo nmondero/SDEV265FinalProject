@@ -75,11 +75,6 @@ class Player:
         self.playerBalance = balance
         self.propertyList = properties if properties is not None else []
         
-        #Used to set and determine the content of the player's score card where the player's score rectangle is
-        self.scoreTextFont = pygame.font.Font(pygame.font.get_default_font(), 12)
-        self.scoreTextSurface = self.scoreTextFont.render(f"{self.playerName}\nBalance: ${self.playerBalance}", True, "Blue") #NOTE: We need to make sure playerBalance is changed whenever Player.player balance changes.
-        self.scoreTextRect = self.scoreTextSurface.get_rect(center = self.PLAYER_SCORE_RECT_COORDINATES[self.playerNumber])
-
         self.token = token
         self.playerPosition = position
     
@@ -91,9 +86,6 @@ class Player:
         
         self.isBankrupt = isBankrupt # Might not need this, we just end the game on bankruptcy anyways... although might be useful if we 
         self.lastDiceResult = lastDiceResult # The only reason I am keeping track of the last total roll result is for the Utilities getRent() function
-
-    def drawScore(self, screen: pygame.Surface):
-        screen.blit(self.scoreTextSurface, self.scoreTextRect)
     
     def draw(self, screen: pygame.Surface, x: int, y: int, outline_color: tuple = (0,0,0)):
         circle_diameter = 24  # Diameter of the circle
@@ -218,7 +210,26 @@ class Player:
                 minDistance = current_distance
                 minIndex = index
         return minIndex
+    
+    #Overall Bankruptcy Check. Returns true if player is bankrupt with no way to escape
+    def bankruptcyCheck(self) -> bool:
+        
+        if self.isPossibletoLive() < 0:
+            return True
+        else:
+            return False
 
+    def isPossibletoLive(self) -> int:
+        copybalance = self.playerBalance
+        for property in self.propertyList:
+            if(isinstance(property, ColorProperty)):
+                if(property.upgradeLevel > 0):
+                    copybalance += (property.upgradeLevel * property.upgradeCost)//2
+            copybalance += property.sellValue
+            
+        return copybalance
+                
+        
 class Board:
     COLOR_PROPERTY_INDEXES = (1, 3, 6, 8, 9, 11, 13, 14, 16, 18, 19, 21, 23, 24, 26, 27, 29, 31, 32, 34, 37, 39)
     UTILITIES_INDEXES = (12, 28)
@@ -236,6 +247,7 @@ class Board:
             self.tileArray = tileArray
         else:
             self.tileArray = []
+            
             for i in range(40):
                 if i in self.COLOR_PROPERTY_INDEXES:
                     self.tileArray.append(ColorProperty(i)) 
@@ -263,19 +275,6 @@ class Board:
         self.GameActive = True
         self.screen = screen
         self.savefile = savefile
-
-    def checkEndGame(self) -> bool:
-        for player in self.playerTurnQueue:
-            if player.playerBalance < 0:
-                return True
-    
-    def endGame(self, playerToRemove: Player) -> None:
-        '''
-        1. Order players by playerBalance
-        2. Make game board screen inactive
-        3. Make results screen active -> Display end-of-game rankings and final net worths.
-        '''
-        pass
     
     def assignPlayerPosition(self, players: Player[Player]):
         for player in players:
@@ -291,19 +290,101 @@ class Board:
         print(f"Consecutive Doubles: {players[turn].consecutiveDoubles}")
         print(f"Is In Jail: {players[turn].isInJail}")
         print(f"Turns Left in Jail: {players[turn].turnsLeftInJail}")
-        
+        font = pygame.font.SysFont("Arial", 22)
+        clock = pygame.time.Clock()
         # Decide whether to increment consecutive doubles
         doubles = dice.isDoubles()
         
         if players[turn].isInJail:
+            print(f"Player is in Jail: numGetOutOfJailCards: {players[turn].numGetOutOfJailCards}")
+            if players[turn].numGetOutOfJailCards > 0:
+                players[turn].numGetOutOfJailCards -= 1
+                players[turn].isInJail = False
+                event_start_time = pygame.time.get_ticks()
+                popup_rect = pygame.Rect(self.screen.get_width() // 2 - 200, self.screen.get_height() // 2 - 50, 400, 100)
+                pygame.draw.rect(self.screen, (200,200,200), popup_rect, border_radius=20)
+                getoutofjail_message = font.render("You used a Get Out of Jail Card!", True, (0,0,0))
+                self.screen.blit(getoutofjail_message, (self.screen.get_width() // 2 - getoutofjail_message.get_width() // 2, self.screen.get_height() // 2 - getoutofjail_message.get_height() // 2))
+                waiting_for_event = True
+                    
+                    # Keep updating the screen while waiting
+                while waiting_for_event:
+                    # Check if 6 seconds have passed
+                    if pygame.time.get_ticks() - event_start_time >= 6000:
+                        waiting_for_event = False
+                    
+                    # Keep processing events to prevent the game from appearing frozen
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            running = False
+                            waiting_for_event = False
+                        elif event.type == pygame.MOUSEBUTTONDOWN:  # Optional: allow clicking to dismiss
+                            waiting_for_event = False
+                    
+                    pygame.display.update()
+                    clock.tick(60)  # Maintain frame rate
+
+                self.movePlayer(players, turn, moveAmount = players[turn].lastDiceResult)
+                if doubles:
+                    players[turn].consecutiveDoubles += 1
+                    return True
+                else:
+                    return False
+                
             if doubles:
                 players[turn].isInJail = False
+                event_start_time = pygame.time.get_ticks()
+                popup_rect = pygame.Rect(self.screen.get_width() // 2 - 200, self.screen.get_height() // 2 - 50, 400, 100)
+                pygame.draw.rect(self.screen, (200,200,200), popup_rect, border_radius=20)
+                getoutofjail_message = font.render("You have rolled doubles!", True, (0,0,0))
+                self.screen.blit(getoutofjail_message, (self.screen.get_width() // 2 - getoutofjail_message.get_width() // 2, self.screen.get_height() // 2 - getoutofjail_message.get_height() // 2))
+                waiting_for_event = True
+                    
+                    # Keep updating the screen while waiting
+                while waiting_for_event:
+                    # Check if 6 seconds have passed
+                    if pygame.time.get_ticks() - event_start_time >= 6000:
+                        waiting_for_event = False
+                    
+                    # Keep processing events to prevent the game from appearing frozen
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            running = False
+                            waiting_for_event = False
+                        elif event.type == pygame.MOUSEBUTTONDOWN:  # Optional: allow clicking to dismiss
+                            waiting_for_event = False
+                    
+                    pygame.display.update()
+                    clock.tick(60)  # Maintain frame rate
                 self.movePlayer(players, turn, moveAmount = players[turn].lastDiceResult)
                 players[turn].consecutiveDoubles += 1
                 players[turn].turnsLeftInJail = 0
-                return False #You don't roll again if you go to jail after rolling 3 doubles
+                return True #You roll again as you got doubles while in jail
             elif players[turn].turnsLeftInJail == 0:
                 players[turn].isInJail = False
+                event_start_time = pygame.time.get_ticks()
+                popup_rect = pygame.Rect(self.screen.get_width() // 2 - 200, self.screen.get_height() // 2 - 50, 400, 100)
+                pygame.draw.rect(self.screen, (200,200,200), popup_rect, border_radius=20)
+                getoutofjail_message = font.render("You have served your sentence!", True, (0,0,0))
+                self.screen.blit(getoutofjail_message, (self.screen.get_width() // 2 - getoutofjail_message.get_width() // 2, self.screen.get_height() // 2 - getoutofjail_message.get_height() // 2))
+                waiting_for_event = True
+                    
+                    # Keep updating the screen while waiting
+                while waiting_for_event:
+                    # Check if 6 seconds have passed
+                    if pygame.time.get_ticks() - event_start_time >= 6000:
+                        waiting_for_event = False
+                    
+                    # Keep processing events to prevent the game from appearing frozen
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            running = False
+                            waiting_for_event = False
+                        elif event.type == pygame.MOUSEBUTTONDOWN:  # Optional: allow clicking to dismiss
+                            waiting_for_event = False
+                    
+                    pygame.display.update()
+                    clock.tick(60)  # Maintain frame rate
                 self.movePlayer(players, turn, moveAmount = players[turn].lastDiceResult)
                 return False
 
@@ -502,8 +583,10 @@ class Board:
         start_x = (self.screen.get_width() - total_width) // 2
 
         # Buy Button
+        buy_button = pygame.Rect(start_x, self.screen.get_height() - 150 + 20, button_width, button_height)
+        canbuy = False
         if(player.playerBalance >= self.tileArray[currentPlayer.playerPosition].buyPrice):
-            buy_button = pygame.Rect(start_x, self.screen.get_height() - 150 + 20, button_width, button_height)
+            canbuy = True
             pygame.draw.rect(self.screen, (100, 100, 100), buy_button)
             buy_button_text = font.render(f"Buy", True, (0, 0, 0))
             self.screen.blit(buy_button_text, (buy_button.centerx - buy_button_text.get_width() // 2, buy_button.centery - buy_button_text.get_height() // 2))
@@ -527,7 +610,7 @@ class Board:
                         waitforinput = False
                         self.screen.fill((200, 200, 200))
                         return 1
-                    elif buy_button.collidepoint(mouse_pos):
+                    elif buy_button.collidepoint(mouse_pos) and canbuy:
                         waitforinput = False
                         self.screen.fill((200, 200, 200))
                         return 0
@@ -782,9 +865,11 @@ class Board:
     def sellScreen(self, player: Player):
         font = pygame.font.SysFont("Arial", 22)
         self.screen.fill((200, 200, 200))
-
+        deselect = False
         PropertyScreen = True
         SellScreen = False
+        selected_color = None
+        selected_property = None
 
         # Get all color groups the player owns properties in
         
@@ -819,6 +904,8 @@ class Board:
                 self.screen.blit(title, (self.screen.get_width() // 2 - title.get_width() // 2, 50))
                 instructions = font.render("Select a color to sell properties. Only owned colors will appear.", True, (0, 0, 0))
                 self.screen.blit(instructions, (self.screen.get_width() // 2 - instructions.get_width() // 2, 100))
+                balance = font.render(f"Balance: ${player.playerBalance}", True, (0, 0, 0))
+                self.screen.blit(balance, (self.screen.get_width() // 2 - balance.get_width() // 2, 150))
 
                 # Draw color buttons
                 purple_button_rect = pygame.Rect(button_positions[0][0], button_positions[0][1], button_width, button_height)
@@ -888,7 +975,7 @@ class Board:
             
             elif SellScreen: 
                 self.screen.fill((200, 200, 200))
-                title = font.render(f"Sell {selected_color} Properties", True, (0, 0, 0))
+                title = font.render(f"Select a Property to Sell from {selected_color} Properties", True, (0, 0, 0))
                 self.screen.blit(title, (self.screen.get_width() // 2 - title.get_width() // 2, 50))
 
                 if selected_color == "RAILROAD" or selected_color == "UTILITY":
@@ -942,13 +1029,23 @@ class Board:
             self.screen.blit(back_button_text, (back_button_rect.centerx - back_button_text.get_width() // 2, back_button_rect.centery - back_button_text.get_height() // 2))
 
             pygame.display.update()
-
-            selected_color = None
-            selected_property = None
-            
+            #only reset color and selected property during a non deselect
+            if deselect == True:
+                print(f"Deselect: Color: {selected_color}, Property:{selected_property}, Deselect:{deselect}")
+                for prop_rect, prop in property_buttons:
+                    if prop == selected_property:
+                        pygame.draw.rect(self.screen, (255, 255, 0), prop_rect, 3)
+                        pygame.display.update()
+                        break
+            else:
+                selected_property = None
+            deselect = False
+            print(f"NORM: Color: {selected_color}, Property:{selected_property}, Deselect:{deselect}")
             if SellScreen:
                 while SellScreen:
                     for event in pygame.event.get():
+                        if deselect:
+                            break
                         if event.type == pygame.QUIT:
                             return
                         elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -956,19 +1053,25 @@ class Board:
                             if back_button_rect.collidepoint(mouse_pos):
                                 SellScreen = False
                                 PropertyScreen = True
+                                selected_color = None
                                 break
                             if sell_button_rect.collidepoint(mouse_pos) and selected_property:
                                 self.sellProperty(player, selected_property)
                                 selected_property = None
                                 SellScreen = False
                                 PropertyScreen = True
+                                selected_color = None
                                 break
                             for prop_rect, prop in property_buttons:
                                 if prop_rect.collidepoint(mouse_pos):
+                                    if selected_property is not None:
+                                        deselect = True
                                     selected_property = prop
                                     # Highlight the selected property
                                     pygame.draw.rect(self.screen, (255, 255, 0), prop_rect, 3)
                                     pygame.display.update()
+                    if deselect:
+                        break
             
             elif PropertyScreen:
                 while PropertyScreen:
@@ -1444,7 +1547,7 @@ class Event:
         self.is_visible = False #sets up for the trigger function of the textbox to be shown or not
 
     def event_outcome(event_code: int, player: Player, gameBoard: Board):
-
+        print(f"Event: {event_code}")
         players = [player]
         current_turn = 0
         
@@ -1530,13 +1633,13 @@ class Event:
             player.removeBalance(15)
             #pay 15
         elif (event_code == 26):
-            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 23, passGoViable = True)
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 13, passGoViable = True)
             #go to QVC
         elif (event_code == 27):
             gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 39, passGoViable = True)
             #go to Goodwrench service plus
         elif (event_code == 28):
-            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 15, passGoViable = True)
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 25, passGoViable = True)
             #go to Charlotte Motor Speedway
         elif (event_code == 31):
             player.addBalance(50)
