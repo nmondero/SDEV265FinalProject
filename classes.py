@@ -415,11 +415,12 @@ class Board:
     
         # Draw player balance positions
         score_positions = [
-            (250,100),     # 2nd position
-            (450,100),     # 3rd position
-            (50, 100),      # 1st position
-            (650,100)     # 4th position
+            (225,100),     # 2nd position
+            (425,100),     # 3rd position
+            (25, 100),      # 1st position
+            (625,100)     # 4th position
         ]
+
 
         # Draw player balance
         for i, player in enumerate(players):
