@@ -35,6 +35,9 @@ class Menu:
         self.overlay_rect = pygame.Rect(150, 150, 500, 500)
         self.close_button_rect = pygame.Rect(self.overlay_rect.right - 30, self.overlay_rect.top + 10, 20, 20)
 
+        self.new_game_clicked = False
+        self.load_game_clicked = False
+
     def handle_event(self, event):
         # Check for mouse click on buttons
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -46,10 +49,12 @@ class Menu:
                         action = self.buttons[i]["action"]
                         if action == "start_game":
                             self.menu_active = False  # Hide menu on "Start Game"
+                            self.new_game_clicked = True
                         elif action == "how_to_play":
                             self.overlay_active = True  # Show overlay for "How to Play"
                         elif action == "load_game":
-                            pass
+                            self.menu_active = False
+                            self.load_game_clicked = True
             elif self.overlay_active:
                 # Check if close button on overlay was clicked
                 if self.close_button_rect.collidepoint(mouse_pos):

@@ -75,11 +75,6 @@ class Player:
         self.playerBalance = balance
         self.propertyList = properties if properties is not None else []
         
-        #Used to set and determine the content of the player's score card where the player's score rectangle is
-        self.scoreTextFont = pygame.font.Font(pygame.font.get_default_font(), 12)
-        self.scoreTextSurface = self.scoreTextFont.render(f"{self.playerName}\nBalance: ${self.playerBalance}", True, "Blue") #NOTE: We need to make sure playerBalance is changed whenever Player.player balance changes.
-        self.scoreTextRect = self.scoreTextSurface.get_rect(center = self.PLAYER_SCORE_RECT_COORDINATES[self.playerNumber])
-
         self.token = token
         self.playerPosition = position
     
@@ -90,11 +85,7 @@ class Player:
         self.turnsLeftInJail = turnsLeftInJail
         
         self.isBankrupt = isBankrupt # Might not need this, we just end the game on bankruptcy anyways... although might be useful if we 
-        self.playerNumber = playerNumber # Dont think we need this
         self.lastDiceResult = lastDiceResult # The only reason I am keeping track of the last total roll result is for the Utilities getRent() function
-
-    def drawScore(self, screen: pygame.Surface):
-        screen.blit(self.scoreTextSurface, self.scoreTextRect)
     
     def draw(self, screen: pygame.Surface, x: int, y: int, outline_color: tuple = (0,0,0)):
         circle_diameter = 24  # Diameter of the circle
@@ -117,12 +108,11 @@ class Player:
         # Draw the image with the circular background on the main screen
         screen.blit(circle_surface, (x - circle_diameter // 2, y - circle_diameter // 2))
 
-    def putInJail(self, jailTile: Jail): 
-        self.movePlayer(jumpToTile = 10, passGoViable = False)
+    def putInJail(self): 
         self.isInJail = True
         self.turnsLeftInJail = 3
 
-    def releaseFromJail(self, jailTile: Jail):
+    def releaseFromJail(self):
         self.isInJail = False
 
     #Add a property to player's property list
@@ -131,7 +121,7 @@ class Player:
 
     #Remove a property from player's property list
     def removeProperty(self, propertyToRemove: Property) -> None:
-        if propertyToRemove not in self.properties: #Raise exception if the property is not in the player's property list
+        if propertyToRemove not in self.propertyList: #Raise exception if the property is not in the player's property list
             raise ValueError("Exception: Property to remove is not in player's property list.")
         self.propertyList.remove(propertyToRemove) #Remove the property from the player's property list
 
@@ -143,113 +133,29 @@ class Player:
 
     #Remove an amount from player balance
     def removeBalance(self, balanceToRemove: int) -> None:
-        if (balanceToRemove <= 0): #Raise exception if invalid parameter
+        if (balanceToRemove < 0): #Raise exception if invalid parameter
             raise ValueError("Exception: Balance to remove (${balanceToRemove}) is not greater than 0.")
 
         self.playerBalance -= balanceToRemove #Remove specified amount from player 
-        
-        ''' 
-        Note: I am thinking of moving this to the main so that we dont have to awkwardly pass the screen display to the removeBalance function to get the sellProperty function to work
-        if self.playerBalance < 0: #If player balance is less than 0, check if they can sell properties to avoid bankruptcy
-            totalPropertyValue = 0
-            for property in self.propertyList:
-                totalPropertyValue += property.sellValue
-            
-            if totalPropertyValue < balanceToRemove: #Player is bankrupt if they cannot sell enough value to get out of negative balance
-                self.isBankrupt = True
-
-            else: #Make the player sell property until they have enough money to stay out of negative
-                while self.playerBalance < balanceToRemove:
-                    self.sellProperty(screen)
-        '''
 
     # Pays another player a certain amount
     def payPlayer(self, payAmount: int, payee: Player):
         self.removeBalance(payAmount)
         payee.addBalance(payAmount)
-    
-    def sellProperty(self, screen: pygame.Surface) -> None:
-        if self.propertyList.count() == 0:
-            raise ValueError("Exception: No properties to sell.")
-
-        '''
-        Create "Sell Property" Surface to display as a title for sell property screen
-        Create button objects (Surfaces) that will display properties and their sell values
-        Map each button to the properties in the player's property list
-        Create an array of Property that represents properties selected to sell
-        Create button objects to Confirm the sell or cancel the sell
-        Draw over the entire Display Surface with the background color then draw on the new button objects
-        Event loop looking for player clicks:
-            if player clicks a property button:
-                if the property for that button IS NOT in the properties to sell array (the button is UNCLICKED):
-                    add the property at that button to properties to sell array
-                    Update the button to look like it has been selected (probably change the Surface color)
-                if the property for that button IS in the properties to sell array:
-                    Remove the property at that button from properties to sell array
-                    Update the button to look like it has not been selected (probably change the Surface color back to default)
-            if player clicks Sell Properties:
-                For each property in the properties to sell array:
-                    Add property sell value to player balance
-                    Remove the property from player property array
-        '''
-
-
-    def rollDice(self, dice: Dice):
-        self.lastDiceResult = dice.roll.result() # The only reason I am keeping track of the last dice roll result is for the Utilities getRent function
-
-        # Decide whether to increment consecutive doubles
-        doubles = dice.isDoubles()
-        if doubles:
-            self.consecutiveDoubles += 1
-        else:
-            self.consecutiveDoubles = 0
-
-        # If in jail 
-        if self.isInJail:
-            if doubles:
-                self.isInJail = False
-                self.movePlayer(moveAmount = dice.result())
-
-            else:
-                self.turnsLeftInJail -= 1
-
-        # If not in jail
-        else:
-            if self.consecutiveDoubles == 3: # If 3 consecutive doubles, go directly to jail
-                self.putInJail()
-            
-            else: # Else, regular dice roll-based movement
-                self.movePlayer(moveAmount = self.lastDiceResult)
-
-
-    '''
-    I am thinking we simply just use this function to move the player by a specified amount (move amount) or move directly to a certain spot (jumpToTile) and a bool to specify if the jumpToTile should allow passing go
-    ex. Move via dice roll (totalDiceVal = 6): 
-        player1.movePlayer(moveAmount = totalDiceVal)
-    ex. Pass directly to Go tile (index of zero)
-        player1.movePlayer(jumpToTile = 0, passGoViable = True)
-    ex. Go directly to jail, do not collect passing go money
-        player1.movePlayer(jumpToTile = 10, passGoViable = False)
-    '''
-    
-    def moveToken(self, fromTile: Tile, toTile: Tile):
-        pass
-            
 
     # Determines if the player owns the full property set of the specified color
     def ownsPropertySet(self, color: str) -> bool:
-        # Make a set of each property ID in the players propertyList
-        playerPropertyIDs = {}
-        for prop in self.propertyList:
-            playerPropertyIDs.add(prop.tileNumber)
-
+        # Get a list of the property I
+        propIds = []
+        for p in self.propertyList: 
+            propIds.append(p.tileNumber)
         # Check if the player has each property in the color set
         for colorMemberID in ColorProperty.COLOR_GROUPS[color]:
-            if colorMemberID not in playerPropertyIDs:
+            if colorMemberID not in propIds:
                 return False # Return false if no match found
         
         return True # If player had the whole set
-    
+
     # Return the value of the nearest speedway
     def nearestSpeedway(self) -> int:
         # Determine index of closest speedway
@@ -258,79 +164,249 @@ class Player:
         minIndex = railroadIndices[0]
         minDistance = abs(minIndex - pos)
         for index in railroadIndices[1:]:
-            current_distance = abs(railroadIndices[index] - pos)
+            current_distance = abs(index - pos)
             if current_distance < minDistance:
                 minDistance = current_distance
                 minIndex = index
         return minIndex
+    
+    #Overall Bankruptcy Check. Returns true if player is bankrupt with no way to escape
+    def bankruptcyCheck(self) -> bool:
+        if self.isPossibletoLive() < 0:
+            return True
+        else:
+            return False
 
+    #Calculates the overall money a player has in both property and upgrades as well as balance
+    def isPossibletoLive(self) -> int:
+        copybalance = self.playerBalance
+        for property in self.propertyList:
+            if(isinstance(property, ColorProperty)):
+                if(property.upgradeLevel > 0):
+                    copybalance += (property.upgradeLevel * property.upgradeCost)//2
+            copybalance += property.sellValue
+            
+        return copybalance
+                
+        
 class Board:
-    COLOR_PROPERTY_INDEXES = (1, 3, 5, 6, 8, 9, 11, 13, 14, 16, 18, 19, 21, 23, 24, 26, 27, 29, 31, 32, 34, 37, 39)
+    #Static index for all different property types on the board and their tile location
+    COLOR_PROPERTY_INDEXES = (1, 3, 6, 8, 9, 11, 13, 14, 16, 18, 19, 21, 23, 24, 26, 27, 29, 31, 32, 34, 37, 39)
     UTILITIES_INDEXES = (12, 28)
     SPEEDWAY_INDEXES = (5, 15, 25, 35)
-    EVENT_INDEXES = (2, 7, 17, 22, 33)
+    EVENT_INDEXES = (2, 7, 17, 22, 33, 36)
     TAX_INDEXES = (4, 38)
     JAIL_INDEX = 10
     GO_INDEX = 0
     FREE_PARKING_INDEX = 20
     GO_TO_JAIL_INDEX = 30
+    PLAYER_COLOR = [(218,36,44),(20,167,89),(3,102,165),(253,239,5)]
     
-    def __init__(self, screen: pygame.Surface, playerTurnQueue: List[Player], turnNumber: int = 1, eventCardDeck: List[int] = None):
-        self.tileArray = []
-        for i in range(40):
-            if i in self.COLOR_PROPERTY_INDEXES:
-                self.tileArray.append(ColorProperty(i)) 
-            elif i in self.UTILITIES_INDEXES:
-                self.tileArray.append(Utility(i))
-            elif i in self.SPEEDWAY_INDEXES:
-                self.tileArray.append(Railroad(i))
-            elif i == self.JAIL_INDEX:
-                self.tileArray.append(Jail())
-            elif i == self.GO_INDEX:
-                self.tileArray.append(Tile(i))
-            elif i == self.FREE_PARKING_INDEX:
-                self.tileArray.append(Tile(i))
-            elif i == self.GO_TO_JAIL_INDEX:
-                self.tileArray.append(Tile(i))
-            elif i in self.EVENT_INDEXES:  # Event card spaces
-                self.tileArray.append(Tile(i))
-            elif i in self.TAX_INDEXES:
-                self.tileArray.append(Tile(i))
-            else:
-                self.tileArray.append(Tile(i))
+    def __init__(self, screen: pygame.Surface, playerTurnQueue: List[Player], savefile: str, currentTurn: int = 0, tileArray: Optional[List[Tile]] = None):
+        if tileArray != None:
+            self.tileArray = tileArray
+        else:
+            self.tileArray = []
+            
+            for i in range(40):
+                if i in self.COLOR_PROPERTY_INDEXES:
+                    self.tileArray.append(ColorProperty(i)) 
+                elif i in self.UTILITIES_INDEXES:
+                    self.tileArray.append(Utility(i))
+                elif i in self.SPEEDWAY_INDEXES:
+                    self.tileArray.append(Railroad(i))
+                elif i == self.JAIL_INDEX:
+                    self.tileArray.append(Jail())
+                elif i == self.GO_INDEX:
+                    self.tileArray.append(Tile(i))
+                elif i == self.FREE_PARKING_INDEX:
+                    self.tileArray.append(Tile(i))
+                elif i == self.GO_TO_JAIL_INDEX:
+                    self.tileArray.append(Tile(i))
+                elif i in self.EVENT_INDEXES:  # Event card spaces
+                    self.tileArray.append(Tile(i))
+                elif i in self.TAX_INDEXES:
+                    self.tileArray.append(Tile(i))
+                else:
+                    self.tileArray.append(Tile(i))
+        
         self.playerTurnQueue = playerTurnQueue # We are looking at this like a queue. Current player is the player in position 0. At end of turn, remove at position 0 and append it to the end
-        self.turnNumber = turnNumber
-        self.GameActive = True
+        self.currentTurn = currentTurn
         self.screen = screen
-
-    def drawEvent(self) -> None:
-        pass
-
-    def checkEndGame(self) -> bool:
-        for player in self.playerTurnQueue:
-            if player.playerBalance < 0:
-                return True
-    
-    def endGame(self, playerToRemove: Player) -> None:
-        '''
-        1. Order players by playerBalance
-        2. Make game board screen inactive
-        3. Make results screen active
-        '''
-        pass
-
-    def endTurn(self):
-        self.turnNumber += 1 
-        self.playerTurnQueue.append(self.playerTurnQueue.pop(0)) # Rotate playerTurnQueue
+        self.savefile = savefile
     
     def assignPlayerPosition(self, players: Player[Player]):
         for player in players:
             player.playerPosition = 0  # Explicitly set starting position
             tile = self.tileArray[0]
             tile.playersOnTile.append(player)
+    
+    def rollDice(self, dice: Dice, players: Player[Player], turn: int = 0) -> bool:
+        dice.roll()
+        players[turn].lastDiceResult = dice.result() # The only reason I am keeping track of the last dice roll result is for the Utilities getRent function
+        print(f"Dice Result: {players[turn].lastDiceResult}")
+        print(f"Doubles: {dice.isDoubles()}")
+        print(f"Consecutive Doubles: {players[turn].consecutiveDoubles}")
+        print(f"Is In Jail: {players[turn].isInJail}")
+        print(f"Turns Left in Jail: {players[turn].turnsLeftInJail}")
+        font = pygame.font.SysFont("Arial", 22)
+        clock = pygame.time.Clock()
+        # Decide whether to increment consecutive doubles
+        doubles = dice.isDoubles()
+        
+        #Conditions if a player is in jail and rolls the dice
+        if players[turn].isInJail:
+            print(f"Player is in Jail: numGetOutOfJailCards: {players[turn].numGetOutOfJailCards}")
+            #If they have a get out of jail free card
+            if players[turn].numGetOutOfJailCards > 0:
+                players[turn].numGetOutOfJailCards -= 1
+                players[turn].isInJail = False
+                event_start_time = pygame.time.get_ticks()
+                popup_rect = pygame.Rect(self.screen.get_width() // 2 - 200, self.screen.get_height() // 2 - 50, 400, 100)
+                pygame.draw.rect(self.screen, (200,200,200), popup_rect, border_radius=20)
+                getoutofjail_message = font.render("You used a Get Out of Jail Card!", True, (0,0,0))
+                self.screen.blit(getoutofjail_message, (self.screen.get_width() // 2 - getoutofjail_message.get_width() // 2, self.screen.get_height() // 2 - getoutofjail_message.get_height() // 2))
+                waiting_for_event = True
+                    
+                    # Keep updating the screen while waiting
+                while waiting_for_event:
+                    # Check if 6 seconds have passed
+                    if pygame.time.get_ticks() - event_start_time >= 6000:
+                        waiting_for_event = False
+                    
+                    # Keep processing events to prevent the game from appearing frozen
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            running = False
+                            waiting_for_event = False
+                        elif event.type == pygame.MOUSEBUTTONDOWN:  # Optional: allow clicking to dismiss
+                            waiting_for_event = False
+                    
+                    pygame.display.update()
+                    clock.tick(60)  # Maintain frame rate
+
+                self.movePlayer(players, turn, moveAmount = players[turn].lastDiceResult)
+                if doubles:
+                    players[turn].consecutiveDoubles += 1
+                    return True
+                else:
+                    return False
             
+            #If the player rolled doubles while in jail
+            if doubles:
+                players[turn].isInJail = False
+                event_start_time = pygame.time.get_ticks()
+                popup_rect = pygame.Rect(self.screen.get_width() // 2 - 200, self.screen.get_height() // 2 - 50, 400, 100)
+                pygame.draw.rect(self.screen, (200,200,200), popup_rect, border_radius=20)
+                getoutofjail_message = font.render("You have rolled doubles!", True, (0,0,0))
+                self.screen.blit(getoutofjail_message, (self.screen.get_width() // 2 - getoutofjail_message.get_width() // 2, self.screen.get_height() // 2 - getoutofjail_message.get_height() // 2))
+                waiting_for_event = True
+                    
+                    # Keep updating the screen while waiting
+                while waiting_for_event:
+                    # Check if 6 seconds have passed
+                    if pygame.time.get_ticks() - event_start_time >= 6000:
+                        waiting_for_event = False
+                    
+                    # Keep processing events to prevent the game from appearing frozen
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            running = False
+                            waiting_for_event = False
+                        elif event.type == pygame.MOUSEBUTTONDOWN:  # Optional: allow clicking to dismiss
+                            waiting_for_event = False
+                    
+                    pygame.display.update()
+                    clock.tick(60)  # Maintain frame rate
+                self.movePlayer(players, turn, moveAmount = players[turn].lastDiceResult)
+                players[turn].consecutiveDoubles += 1
+                players[turn].turnsLeftInJail = 0
+                return True #You roll again as you got doubles while in jail
+            #If the player runs out of turns left in jail
+            elif players[turn].turnsLeftInJail == 0:
+                players[turn].isInJail = False
+                event_start_time = pygame.time.get_ticks()
+                popup_rect = pygame.Rect(self.screen.get_width() // 2 - 200, self.screen.get_height() // 2 - 50, 400, 100)
+                pygame.draw.rect(self.screen, (200,200,200), popup_rect, border_radius=20)
+                getoutofjail_message = font.render("You have served your sentence!", True, (0,0,0))
+                self.screen.blit(getoutofjail_message, (self.screen.get_width() // 2 - getoutofjail_message.get_width() // 2, self.screen.get_height() // 2 - getoutofjail_message.get_height() // 2))
+                waiting_for_event = True
+                    
+                    # Keep updating the screen while waiting
+                while waiting_for_event:
+                    # Check if 6 seconds have passed
+                    if pygame.time.get_ticks() - event_start_time >= 6000:
+                        waiting_for_event = False
+                    
+                    # Keep processing events to prevent the game from appearing frozen
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            running = False
+                            waiting_for_event = False
+                        elif event.type == pygame.MOUSEBUTTONDOWN:  # Optional: allow clicking to dismiss
+                            waiting_for_event = False
+                    
+                    pygame.display.update()
+                    clock.tick(60)  # Maintain frame rate
+                self.movePlayer(players, turn, moveAmount = players[turn].lastDiceResult)
+                return False
+            #If they didn't get out, senetence - 1
+            else:
+                players[turn].turnsLeftInJail -= 1
+        
+        else: #Else not in jail    
+            if doubles: #If doubles are rolled, check if 3 consecutive
+                players[turn].consecutiveDoubles += 1
+                if players[turn].consecutiveDoubles == 3: # If 3 consecutive doubles, go directly to jail
+                    players[turn].putInJail()
+                    self.movePlayer(players, turn, moveAmount = None, jumpToTile = self.JAIL_INDEX, passGoViable = False)
+                    return False
+
+                else: # Else, regular dice roll-based movement
+                    self.movePlayer(players, turn, moveAmount = players[turn].lastDiceResult)
+                    return True
+                
+            else: #If not doubles, just move
+                players[turn].consecutiveDoubles = 0
+                self.movePlayer(players, turn, moveAmount = players[turn].lastDiceResult)
+                return False
+
+    
     def drawPlayers(self, players: Player[Player]):
         offset = 0
+        font = pygame.font.Font(None, 20)  # Use pygame's default font, size 36
+    
+        # Draw player balance positions
+        score_positions = [
+            (225,100),     # 2nd position
+            (425,100),     # 3rd position
+            (25, 100),      # 1st position
+            (625,100)     # 4th position
+        ]
+
+
+        # Draw player balance
+        for i, player in enumerate(players):
+            if i < len(score_positions):  # Make sure we don't exceed available positions
+                score_text = font.render(f"Balance: {player.playerName} - ${player.playerBalance}", True, self.PLAYER_COLOR[i])
+                self.screen.blit(score_text, score_positions[i])
+        
+        #Drawing Player Properties
+        for player in players:
+            for property in player.propertyList:
+                tile = self.tileArray[property.tileNumber]
+                tileRect = tile.tileRect
+                index = tile.tileNumber # Get the tile's index (so we know what side of the board its on)
+                if 0 <= index <= 9:  # Bottom row only
+                    property.draw(self.screen, tileRect.centerx, tileRect.centery - 50, self.PLAYER_COLOR[players.index(player)])
+                elif 10 <= index <= 19:  # Left row
+                    property.draw(self.screen, tileRect.centerx + 50, tileRect.centery, self.PLAYER_COLOR[players.index(player)])
+                elif 20 <= index <= 29:  # Top row
+                    property.draw(self.screen, tileRect.centerx, tileRect.centery + 50, self.PLAYER_COLOR[players.index(player)])
+                elif 30 <= index <= 39:  # Right row
+                    property.draw(self.screen, tileRect.centerx - 50, tileRect.centery, self.PLAYER_COLOR[players.index(player)])
+        
+        #Drawing the players on the board
         for player in players:
             tile = self.tileArray[player.playerPosition] # Get the tile that the player landed on
             offset = 10 * tile.playersOnTile.index(player)
@@ -338,13 +414,13 @@ class Board:
             tileRect = tile.tileRect                   
             index = tile.tileNumber # Get the tile's index (so we know what side of the board its on)
             if 0 <= index <= 9:  # Bottom row only
-                player.draw(self.screen, tileRect.centerx, tileRect.centery + offset)
+                player.draw(self.screen, tileRect.centerx, tileRect.centery + offset, self.PLAYER_COLOR[players.index(player)])
             elif 10 <= index <= 19:  # Left row
-                player.draw(self.screen, tileRect.centerx - offset, tileRect.centery)
+                player.draw(self.screen, tileRect.centerx - offset, tileRect.centery, self.PLAYER_COLOR[players.index(player)])
             elif 20 <= index <= 29:  # Top row
-                player.draw(self.screen, tileRect.centerx, tileRect.centery - offset)
+                player.draw(self.screen, tileRect.centerx, tileRect.centery - offset, self.PLAYER_COLOR[players.index(player)])
             elif 30 <= index <= 39:  # Right row
-                player.draw(self.screen, tileRect.centerx + offset, tileRect.centery)
+                player.draw(self.screen, tileRect.centerx + offset, tileRect.centery, self.PLAYER_COLOR[players.index(player)])
     
     def movePlayer(self, players: Player[Player], turn: int = 0, moveAmount: Optional[int] = None, jumpToTile: Optional[int] = None, passGoViable: Optional[bool] = None) -> None:
         #Raise exception if parameters are not provided (this function requires either moveAmount alone, or jumpToTile and passGoViable)
@@ -362,13 +438,11 @@ class Board:
         
         #If the parameter indicated an amount of spaces to move...
         if moveAmount != None: 
-            print(f"Move Amount: {moveAmount} and I started on tile: {players[turn].playerPosition}")
             players[turn].playerPosition += moveAmount
             #Passing Go condition - Apply modulo BEFORE any other operations
             if players[turn].playerPosition >= 40: #Changed from > 39 to >= 40 for clarity
                 players[turn].playerPosition %= 40
                 players[turn].playerBalance += 200
-            print(f"I landed on tile: {players[turn].playerPosition}")
 
             #If the parameter indicated a tile to "teleport" to...
         else: 
@@ -389,10 +463,6 @@ class Board:
         
         # Now calculate offset based on player's position in the list
         offset = 10 * tile.playersOnTile.index(players[turn]) # Use index instead of len to get this player's specific offset
-        
-        # Debug prints
-        print(f"Players on initial tile {initialPosition}: {[p.playerName for p in initialTile.playersOnTile]}")
-        print(f"Players on new tile {players[turn].playerPosition}: {[p.playerName for p in tile.playersOnTile]}")
            
             
 
@@ -404,17 +474,684 @@ class Board:
             players[turn].draw(self.screen, tileRect.centerx, tileRect.centery - offset)
         elif 30 <= index <= 39:  # Right row
             players[turn].draw(self.screen, tileRect.centerx + offset, tileRect.centery)
-        '''
-        elif isinstance(tile, Jail): # Player is on the jail tile
-            if self.isInJail:
-                offset = 10 * len(tile.playersInJail)
+        
+    def show_turn_message(self, player_name):    
+        font = pygame.font.Font(None, 36)
+        for player in self.playerTurnQueue:
+            if player_name == player.playerName:
+                text_color = self.PLAYER_COLOR[self.playerTurnQueue.index(player)]
+        background_color = (200, 200, 200)  # Light gray background
+
+        # Render the message and get a centered rect
+        text_surface = font.render(f"{player_name}'s Turn", True, text_color)
+        text_rect = text_surface.get_rect(center=(self.screen.get_width() // 2, 50))  # position above game board
+        
+        # Draw a background rect, then the text
+        pygame.draw.rect(self.screen, background_color, text_rect.inflate(20, 20))  # Slight padding around text
+        self.screen.blit(text_surface, text_rect)
+
+        #update the display to show th message after being called in main loop
+        pygame.display.update()
+        
+    def moveResults(self, players: Player[Player], turn: int)->int:
+        currentPlayer = players[turn]
+        print(f"Current player: {currentPlayer.playerPosition}")
+        if (currentPlayer.playerPosition == self.GO_INDEX) or (currentPlayer.playerPosition == self.JAIL_INDEX) or (currentPlayer.playerPosition == self.FREE_PARKING_INDEX):
+            print("0 - Free space")
+            return 0
+        for property in currentPlayer.propertyList: #Look at all the properties of current player
+            if currentPlayer.playerPosition == property.tileNumber: #If the currentplayer is on their own property
+                    print("0 - My Property")
+                    return 0 #return 0 (do nothing)
+        for pos in self.EVENT_INDEXES: #If player landed on an event tile
+            if currentPlayer.playerPosition == pos:
+                print("2 - Event tile") 
+                return 2
+        for pos in self.TAX_INDEXES: #If player landed on a tax tile
+            if currentPlayer.playerPosition == pos:
+                print("3 - Tax tile")
+                return 3
+        if currentPlayer.playerPosition == self.GO_TO_JAIL_INDEX: #if player landed on go to jail tile
+            print("4 - Go to Jail tile")
+            return 4
+        for player in players: #For all players in the game
+            if player != currentPlayer: #Exclude the current player
+                for property in player.propertyList: #Look at all the properties they own
+                    if currentPlayer.playerPosition == property.tileNumber: #If the currentplayer is on an owned property
+                        print(f"{currentPlayer.playerName} pays ${property.getRent(player, currentPlayer)} to {player.playerName}")
+                        currentPlayer.payPlayer(property.getRent(player, currentPlayer), player) #Pay the player the rent
+                        print("0 - Already Owned Property")
+                        return 5 #And end the checks
+        print("1 - Unowned Property")
+        return 1
+    
+    def propertyDecision(self, player: Player) -> int:
+        currentPlayer = player
+        property_image = pygame.image.load(self.tileArray[currentPlayer.playerPosition].image)
+        font = pygame.font.SysFont("Arial", 22)
+        
+        self.screen.fill((200, 200, 200))
+
+        self.screen.blit(property_image, (self.screen.get_width() // 2 - property_image.get_width() // 2, 150))
+        
+        balance_text = font.render(f"Current Balance: ${currentPlayer.playerBalance}", True, (0, 0, 0))
+        self.screen.blit(balance_text, (self.screen.get_width() // 2 - balance_text.get_width() // 2, 50))
+        
+        cost_text = font.render(f"Cost: ${self.tileArray[currentPlayer.playerPosition].buyPrice}", True, (0, 0, 0))
+        self.screen.blit(cost_text, (self.screen.get_width() // 2 - cost_text.get_width() // 2, 100))
+
+        button_width = 100
+        button_height = 50
+        button_gap = 50  # Gap between buttons
+        total_width = button_width * 2 + button_gap
+        start_x = (self.screen.get_width() - total_width) // 2
+
+        # Buy Button
+        buy_button = pygame.Rect(start_x, self.screen.get_height() - 150 + 20, button_width, button_height)
+        canbuy = False
+        if(player.playerBalance >= self.tileArray[currentPlayer.playerPosition].buyPrice):
+            canbuy = True
+            pygame.draw.rect(self.screen, (100, 100, 100), buy_button)
+            buy_button_text = font.render(f"Buy", True, (0, 0, 0))
+            self.screen.blit(buy_button_text, (buy_button.centerx - buy_button_text.get_width() // 2, buy_button.centery - buy_button_text.get_height() // 2))
+
+        # Auction Button
+        auction_button = pygame.Rect(start_x + button_width + button_gap, self.screen.get_height() - 150 + 20, button_width, button_height)
+        pygame.draw.rect(self.screen, (100, 100, 100), auction_button)
+        auction_button_text = font.render(f"Auction", True, (0, 0, 0))
+        self.screen.blit(auction_button_text, (auction_button.centerx - auction_button_text.get_width() // 2, auction_button.centery - auction_button_text.get_height() // 2))
+        
+        pygame.display.update()
+        
+        waitforinput = True
+        while(waitforinput):
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pass
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_pos = event.pos
+                    if auction_button.collidepoint(mouse_pos):
+                        waitforinput = False
+                        self.screen.fill((200, 200, 200))
+                        return 1
+                    elif buy_button.collidepoint(mouse_pos) and canbuy:
+                        waitforinput = False
+                        self.screen.fill((200, 200, 200))
+                        return 0
+                    
+        return 0
+    
+    def upgradeScreen(self, player: Player):
+        font = pygame.font.SysFont("Arial", 22)
+        self.screen.fill((200, 200, 200))
+
+        PropertyScreen = True
+        UpgradeScreen = False
+
+        color_sets = self.getCompleteColorSets(player)
+        button_width = 200
+        button_height = 50
+
+        # Define fixed positions for the buttons
+        button_positions = [
+            ((self.screen.get_width() // 2) - 250, 100 + 100), ((self.screen.get_width() // 2) + 50, 100 + 100),  # First row
+            ((self.screen.get_width() // 2) - 250, 200 + 100), ((self.screen.get_width() // 2) + 50, 200 + 100),  # Second row
+            ((self.screen.get_width() // 2) - 250, 300 + 100), ((self.screen.get_width() // 2) + 50, 300 + 100),  # Third row
+            ((self.screen.get_width() // 2) - 250, 400 + 100), ((self.screen.get_width() // 2) + 50, 400 + 100)   # Fourth row
+        ]
+        while(True):
+            button_states = {
+                "PURPLE": False,
+                "CYAN": False,
+                "MAGENTA": False,
+                "ORANGE": False,
+                "RED": False,
+                "YELLOW": False,
+                "GREEN": False,
+                "BLUE": False,
+            }
+            if PropertyScreen:
+                self.screen.fill((200, 200, 200))
+                title = font.render("Upgrade Properties", True, (0, 0, 0))
+                self.screen.blit(title, (self.screen.get_width() // 2 - title.get_width() // 2, 50))
+                instructions = font.render("Select a color set to upgrade. Only completed color sets will appear.", True, (0, 0, 0))
+                self.screen.blit(instructions, (self.screen.get_width() // 2 - instructions.get_width() // 2, 100))
+
+                # Draw buttons
+                purple_button_rect = pygame.Rect(button_positions[0][0], button_positions[0][1], button_width, button_height)
+                purple_button_text = font.render(f"Purple", True, (0, 0, 0))
+                cyan_button_rect = pygame.Rect(button_positions[1][0], button_positions[1][1], button_width, button_height)
+                cyan_button_text = font.render(f"Cyan", True, (0, 0, 0))
+                magenta_button_rect = pygame.Rect(button_positions[2][0], button_positions[2][1], button_width, button_height)
+                magenta_button_text = font.render(f"Magenta", True, (0, 0, 0))
+                orange_button_rect = pygame.Rect(button_positions[3][0], button_positions[3][1], button_width, button_height)
+                orange_button_text = font.render(f"Orange", True, (0, 0, 0))
+                red_button_rect = pygame.Rect(button_positions[4][0], button_positions[4][1], button_width, button_height)
+                red_button_text = font.render(f"Red", True, (0, 0, 0))
+                yellow_button_rect = pygame.Rect(button_positions[5][0], button_positions[5][1], button_width, button_height)
+                yellow_button_text = font.render(f"Yellow", True, (0, 0, 0))
+                green_button_rect = pygame.Rect(button_positions[6][0], button_positions[6][1], button_width, button_height)
+                green_button_text = font.render(f"Green", True, (0, 0, 0))
+                blue_button_rect = pygame.Rect(button_positions[7][0], button_positions[7][1], button_width, button_height)
+                blue_button_text = font.render(f"Blue", True, (0, 0, 0))
+                for color in color_sets:
+                    if color == "PURPLE":
+                        pygame.draw.rect(self.screen, (126,15,221), purple_button_rect)
+                        self.screen.blit(purple_button_text, (purple_button_rect.centerx - purple_button_text.get_width() // 2, purple_button_rect.centery - purple_button_text.get_height() // 2))
+                        button_states["PURPLE"] = True
+                    if color == "CYAN":
+                        pygame.draw.rect(self.screen, (160,229,238), cyan_button_rect)
+                        self.screen.blit(cyan_button_text, (cyan_button_rect.centerx - cyan_button_text.get_width() // 2, cyan_button_rect.centery - cyan_button_text.get_height() // 2))
+                        button_states["CYAN"] = True
+                    if color == "MAGENTA":
+                        pygame.draw.rect(self.screen, (249,74,185), magenta_button_rect)
+                        self.screen.blit(magenta_button_text, (magenta_button_rect.centerx - magenta_button_text.get_width() // 2, magenta_button_rect.centery - magenta_button_text.get_height() // 2))
+                        button_states["MAGENTA"] = True
+                    if color == "ORANGE":
+                        pygame.draw.rect(self.screen, (233,142,40), orange_button_rect)
+                        self.screen.blit(orange_button_text, (orange_button_rect.centerx - orange_button_text.get_width() // 2, orange_button_rect.centery - orange_button_text.get_height() // 2))
+                        button_states["ORANGE"] = True
+                    if color == "RED":
+                        pygame.draw.rect(self.screen, (218,36,44), red_button_rect)
+                        self.screen.blit(red_button_text, (red_button_rect.centerx - red_button_text.get_width() // 2, red_button_rect.centery - red_button_text.get_height() // 2))
+                        button_states["RED"] = True
+                    if color == "YELLOW":
+                        pygame.draw.rect(self.screen, (253,239,5), yellow_button_rect)
+                        self.screen.blit(yellow_button_text, (yellow_button_rect.centerx - yellow_button_text.get_width() // 2, yellow_button_rect.centery - yellow_button_text.get_height() // 2))
+                        button_states["YELLOW"] = True
+                    if color == "GREEN":                        
+                        pygame.draw.rect(self.screen, (20,167,89), green_button_rect)
+                        self.screen.blit(green_button_text, (green_button_rect.centerx - green_button_text.get_width() // 2, green_button_rect.centery - green_button_text.get_height() // 2))
+                        button_states["GREEN"] = True
+                    if color == "BLUE":                        
+                        pygame.draw.rect(self.screen, (3,102,165), blue_button_rect)
+                        self.screen.blit(blue_button_text, (blue_button_rect.centerx - blue_button_text.get_width() // 2, blue_button_rect.centery - blue_button_text.get_height() // 2))
+                        button_states["BLUE"] = True
+
+            elif UpgradeScreen:
+                self.screen.fill((200, 200, 200))
+                # Display property details for the selected color set with reduced image size and side by side
+                properties_in_set = [prop for prop in self.tileArray if isinstance(prop, ColorProperty) and prop.color == selection]
+                image_scale = 0.5  # Scale images to half size
+                x_offset = (self.screen.get_width() - (len(properties_in_set) * 100 * image_scale)) // 2  # Center images
+                for prop in properties_in_set:
+                    prop_image = pygame.image.load(prop.image)
+                    prop_image = pygame.transform.scale(prop_image, (int(prop_image.get_width() * image_scale), int(prop_image.get_height() * image_scale)))
+                    self.screen.blit(prop_image, (x_offset-275, 150))
+                    x_offset += prop_image.get_width() + 10  # Move x_offset for next image
+
+                # Calculate and display the total upgrade cost
+                total_upgrade_cost = properties_in_set[0].upgradeCost * len(properties_in_set)
+                cost_text = font.render(f"Total Upgrade Cost: ${total_upgrade_cost}", True, (0, 0, 0))
+                self.screen.blit(cost_text, (self.screen.get_width() // 2 - cost_text.get_width() // 2, 450))
+
+                # Add an Upgrade button
+                upgrade_button_rect = pygame.Rect(
+                    (self.screen.get_width() - button_width) // 2,
+                    500,
+                    button_width,
+                    button_height
+                )
+                pygame.draw.rect(self.screen, (0, 150, 0), upgrade_button_rect)
+                upgrade_button_text = font.render("Upgrade", True, (255, 255, 255))
+                self.screen.blit(upgrade_button_text, (upgrade_button_rect.centerx - upgrade_button_text.get_width() // 2, upgrade_button_rect.centery - upgrade_button_text.get_height() // 2))
+
+            # Draw back button
+            back_button_rect = pygame.Rect(
+                (self.screen.get_width() - button_width) // 2,
+                self.screen.get_height() - 100,
+                button_width,
+                button_height
+            )
+            pygame.draw.rect(self.screen, (150, 0, 0), back_button_rect)
+            back_button_text = font.render("Back", True, (255, 255, 255))
+            self.screen.blit(back_button_text, (back_button_rect.centerx - back_button_text.get_width() // 2, back_button_rect.centery - back_button_text.get_height() // 2))
+
+            pygame.display.update()
+
+            selection = ""
+            message = ""
+            waitforinput = True
+            while(waitforinput):
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        break
+                    elif event.type == pygame.MOUSEBUTTONDOWN:
+                        mouse_pos = event.pos
+
+                        if (back_button_rect.collidepoint(mouse_pos) and PropertyScreen == True):
+                            waitforinput = False
+                            self.screen.fill((200, 200, 200))
+                            return
+                        elif (back_button_rect.collidepoint(mouse_pos) and UpgradeScreen == True):
+                            self.screen.fill((200, 200, 200))
+                            PropertyScreen = True
+                            UpgradeScreen = False
+                            selection = ""
+                            waitforinput = False
+
+                        #button logic for Property Selection Screen
+                        if(PropertyScreen):
+                            if (purple_button_rect.collidepoint(mouse_pos) and button_states["PURPLE"]):
+                                selection = "PURPLE"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+                            if (cyan_button_rect.collidepoint(mouse_pos) and button_states["CYAN"]):
+                                selection = "CYAN"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+                            if (magenta_button_rect.collidepoint(mouse_pos) and button_states["MAGENTA"]):
+                                selection = "MAGENTA"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+                            if (orange_button_rect.collidepoint(mouse_pos) and button_states["ORANGE"]):
+                                selection = "ORANGE"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+                            if (red_button_rect.collidepoint(mouse_pos) and button_states["RED"]):
+                                selection = "RED"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+                            if (yellow_button_rect.collidepoint(mouse_pos) and button_states["YELLOW"]):
+                                selection = "YELLOW"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+                            if (green_button_rect.collidepoint(mouse_pos) and button_states["GREEN"]):
+                                selection = "GREEN"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+                            if (blue_button_rect.collidepoint(mouse_pos) and button_states["BLUE"]):
+                                selection = "BLUE"
+                                PropertyScreen = False
+                                UpgradeScreen = True
+                                waitforinput = False
+
+                        #button Logic for Upgrade Selection Screen
+                        elif(UpgradeScreen):
+                            if(upgrade_button_rect.collidepoint(mouse_pos)):
+                                print(f"Upgrading {selection} for {player.playerName}")
+                                # Calculate total upgrade cost
+                                if player.playerBalance < total_upgrade_cost:
+                                    message = "You don't have enough money to Upgrade"
+                                else:
+                                    message = ""
+                                    for prop in properties_in_set:
+                                        if prop.upgradeLevel >= 5:
+                                                message = "You have reached the maximum upgrade level for this color set"
+                                        else:
+                                            self.screen.fill((200, 200, 200))
+                                            self.upgradeProperty(player, prop)
+                                            PropertyScreen = True
+                                            UpgradeScreen = False    
+                                            waitforinput = False
+                                            selection = ""
+                                            print(f"Upgraded {prop.tileNumber} from {prop.upgradeLevel -1 } to {prop.upgradeLevel}")
+                                # Display error message if any
+                                if message:
+                                        error_text = font.render(message, True, (255, 0, 0))
+                                        self.screen.blit(error_text, (self.screen.get_width() // 2 - error_text.get_width() // 2, 550))
+                                pygame.display.update()
+            #End while loop                
+    def getCompleteColorSets(self, player: Player) -> List[str]:
+        # Use the ownsPropertySet method to determine complete color sets
+        complete_sets = []
+        for color in ColorProperty.COLOR_GROUPS.keys():
+            if player.ownsPropertySet(color):
+                complete_sets.append(color)
+        return complete_sets
+
+    def upgradeProperty(self, player: Player, property: ColorProperty):
+        print(f"Upgrading {property.tileNumber} for {player.playerName}")
+        try:
+            property.upgrade()
+            if(player.playerBalance < property.upgradeCost):
+                raise Exception ("Not enough money to upgrade property")
+            else:
+                player.removeBalance(property.upgradeCost)
+        except Exception as e:
+            print(f"Upgrade failed: {str(e)}")
+
+    def downgradeProperty(self, player: Player, property: ColorProperty):
+        print(f"Downgrading {property.tileNumber} from {property.upgradeLevel} to {property.upgradeLevel - 1} for {player.playerName}")
+        try:
+            property.downgrade()
+            player.addBalance(property.upgradeCost/2)
+        except Exception as e:
+            print(f"Downgrade failed: {str(e)}")
+
+    def sellScreen(self, player: Player):
+        font = pygame.font.SysFont("Arial", 22)
+        self.screen.fill((200, 200, 200))
+        deselect = False
+        PropertyScreen = True
+        SellScreen = False
+        selected_color = None
+        selected_property = None
+
+        # Get all color groups the player owns properties in
+        
+
+        button_width = 200
+        button_height = 50
+        button_positions = [
+            ((self.screen.get_width() // 2) - 250, 100 + 100), ((self.screen.get_width() // 2) + 50, 100 + 100),
+            ((self.screen.get_width() // 2) - 250, 200 + 100), ((self.screen.get_width() // 2) + 50, 200 + 100),
+            ((self.screen.get_width() // 2) - 250, 300 + 100), ((self.screen.get_width() // 2) + 50, 300 + 100),
+            ((self.screen.get_width() // 2) - 250, 400 + 100), ((self.screen.get_width() // 2) + 50, 400 + 100),
+            ((self.screen.get_width() // 2) - 250, 500 + 100), ((self.screen.get_width() // 2) + 50, 500 + 100),
+        ]
+
+        while True:
+            button_states = {
+                "PURPLE": False,
+                "CYAN": False,
+                "MAGENTA": False,
+                "ORANGE": False,
+                "RED": False,
+                "YELLOW": False,
+                "GREEN": False,
+                "BLUE": False,
+                "RAILROAD": False,
+                "UTILITY": False
+            }
+            owned_colors = set(prop.color for prop in player.propertyList if isinstance(prop, ColorProperty))
+            if PropertyScreen:
+                self.screen.fill((200, 200, 200))
+                title = font.render("Sell Properties", True, (0, 0, 0))
+                self.screen.blit(title, (self.screen.get_width() // 2 - title.get_width() // 2, 50))
+                instructions = font.render("Select a color to sell properties. Only owned colors will appear.", True, (0, 0, 0))
+                self.screen.blit(instructions, (self.screen.get_width() // 2 - instructions.get_width() // 2, 100))
+                balance = font.render(f"Balance: ${player.playerBalance}", True, (0, 0, 0))
+                self.screen.blit(balance, (self.screen.get_width() // 2 - balance.get_width() // 2, 150))
+
+                # Draw color buttons
+                purple_button_rect = pygame.Rect(button_positions[0][0], button_positions[0][1], button_width, button_height)
+                purple_button_text = font.render(f"Purple", True, (0, 0, 0))
+                cyan_button_rect = pygame.Rect(button_positions[1][0], button_positions[1][1], button_width, button_height)
+                cyan_button_text = font.render(f"Cyan", True, (0, 0, 0))
+                magenta_button_rect = pygame.Rect(button_positions[2][0], button_positions[2][1], button_width, button_height)
+                magenta_button_text = font.render(f"Magenta", True, (0, 0, 0))
+                orange_button_rect = pygame.Rect(button_positions[3][0], button_positions[3][1], button_width, button_height)
+                orange_button_text = font.render(f"Orange", True, (0, 0, 0))
+                red_button_rect = pygame.Rect(button_positions[4][0], button_positions[4][1], button_width, button_height)
+                red_button_text = font.render(f"Red", True, (0, 0, 0))
+                yellow_button_rect = pygame.Rect(button_positions[5][0], button_positions[5][1], button_width, button_height)
+                yellow_button_text = font.render(f"Yellow", True, (0, 0, 0))
+                green_button_rect = pygame.Rect(button_positions[6][0], button_positions[6][1], button_width, button_height)
+                green_button_text = font.render(f"Green", True, (0, 0, 0))
+                blue_button_rect = pygame.Rect(button_positions[7][0], button_positions[7][1], button_width, button_height)
+                blue_button_text = font.render(f"Blue", True, (0, 0, 0))
+                for color in owned_colors:
+                    if color == "PURPLE":
+                        pygame.draw.rect(self.screen, (126,15,221), purple_button_rect)
+                        self.screen.blit(purple_button_text, (purple_button_rect.centerx - purple_button_text.get_width() // 2, purple_button_rect.centery - purple_button_text.get_height() // 2))
+                        button_states["PURPLE"] = True
+                    if color == "CYAN":
+                        pygame.draw.rect(self.screen, (160,229,238), cyan_button_rect)
+                        self.screen.blit(cyan_button_text, (cyan_button_rect.centerx - cyan_button_text.get_width() // 2, cyan_button_rect.centery - cyan_button_text.get_height() // 2))
+                        button_states["CYAN"] = True
+                    if color == "MAGENTA":
+                        pygame.draw.rect(self.screen, (249,74,185), magenta_button_rect)
+                        self.screen.blit(magenta_button_text, (magenta_button_rect.centerx - magenta_button_text.get_width() // 2, magenta_button_rect.centery - magenta_button_text.get_height() // 2))
+                        button_states["MAGENTA"] = True
+                    if color == "ORANGE":
+                        pygame.draw.rect(self.screen, (233,142,40), orange_button_rect)
+                        self.screen.blit(orange_button_text, (orange_button_rect.centerx - orange_button_text.get_width() // 2, orange_button_rect.centery - orange_button_text.get_height() // 2))
+                        button_states["ORANGE"] = True
+                    if color == "RED":
+                        pygame.draw.rect(self.screen, (218,36,44), red_button_rect)
+                        self.screen.blit(red_button_text, (red_button_rect.centerx - red_button_text.get_width() // 2, red_button_rect.centery - red_button_text.get_height() // 2))
+                        button_states["RED"] = True
+                    if color == "YELLOW":
+                        pygame.draw.rect(self.screen, (253,239,5), yellow_button_rect)
+                        self.screen.blit(yellow_button_text, (yellow_button_rect.centerx - yellow_button_text.get_width() // 2, yellow_button_rect.centery - yellow_button_text.get_height() // 2))
+                        button_states["YELLOW"] = True
+                    if color == "GREEN":                        
+                        pygame.draw.rect(self.screen, (20,167,89), green_button_rect)
+                        self.screen.blit(green_button_text, (green_button_rect.centerx - green_button_text.get_width() // 2, green_button_rect.centery - green_button_text.get_height() // 2))
+                        button_states["GREEN"] = True
+                    if color == "BLUE":                        
+                        pygame.draw.rect(self.screen, (3,102,165), blue_button_rect)
+                        self.screen.blit(blue_button_text, (blue_button_rect.centerx - blue_button_text.get_width() // 2, blue_button_rect.centery - blue_button_text.get_height() // 2))
+                        button_states["BLUE"] = True
+                
+                #Draw Utility and Railroad buttons
+                railroad_button_rect = pygame.Rect(button_positions[8][0], button_positions[8][1], button_width, button_height)
+                railroad_button_text = font.render(f"Railroad", True, (0, 0, 0))
+                utility_button_rect = pygame.Rect(button_positions[9][0], button_positions[9][1], button_width, button_height)
+                utility_button_text = font.render(f"Utility", True, (0, 0, 0))
+                for prop in player.propertyList:
+                    if isinstance(prop, Railroad):
+                        pygame.draw.rect(self.screen, (170, 170, 170), railroad_button_rect)
+                        self.screen.blit(railroad_button_text, (railroad_button_rect.centerx - railroad_button_text.get_width() // 2, railroad_button_rect.centery - railroad_button_text.get_height() // 2))
+                        button_states["RAILROAD"] = True
+                    elif isinstance(prop, Utility):
+                        pygame.draw.rect(self.screen, (170, 170, 170), utility_button_rect)
+                        self.screen.blit(utility_button_text, (utility_button_rect.centerx - utility_button_text.get_width() // 2, utility_button_rect.centery - utility_button_text.get_height() // 2))
+                        button_states["UTILITY"] = True
             
-            if self.isInJail: # If player is currently jailed --> offset y down starting from the top right based on how many players on the jail tile are currently jailed
-                for player in gameBoard.playerTurnQueue:
-                    if player.isInJail
-                self.token.moveToken(tileRect.right - 30, tileRect.top + 30 + offset) #NOTE: need to make sure to change offset based on number of player on jail tile that are actually jailed
+            elif SellScreen: 
+                self.screen.fill((200, 200, 200))
+                title = font.render(f"Select a Property to Sell from {selected_color} Properties", True, (0, 0, 0))
+                self.screen.blit(title, (self.screen.get_width() // 2 - title.get_width() // 2, 50))
+
+                if selected_color == "RAILROAD" or selected_color == "UTILITY":
+                    if selected_color == "RAILROAD":
+                        properties = [prop for prop in player.propertyList if isinstance(prop, Railroad)]
+                    else:
+                        properties = [prop for prop in player.propertyList if isinstance(prop, Utility)]
+                else:
+                    # Display properties in the selected color
+                    properties = [prop for prop in player.propertyList if isinstance(prop, ColorProperty) and prop.color == selected_color]
+                property_buttons = [] 
+                for idx, prop in enumerate(properties):
+                    # Load the image from the file path
+                    loaded_image = pygame.image.load(prop.image)
+                    # Scale the image to a smaller size to fit four on the screen
+                    scale_factor = 0.4  # Adjust this factor to make the images smaller
+                    prop_image = pygame.transform.scale(loaded_image, (int(loaded_image.get_width() * scale_factor), int(loaded_image.get_height() * scale_factor)))
+                    
+                    # Calculate the x position for horizontal alignment
+                    x_position = 225 + (idx % 2) * (prop_image.get_width() + 10)  # Two cards per row
+                    # Calculate the y position for vertical alignment
+                    y_position = 150 if idx < 2 else 150 + prop_image.get_height() + 10  # New row for the third and fourth cards
+                
+                    prop_rect = prop_image.get_rect(topleft=(x_position, y_position))
+                    self.screen.blit(prop_image, prop_rect)
+                    property_buttons.append((prop_rect, prop))
+
+                # Draw sell button
+                sell_button_rect = pygame.Rect(
+                    (self.screen.get_width() - button_width) // 2,
+                    self.screen.get_height() - 150,
+                    button_width,
+                    button_height
+                )
+                if selected_color == "RAILROAD" or selected_color == "UTILITY":
+                    sell_button_text = font.render("Sell", True, (255, 255, 255)) 
+                else:
+                    sell_button_text = font.render("Sell" if not any(prop.upgradeLevel > 0 for prop in properties) else "Downgrade", True, (255, 255, 255))
+                pygame.draw.rect(self.screen, (0, 150, 0), sell_button_rect)
+                self.screen.blit(sell_button_text, (sell_button_rect.centerx - sell_button_text.get_width() // 2, sell_button_rect.centery - sell_button_text.get_height() // 2))
+                
+            # Draw back button
+            back_button_rect = pygame.Rect(
+                (self.screen.get_width() - button_width) // 2,
+                self.screen.get_height() - 100,
+                button_width,
+                button_height
+            )
+            pygame.draw.rect(self.screen, (150, 0, 0), back_button_rect)
+            back_button_text = font.render("Back", True, (255, 255, 255))
+            self.screen.blit(back_button_text, (back_button_rect.centerx - back_button_text.get_width() // 2, back_button_rect.centery - back_button_text.get_height() // 2))
+
+            pygame.display.update()
+            #only reset color and selected property during a non deselect
+            if deselect == True:
+                print(f"Deselect: Color: {selected_color}, Property:{selected_property}, Deselect:{deselect}")
+                for prop_rect, prop in property_buttons:
+                    if prop == selected_property:
+                        pygame.draw.rect(self.screen, (255, 255, 0), prop_rect, 3)
+                        pygame.display.update()
+                        break
+            else:
+                selected_property = None
+            deselect = False
+            print(f"NORM: Color: {selected_color}, Property:{selected_property}, Deselect:{deselect}")
+            if SellScreen:
+                while SellScreen:
+                    for event in pygame.event.get():
+                        if deselect:
+                            break
+                        if event.type == pygame.QUIT:
+                            return
+                        elif event.type == pygame.MOUSEBUTTONDOWN:
+                            mouse_pos = event.pos
+                            if back_button_rect.collidepoint(mouse_pos):
+                                SellScreen = False
+                                PropertyScreen = True
+                                selected_color = None
+                                break
+                            if sell_button_rect.collidepoint(mouse_pos) and selected_property:
+                                self.sellProperty(player, selected_property)
+                                selected_property = None
+                                SellScreen = False
+                                PropertyScreen = True
+                                selected_color = None
+                                break
+                            for prop_rect, prop in property_buttons:
+                                if prop_rect.collidepoint(mouse_pos):
+                                    if selected_property is not None:
+                                        deselect = True
+                                    selected_property = prop
+                                    # Highlight the selected property
+                                    pygame.draw.rect(self.screen, (255, 255, 0), prop_rect, 3)
+                                    pygame.display.update()
+                    if deselect:
+                        break
             
-        '''
+            elif PropertyScreen:
+                while PropertyScreen:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            return
+                        elif event.type == pygame.MOUSEBUTTONDOWN:
+                            mouse_pos = event.pos
+                            if back_button_rect.collidepoint(mouse_pos) and PropertyScreen:
+                                PropertyScreen = False
+                                return
+                            if purple_button_rect.collidepoint(mouse_pos) and button_states["PURPLE"]:  
+                                selected_color = "PURPLE"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if cyan_button_rect.collidepoint(mouse_pos) and button_states["CYAN"]:
+                                selected_color = "CYAN"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if magenta_button_rect.collidepoint(mouse_pos) and button_states["MAGENTA"]:
+                                selected_color = "MAGENTA"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if orange_button_rect.collidepoint(mouse_pos) and button_states["ORANGE"]:
+                                selected_color = "ORANGE"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if red_button_rect.collidepoint(mouse_pos) and button_states["RED"]:
+                                selected_color = "RED"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if yellow_button_rect.collidepoint(mouse_pos) and button_states["YELLOW"]:
+                                selected_color = "YELLOW"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if green_button_rect.collidepoint(mouse_pos) and button_states["GREEN"]:
+                                selected_color = "GREEN"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if blue_button_rect.collidepoint(mouse_pos) and button_states["BLUE"]:
+                                selected_color = "BLUE"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if railroad_button_rect.collidepoint(mouse_pos) and button_states["RAILROAD"]:
+                                selected_color = "RAILROAD"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+                            if utility_button_rect.collidepoint(mouse_pos) and button_states["UTILITY"]:
+                                selected_color = "UTILITY"
+                                PropertyScreen = False
+                                SellScreen = True
+                                break
+
+
+    def sellProperty(self, player: Player, prop: Property):
+        if(isinstance(prop, ColorProperty) and prop.upgradeLevel > 0):
+            color_group = prop.color
+            for tile in self.tileArray:
+                if(isinstance(tile, ColorProperty) and tile.color == color_group and tile.upgradeLevel > 0):
+                    self.downgradeProperty(player, tile)
+        else:
+            player.removeProperty(prop)
+            player.addBalance(prop.sellValue)
+    
+    
+    def save_the_game(self):
+        sf = open(self.savefile, "w") # Open the save file (write mode)
+
+        # Record current turn
+        sf.write(f"{self.currentTurn}\n")
+        
+        # Record player information
+        sf.write(f"{len(self.playerTurnQueue)}\n") # Print the number of players so we know how many times to iterate over individual players
+        for p in self.playerTurnQueue:
+            # Declare a list of lines of strings containing player info
+            player_info = [f"{p.playerNumber}\n", f"{p.playerName}\n", f"{p.playerBalance}\n", f"{p.playerPosition}\n", f"{p.token.tokenID}\n", f"{p.isInJail}\n"]
+            player_info += [f"{p.isBankrupt}\n", f"{p.lastDiceResult}\n", f"{p.consecutiveDoubles}\n", f"{p.numGetOutOfJailCards}\n", f"{p.turnsLeftInJail}\n"]
+            sf.writelines(player_info) # Print the player_info lines to the save file
+
+            # Record player property IDs
+            sf.write(f"{len(p.propertyList)}\n") # This allows us to know how many times to iterate when loading from the save file
+            for prop in p.propertyList: # We record only the property IDs that the player owns for now
+                sf.write(f"{prop.tileNumber}\n")
+
+            # For Loading: After reading in all the players information, construct the Player with an empty propertyList for now, but keep track of the property IDs for later manual
+            #              assignment via player.addProperty(property indicated by player property ID list)
+
+        # Record tile information (player list will be recorded by player number )
+        for t in self.tileArray:
+            sf.write(f"{t.tileNumber}\n") 
+
+            # Output number of players on the tile
+            sf.write(f"{len(t.playersOnTile)}\n")
+            for p in t.playersOnTile: # For each player on the tile, give their player number
+                sf.write(f"{p.playerNumber}\n") 
+
+            # If color property, output the upgrade level
+            if t.tileNumber in self.COLOR_PROPERTY_INDEXES:
+                sf.write(f"{t.upgradeLevel}\n")
+
+            # If Jail Tile, also output players in jail
+            elif t.tileNumber == self.JAIL_INDEX:
+                sf.write(f"{len(t.playersInJail)}\n") # Output length of players in jail
+                for p in t.playersInJail:
+                    sf.write(f"{p.playerNumber}\n")
+
+        sf.close()
 
 class PlayerTokenImage: 
     TOKEN_WIDTH = 20
@@ -601,8 +1338,18 @@ class Property(Tile):
         self.image = self.PROPERTY_NUM_TO_INFO[tileNumber]["Image"]
 
     # Abstract getRent function
-    def getRent(self, owner: Player) -> int:
+    def getRent(self, owner: Player, currentPlayer: Player) -> int:
         pass
+    
+    #Default draw function with no upgrade level
+    def draw(self, screen: pygame.Surface, x: int, y: int, circle_color: tuple = (0,0,0)):
+        # Define circle properties
+        outline_color = (0, 0, 0)  #Black circle
+        circle_radius = 10  #radius size
+
+        # Draw the circle with outline
+        pygame.draw.circle(screen, outline_color, (x,y), circle_radius + 2)
+        pygame.draw.circle(screen, circle_color, (x,y), circle_radius)
 
 class ColorProperty(Property):
     # Define groups of tiles that belong to specific colors
@@ -617,9 +1364,8 @@ class ColorProperty(Property):
         "BLUE" : (37, 39)
     }
 
-    def __init__(self, tileNumber: int, playersOnTile: Optional[List[Player]] = None, upgradeLevel: Optional[int] = 0):
+    def __init__(self, tileNumber: int, playersOnTile: Optional[List[Player]] = None, upgradeLevel: int = 0):
         super().__init__(tileNumber, playersOnTile)
-
         # Handle upgradeLevel parameter
         if upgradeLevel < 0 or upgradeLevel > 5:
             raise ValueError("Exception: upgradeLevel" + upgradeLevel + " out of range")        
@@ -630,10 +1376,14 @@ class ColorProperty(Property):
         self.upgradeCost = 50 + (50 * (tileNumber // 10))
 
         # Determine the color based on tile number
+        self.color = None  # Initialize color to None
         for group_name, group_values in self.COLOR_GROUPS.items():
             if tileNumber in group_values:
                 self.color = group_name
                 break
+        
+        if self.color is None:
+            raise ValueError(f"Invalid tile number {tileNumber} - no matching color group found")
 
     # Upgrades the property. Assumes player balance has already been verified to perform the upgrade
     def upgrade(self):
@@ -654,27 +1404,43 @@ class ColorProperty(Property):
         self.upgradeLevel = 0
         
     # Override: Determine the rent due from landing on this spot given the player that owns the property
-    def getRent(self, owner: Player) -> int:
+    def getRent(self, owner: Player, currentPlayer: Player) -> int:
         if owner.ownsPropertySet(self.color) and self.upgradeLevel == 0: # If the owner owns the property set but hasnt upgraded yet, return double the base rent (special case)
             return self.rentList[0] * 2
         else: # Else, just return the rent from the rentList at the upgradeLevel index
             return self.rentList[self.upgradeLevel]
+    
+    # Draw color properties with upgrade level
+    def draw(self, screen: pygame.Surface, x: int, y: int, circle_color: tuple = (0,0,0)):
+        # Define circle properties
+        outline_color = (0, 0, 0)  # Black circle
+        circle_radius = 10  #radius size
+
+        # Draw the circle with outline
+        pygame.draw.circle(screen, outline_color, (x,y), circle_radius + 2)
+        pygame.draw.circle(screen, circle_color, (x,y), circle_radius)
+
+        # Render the upgrade level number
+        font = pygame.font.Font(None, 24)  # Example font size
+        text = font.render(str(self.upgradeLevel + 1), True, outline_color)
+        text_rect = text.get_rect(center=(x,y))
+        screen.blit(text, text_rect)
 
 class Utility(Property):
     def __init__(self, tileNumber: int, playersOnTile: Optional[List[Player]] = None):
         super().__init__(tileNumber, playersOnTile)
 
     # Override: Determine the rent due according to the diceRollTotal
-    def getRent(self, owner: Player) -> int:
+    def getRent(self, owner: Player, currentPlayer: Player) -> int:
         # Count the number of utilities owned by the player to determine the resulting dice multiplication value from rentList
         utilityCount = 0
         for prop in owner.propertyList:
             if isinstance(prop, Utility):
                 utilityCount += 1
                 if utilityCount == 2:
-                    break;
-        factor = self.rentList(utilityCount - 1)
-        return factor * owner.lastDiceResult # Multiply dice roll by the factor indicated by number of utilities owned (x4 or x10)
+                    break
+        factor = self.rentList[utilityCount - 1]
+        return factor * currentPlayer.lastDiceResult  # Multiply dice roll by the factor indicated by number of utilities owned (x4 or x10)
 
 
 class Railroad(Property):
@@ -682,34 +1448,55 @@ class Railroad(Property):
         super().__init__(tileNumber, playersOnTile)
 
     # getRent override for railroads. counts railroads that the player owns
-    def getRent(self, owner: Player) -> int:
+    def getRent(self, owner: Player, currentPlayer: Player) -> int:
         railroadCount = 0
         for prop in owner.propertyList:
             if isinstance(prop, Railroad):
                 railroadCount += 1
                 if railroadCount == 4:
-                    break;
+                    break
         return 25 * pow(2, railroadCount - 1) # Corresponds to 25, 50, 100, 200 at 1, 2, 3, and 4 railroads owned
     
 class Jail(Tile):
     def __init__(self, playersOnTile: Optional[List[Player]] = None, playersInJail: Optional[List[Player]] = None):
         super().__init__(10, playersOnTile)
         self.playersInJail = playersInJail if playersInJail is not None else []
-
-
-
-    def arrest(self, player: Player):
-        self.playersInJail.append(player)
-
-    def release(self, player: Player):
-        self.playersInJail.remove(player)
         
 class Event:
     def __init__(self):
-        self.events = {1:"Elected to racing hall of fame. Collect $100",2:"Sign associate sponsorship. Collect $100",3:"First Union race fund matures! Collect $100",4:"Won first pole position! Collect $20",5:"Collect $50 from ever player for guest passes.",6:"Go to jail!",7:"Get out of Jail free!",8:"You are assessed for track repairs. Pay $40 for every upgrade you've made.",9:"Car needs new tires. Pay $100",10:"Speeding on pit row. Pay $50",
-        11:"Won first Race! Collect $200",12:"Pay driving school fee of $150",13:"Fastest pit crew! Receive $25 prize.",14:"From sale of surplus race equipment you get $45",15:"In second place collect $10",16:"Race over to go and collect $200",17:"Pay $25 for each upgrade you've made",18:"You make the cover story in Inside Nascar magazine! Collect $150",19:"Need new spark plugs. Advance to parts America.",20:"Advance token to the nearest Speedway and pay owner twice the rent. If the speedway is unowned, you may buy it.",
-        21:"Cut off driver. Go back 3 spaces.",22:"Nascar winston cup scene names you driver of the year! Pay each player $50",23:"Go to jail.",24:"Get out of jail free",25:"Licensed souveniers pay. Pay $15",26:"Race over to QVC",27:"Free pit pass. Advance token to Goodwrench service plus.",28:"You qualified! Drive over to Charlotte Motor Speedway.",29:"Advance token to the nearest Speedway and pay owner twice the rent. If the speedway is unowned, you may buy it.",30:"Speed over to go and collect $200",
-        31:"First Union pays you dividend of $50",32:"Advance to nearest utility. If unowned, you may buy it. Otherwise pay the owner 10x the amount thrown on the dice."}
+        self.events = {
+                    1:"Elected to racing hall of fame. Collect $100",
+                    2:"Sign associate sponsorship. Collect $100",
+                    3:"First Union race fund matures! Collect $100",
+                    4:"Won first pole position! Collect $20",
+                    5:"Collect $50 from ever player for guest passes.",
+                    6:"Go to jail!",
+                    7:"Get out of Jail free!",
+                    8:"You are assessed for track repairs. Pay $40 for every upgrade you've made.",
+                    9:"Car needs new tires. Pay $100",
+                    10:"Speeding on pit row. Pay $50",
+                    11:"Won first Race! Collect $200",
+                    12:"Pay driving school fee of $150",
+                    13:"Fastest pit crew! Receive $25 prize.",
+                    14:"From sale of surplus race equipment you get $45",
+                    15:"In second place collect $10",
+                    16:"Race over to go and collect $200",
+                    17:"Pay $25 for each upgrade you've made",
+                    18:"You make the cover story in Inside Nascar magazine! Collect $150",
+                    19:"Need new spark plugs. Advance to parts America.",
+                    20:"Advance token to the nearest Speedway and pay owner the rent. If the speedway is unowned, you may buy it.",
+                    21:"Cut off driver. Go back 3 spaces.",
+                    22:"Nascar winston cup scene names you driver of the year! Pay each player $50",
+                    23:"Go to jail.",
+                    24:"Get out of jail free",
+                    25:"Licensed souveniers pay. Pay $15",
+                    26:"Race over to QVC",
+                    27:"Free pit pass. Advance token to Goodwrench service plus.",
+                    28:"You qualified! Drive over to Charlotte Motor Speedway.",
+                    29:"Advance token to the nearest Speedway and pay owner the rent. If the speedway is unowned, you may buy it.",
+                    30:"Speed over to go and collect $200",
+                    31:"First Union pays you dividend of $50"
+        }
         
         #initializing variables initially for future references 
         self.font = pygame.font.Font(None, 24) #sets font and size
@@ -718,7 +1505,10 @@ class Event:
         self.is_visible = False #sets up for the trigger function of the textbox to be shown or not
 
     def event_outcome(event_code: int, player: Player, gameBoard: Board):
-
+        print(f"Event: {event_code}")
+        players = [player]
+        current_turn = 0
+        
         if(event_code == 1 or event_code == 2 or event_code == 3):
             player.addBalance(100)
             #gain $100
@@ -731,13 +1521,19 @@ class Event:
                     payer.payPlayer(50, player)
             #gain $50 from all players
         elif (event_code == 6 or event_code == 23):
-            player.movePlayer(jumpToTile = 10, passGoViable = False)
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 10, passGoViable = False)
+            player.putInJail()
+            
             #go to jail
         elif (event_code == 7 or event_code == 24):
             player.numGetOutOfJailCards += 1
             #get out of jail
         elif (event_code == 8):
-            player.removeBalance(40)
+            upgradeCount = 0
+            for prop in player.propertyList:
+                if isinstance(prop, ColorProperty):
+                    upgradeCount += prop.upgradeLevel
+            player.removeBalance(40 * upgradeCount)
             #pay $40
         elif (event_code == 9):
             player.removeBalance(100)
@@ -761,7 +1557,7 @@ class Event:
             player.addBalance(10)
             #gain $10
         elif (event_code == 16 or event_code == 30):
-            player.movePlayer(jumpToTile = 0, passGoViable = True)
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 0, passGoViable = True)
             #advance to go
         elif (event_code == 17):
             upgradeCount = 0
@@ -774,18 +1570,14 @@ class Event:
             player.addBalance(150)
             #gain $150
         elif (event_code == 19):
-            player.movePlayer(jumpToTile = 23, passGoViable = True)
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 23, passGoViable = True)
             #advance to parts america
         elif (event_code == 20 or event_code == 29):
             # Move the player to the property
-            player.movePlayer(jumpToTile = player.nearestSpeedway(), passGoViable = True)
-
-            #MAKE SURE TO PROCESS BUYING/AUCTIONING IF SPEEDWAY NOT OWNED
-            #OR PROCESS PAYING DOUBLE RENT!!!
-            
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = player.nearestSpeedway(), passGoViable = True)
             #advance to nearest speedway and pay double rent or buy property
         elif (event_code == 21):
-            player.movePlayer(moveAmount = -3)
+            gameBoard.movePlayer(players, current_turn, moveAmount = -3)
             #go back 3 spaces
         elif (event_code == 22):
             for recipient in gameBoard.playerTurnQueue:
@@ -795,66 +1587,76 @@ class Event:
             player.removeBalance(15)
             #pay 15
         elif (event_code == 26):
-            player.movePlayer(jumpToTile = 23, passGoViable = True)
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 13, passGoViable = True)
             #go to QVC
         elif (event_code == 27):
-            player.movePlayer(jumpToTile = 39, passGoViable = True)
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 39, passGoViable = True)
             #go to Goodwrench service plus
         elif (event_code == 28):
-            player.movePlayer(jumpToTile = 15, passGoViable = True)
+            gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = 25, passGoViable = True)
             #go to Charlotte Motor Speedway
         elif (event_code == 31):
             player.addBalance(50)
             #gain $50
-        elif (event_code == 32):
-            player.movePlayer(jumpToTile = player.nearestSpeedway(), passGoViable = True)
-            
-            # MAKE SURE TO HANDLE PAYING 10x PROPERTY VALUE OR GOING TO AUCTION
-            #go to nearest speedway. Pay 10x of dice value or buy property
-    
-    #creates a pop_up message when triggered to show player the event card message
     def show_event_message(self, event_code: int):
+        """Display the event message and draw it to the screen."""
         message = self.events.get(event_code, "Unknown Event")
-        self.font_surface = self.wrap_text(message, 250)  # Wrap text to fit a width of 300 pixels
+        self.font_surface = self.wrap_text(message, 250)  # Wrap text to fit a width of 250 pixels
         self.is_visible = True
+        self.draw(pygame.display.get_surface())  # Get the current display surface and draw to it
+
+    def draw(self, screen: pygame.Surface):
+        """Draw the event message box and text to the screen."""
+        if self.is_visible and self.font_surface:
+            # Create semi-transparent overlay
+            overlay = pygame.Surface((800, 800), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 128))  # Black with 50% transparency
+            screen.blit(overlay, (0, 0))
+
+            # Create message box
+            font_rect = pygame.Rect(200, 250, 400, 300)  # Centered text box
+            pygame.draw.rect(screen, (255, 255, 255), font_rect)  # White background
+            pygame.draw.rect(screen, (0, 0, 0), font_rect, 2)  # Black border
+
+            # Add a title
+            title_font = pygame.font.Font(None, 36)
+            title_surface = title_font.render("EVENT CARD", True, (0, 0, 0))
+            title_rect = title_surface.get_rect(centerx=font_rect.centerx, top=font_rect.top + 20)
+            screen.blit(title_surface, title_rect)
+
+            # Draw each line of wrapped text
+            total_height = sum(line.get_height() for line in self.font_surface)
+            start_y = font_rect.centery - total_height // 2
+
+            for i, line_surface in enumerate(self.font_surface):
+                line_rect = line_surface.get_rect(centerx=font_rect.centerx, top=start_y + i * self.font.get_height())
+                screen.blit(line_surface, line_rect)
 
     def wrap_text(self, text, max_width):
-        words = text.split(' ')
+        """Wrap text to fit within a given width."""
+        words = text.split()
         lines = []
-        current_line = ''
-        
-        for word in words:
-            # Check if adding the next word exceeds the max width
-            test_line = current_line + (word if not current_line else ' ' + word)
-            if self.font.size(test_line)[0] <= max_width:
-                current_line = test_line
-            else:
-                # If the current line is not empty, add it to lines
-                if current_line:
-                    lines.append(current_line)
-                current_line = word  # Start a new line with the current word
-                
-        # Add the last line if it's not empty
-        if current_line:
-            lines.append(current_line)
-            
-        # Render each line and create a surface to hold all lines
-        surfaces = [self.font.render(line, True, (0, 0, 0)) for line in lines]
-        return surfaces
+        current_line = []
+        current_width = 0
 
+        for word in words:
+            word_surface = self.font.render(word + " ", True, (0, 0, 0))
+            word_width = word_surface.get_width()
+
+            if current_width + word_width <= max_width:
+                current_line.append(word)
+                current_width += word_width
+            else:
+                if current_line:
+                    lines.append(" ".join(current_line))
+                current_line = [word]
+                current_width = word_width
+
+        if current_line:
+            lines.append(" ".join(current_line))
+
+        return [self.font.render(line, True, (0, 0, 0)) for line in lines]
+    
     # Hides the event message
     def hide_event_message(self):
         self.is_visible = False
-
-# Draws the event card on the screen
-    def draw(self, screen: pygame.Surface):
-        if self.is_visible and self.font_surface:
-            font_rect = pygame.Rect(250, 300, 300, 200)  # Text box size (LEFT, TOP, WIDTH, HEIGHT)
-            pygame.draw.rect(screen, (255, 255, 255), font_rect)  # White background box
-            pygame.draw.rect(screen, (0, 0, 0), font_rect, 2)  # Black border
-
-            # Draw each line of wrapped text
-            for i, line_surface in enumerate(self.font_surface):
-                line_rect = line_surface.get_rect(topleft=(font_rect.x + 10, font_rect.y + 70 + i * self.font.get_height()))
-                screen.blit(line_surface, line_rect)
-    

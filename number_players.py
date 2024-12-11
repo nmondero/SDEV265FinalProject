@@ -4,7 +4,7 @@ import pygame
 class PlayerNumberMenu:
     def __init__(self, screen):
         self.screen = screen
-        self.menu_active = True
+        self.menu_active = False
         
         # Define colors
         self.WHITE = (255, 255, 255)
