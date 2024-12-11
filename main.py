@@ -50,13 +50,6 @@ def cleanScreen():
     buttons.draw_buttons(is_doubles)
     gameboard.show_turn_message(players[current_turn].playerName)
 
-def debug_player(player):
-    for attr in dir(player):
-        if not attr.startswith("__"):
-            value = getattr(player, attr)
-            print(f"Attribute: {attr}, Type: {type(value)}")
-    # Use this function to print out the types of all attributes in a Player instance
-
 
 def endGame():
     # Sort players by net worth in descending order
@@ -184,7 +177,6 @@ def load_the_game(savefile_name: str, screen: pygame.Surface) -> Board:
 board_surf = pygame.transform.scale(pygame.image.load("images/GameBoard.png").convert(), (550, 550))
 board_rect = pygame.Rect(125, 125, 550, 550)
 
-didImove = False
 is_doubles = False
 while running:
     for event in pygame.event.get():
@@ -260,46 +252,7 @@ while running:
                     gameboard = Board(screen, players, savefile)
                     print("Save file is: " + gameboard.savefile)
                     gameboard.assignPlayerPosition(players)    
-                    '''
-                    # assignment of all properties to the first player for testing purposes
-                    first_player = players[0]
-                    all_properties = [Property(tileNumber=i) for i in range(40) if i in Property.PROPERTY_NUM_TO_INFO.keys()]
-                    first_player.propertyList = all_properties
-                    '''
 
-           # Handle key pressing events
-            elif event.type == pygame.KEYDOWN:
-                print("Input detected")
-                if event.key == pygame.K_RETURN:
-                    dice.roll()
-                    diceResult = dice.result()
-                    print(f"Dice Result: {diceResult}")
-                    
-                    
-                    if dice.isDoubles():
-                        print("Doubles!")
-                    didImove = True
-
-                elif event.key == pygame.K_SPACE:
-                    card_popup.show_event_message(random.randint(1, 32))
-
-                #press Left Shift to change players for now till we get functionality 
-                elif event.key == pygame.K_LSHIFT:  # Press LSHIFT to advance turn
-                    current_turn = (current_turn + 1) % len(players)  # Move to the next player
-                    turn_displayed = False #resets to show new player message
-                    didImove = True
-                
-                elif event.key == pygame.K_a:
-                    auction_instance = Auction(players, Property(1), current_turn)
-                    running_auction=True
-
-            # Handle clicking events
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                mouse_pos = event.pos
-                for i in range(40):
-                    if tiles[i].tileRect.collidepoint(mouse_pos):
-                        print("Clicked Tile: " + tiles[i].tileName)
-            
             
     # Fill background to empty before updating with new draws
     screen.fill(backgroundColor)

@@ -72,51 +72,53 @@ class Auction:
         Runs the auction and returns the winner and winning bid.
         
         Returns:
-            tuple: (winner: Player or None, winning_bid: int)
+            tuple: (winner: Player, winning_bid: int)
         """
         self.auction_screen(screen)
         return self.winner, self.winning_bid
 
     def auction_screen(self, screen):
+        #Main auction screen that refreshes after each input
         while len(self.players) > 1 and self.running:
             screen.fill(BOX_COLOR)
             font = pygame.font.SysFont("Arial", FONT_SIZE)
             
-            current_player_text = font.render(f"Current Player: {self.players[self.current_player_index].playerName}", True, TEXT_COLOR)
+            current_player_text = font.render(f"Current Player: {self.players[self.current_player_index].playerName}", True, TEXT_COLOR) #Player text
             screen.blit(current_player_text, (SCREEN_WIDTH // 2 - current_player_text.get_width() // 2, 50))
             
-            current_player_balance = font.render(f"Balance: {self.players[self.current_player_index].playerBalance}", True, TEXT_COLOR)
+            current_player_balance = font.render(f"Balance: {self.players[self.current_player_index].playerBalance}", True, TEXT_COLOR) #Player Balance Text
             screen.blit(current_player_balance, (SCREEN_WIDTH // 2 - current_player_balance.get_width() // 2, 85))
             
-            bid_text = font.render(f"Current Bid: ${self.current_bid}", True, TEXT_COLOR)
+            bid_text = font.render(f"Current Bid: ${self.current_bid}", True, TEXT_COLOR) #Bid Text
             screen.blit(bid_text, (SCREEN_WIDTH // 2 - bid_text.get_width() // 2, 120))
             
-            screen.blit(self.property_image, (SCREEN_WIDTH // 2 - self.property_image.get_width() // 2, 150))
+            screen.blit(self.property_image, (SCREEN_WIDTH // 2 - self.property_image.get_width() // 2, 150)) #Property Image
             
             button_10 = pygame.Rect(SCREEN_WIDTH // 4 * (0 + 1) - 50, SCREEN_HEIGHT - 150 + 20, 100, 50)
             pygame.draw.rect(screen, BUTTON_COLOR, button_10)
             bid_button_text = font.render(f"$10", True, BUTTON_TEXT_COLOR)
-            screen.blit(bid_button_text, (button_10.centerx - bid_button_text.get_width() // 2, button_10.centery - bid_button_text.get_height() // 2))
+            screen.blit(bid_button_text, (button_10.centerx - bid_button_text.get_width() // 2, button_10.centery - bid_button_text.get_height() // 2)) #$10 Bid button
             
             button_25 = pygame.Rect(SCREEN_WIDTH // 4 * (1 + 1) - 50, SCREEN_HEIGHT - 150 + 20, 100, 50)
             pygame.draw.rect(screen, BUTTON_COLOR, button_25)
             bid_button_text = font.render(f"$25", True, BUTTON_TEXT_COLOR)
-            screen.blit(bid_button_text, (button_25.centerx - bid_button_text.get_width() // 2, button_25.centery - bid_button_text.get_height() // 2))
+            screen.blit(bid_button_text, (button_25.centerx - bid_button_text.get_width() // 2, button_25.centery - bid_button_text.get_height() // 2)) #$25 Bid button
             
             button_50 = pygame.Rect(SCREEN_WIDTH // 4 * (2 + 1) - 50, SCREEN_HEIGHT - 150 + 20, 100, 50)
             pygame.draw.rect(screen, BUTTON_COLOR, button_50)
             bid_button_text = font.render(f"$50", True, BUTTON_TEXT_COLOR)
-            screen.blit(bid_button_text, (button_50.centerx - bid_button_text.get_width() // 2, button_50.centery - bid_button_text.get_height() // 2))
+            screen.blit(bid_button_text, (button_50.centerx - bid_button_text.get_width() // 2, button_50.centery - bid_button_text.get_height() // 2)) #$50 Bid button
             
             withdraw_button = pygame.Rect(SCREEN_WIDTH // 2 - 50, SCREEN_HEIGHT - 100 + 20, 100, 50)
             pygame.draw.rect(screen, BUTTON_COLOR, withdraw_button)
             withdraw_text = font.render("Withdraw", True, BUTTON_TEXT_COLOR)
-            screen.blit(withdraw_text, (withdraw_button.centerx - withdraw_text.get_width() // 2, withdraw_button.centery - withdraw_text.get_height() // 2))
+            screen.blit(withdraw_text, (withdraw_button.centerx - withdraw_text.get_width() // 2, withdraw_button.centery - withdraw_text.get_height() // 2)) #Withdraw Button
             
-            if(self.exceded):
+            if(self.exceded): #Check to ensure the player making a bid has enough money
                 exceded_text = font.render("You cannot bid that much as it exceeds your current balance", True, (255,0,0))
                 screen.blit(exceded_text, (SCREEN_WIDTH // 2 - (exceded_text.get_width()//2), withdraw_button.bottom + 5))
             
+            #Event handler to deal with input. The function draws the screen then waits for input. This repeats until 1 player is left in the auction. 
             pygame.display.update()
             print("In loop")
             waitforinput = True

@@ -1,6 +1,6 @@
 import pygame
 
-#class that is imported to main file for appearance and functionality (not yet implemented)
+#class that is imported to main file for drawing the main buttons
 class Buttons:
     def __init__(self, screen):
         self.canIrollDice = True

@@ -137,52 +137,11 @@ class Player:
             raise ValueError("Exception: Balance to remove (${balanceToRemove}) is not greater than 0.")
 
         self.playerBalance -= balanceToRemove #Remove specified amount from player 
-        
-        ''' 
-        Note: I am thinking of moving this to the main so that we dont have to awkwardly pass the screen display to the removeBalance function to get the sellProperty function to work
-        if self.playerBalance < 0: #If player balance is less than 0, check if they can sell properties to avoid bankruptcy
-            totalPropertyValue = 0
-            for property in self.propertyList:
-                totalPropertyValue += property.sellValue
-            
-            if totalPropertyValue < balanceToRemove: #Player is bankrupt if they cannot sell enough value to get out of negative balance
-                self.isBankrupt = True
-
-            else: #Make the player sell property until they have enough money to stay out of negative
-                while self.playerBalance < balanceToRemove:
-                    self.sellProperty(screen)
-        '''
 
     # Pays another player a certain amount
     def payPlayer(self, payAmount: int, payee: Player):
         self.removeBalance(payAmount)
         payee.addBalance(payAmount)
-    
-    def sellProperty(self, screen: pygame.Surface) -> None:
-        if self.propertyList.count() == 0:
-            raise ValueError("Exception: No properties to sell.")
-
-        '''
-        Create "Sell Property" Surface to display as a title for sell property screen
-        Create button objects (Surfaces) that will display properties and their sell values
-        Map each button to the properties in the player's property list
-        Create an array of Property that represents properties selected to sell
-        Create button objects to Confirm the sell or cancel the sell
-        Draw over the entire Display Surface with the background color then draw on the new button objects
-        Event loop looking for player clicks:
-            if player clicks a property button:
-                if the property for that button IS NOT in the properties to sell array (the button is UNCLICKED):
-                    add the property at that button to properties to sell array
-                    Update the button to look like it has been selected (probably change the Surface color)
-                if the property for that button IS in the properties to sell array:
-                    Remove the property at that button from properties to sell array
-                    Update the button to look like it has not been selected (probably change the Surface color back to default)
-            if player clicks Sell Properties:
-                For each property in the properties to sell array:
-                    Add property sell value to player balance
-                    Remove the property from player property array
-        '''
-            
 
     # Determines if the player owns the full property set of the specified color
     def ownsPropertySet(self, color: str) -> bool:
@@ -213,12 +172,12 @@ class Player:
     
     #Overall Bankruptcy Check. Returns true if player is bankrupt with no way to escape
     def bankruptcyCheck(self) -> bool:
-        
         if self.isPossibletoLive() < 0:
             return True
         else:
             return False
 
+    #Calculates the overall money a player has in both property and upgrades as well as balance
     def isPossibletoLive(self) -> int:
         copybalance = self.playerBalance
         for property in self.propertyList:
@@ -231,6 +190,7 @@ class Player:
                 
         
 class Board:
+    #Static index for all different property types on the board and their tile location
     COLOR_PROPERTY_INDEXES = (1, 3, 6, 8, 9, 11, 13, 14, 16, 18, 19, 21, 23, 24, 26, 27, 29, 31, 32, 34, 37, 39)
     UTILITIES_INDEXES = (12, 28)
     SPEEDWAY_INDEXES = (5, 15, 25, 35)
@@ -272,7 +232,6 @@ class Board:
         
         self.playerTurnQueue = playerTurnQueue # We are looking at this like a queue. Current player is the player in position 0. At end of turn, remove at position 0 and append it to the end
         self.currentTurn = currentTurn
-        self.GameActive = True
         self.screen = screen
         self.savefile = savefile
     
@@ -295,8 +254,10 @@ class Board:
         # Decide whether to increment consecutive doubles
         doubles = dice.isDoubles()
         
+        #Conditions if a player is in jail and rolls the dice
         if players[turn].isInJail:
             print(f"Player is in Jail: numGetOutOfJailCards: {players[turn].numGetOutOfJailCards}")
+            #If they have a get out of jail free card
             if players[turn].numGetOutOfJailCards > 0:
                 players[turn].numGetOutOfJailCards -= 1
                 players[turn].isInJail = False
@@ -330,7 +291,8 @@ class Board:
                     return True
                 else:
                     return False
-                
+            
+            #If the player rolled doubles while in jail
             if doubles:
                 players[turn].isInJail = False
                 event_start_time = pygame.time.get_ticks()
@@ -360,6 +322,7 @@ class Board:
                 players[turn].consecutiveDoubles += 1
                 players[turn].turnsLeftInJail = 0
                 return True #You roll again as you got doubles while in jail
+            #If the player runs out of turns left in jail
             elif players[turn].turnsLeftInJail == 0:
                 players[turn].isInJail = False
                 event_start_time = pygame.time.get_ticks()
@@ -387,7 +350,7 @@ class Board:
                     clock.tick(60)  # Maintain frame rate
                 self.movePlayer(players, turn, moveAmount = players[turn].lastDiceResult)
                 return False
-
+            #If they didn't get out, senetence - 1
             else:
                 players[turn].turnsLeftInJail -= 1
         
@@ -1498,12 +1461,6 @@ class Jail(Tile):
     def __init__(self, playersOnTile: Optional[List[Player]] = None, playersInJail: Optional[List[Player]] = None):
         super().__init__(10, playersOnTile)
         self.playersInJail = playersInJail if playersInJail is not None else []
-
-    def arrest(self, player: Player):
-        self.playersInJail.append(player)
-
-    def release(self, player: Player):
-        self.playersInJail.remove(player)
         
 class Event:
     def __init__(self):
@@ -1618,10 +1575,6 @@ class Event:
         elif (event_code == 20 or event_code == 29):
             # Move the player to the property
             gameBoard.movePlayer(players, current_turn, moveAmount = None, jumpToTile = player.nearestSpeedway(), passGoViable = True)
-
-            #MAKE SURE TO PROCESS BUYING/AUCTIONING IF SPEEDWAY NOT OWNED
-            #OR PROCESS PAYING DOUBLE RENT!!!
-            
             #advance to nearest speedway and pay double rent or buy property
         elif (event_code == 21):
             gameBoard.movePlayer(players, current_turn, moveAmount = -3)
